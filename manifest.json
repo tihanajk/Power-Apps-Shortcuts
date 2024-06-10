@@ -1,0 +1,43 @@
+{
+  "manifest_version": 2,
+  "version": "1.0",
+  "name": "God Mode",
+  "icons": {
+    "32": "icon.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Shift+Alt+G"
+      },
+      "description": "godmode shortcut"
+    },
+    "ribbon_debug": {
+      "suggested_key": {
+        "default": "Shift+Alt+C"
+      },
+      "description": "ribbon debug"
+    },
+    "advanced_find": {
+      "suggested_key": {
+        "default": "Shift+Alt+F"
+      },
+      "description": "advanced find"
+    }
+  },
+  "web_accessible_resources": ["godMode.js"],
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["*://*.crm4.dynamics.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_action": {
+    "default_title": "Enable God Mode"
+  }
+}
