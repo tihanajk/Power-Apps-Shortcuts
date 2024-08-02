@@ -18,8 +18,8 @@ function loc() {
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
           if (c.getName() == field) {
-            tab = t.getName();
-            section = s.getName();
+            tab = `${t?.getLabel()}  (${t?.getName()})`;
+            section = `${s?.getLabel()}  (${s?.getName()})`;
           }
         })
       )
