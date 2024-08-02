@@ -24,5 +24,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   } else if (request.message === "advancedFind") {
     var url = location.href.split("&pagetype")[0];
     window.open(`${url}&pagetype=advancedfind`, "_blank");
+  } else if (request.message === "locateOnForm") {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+
+    script.src = chrome.runtime.getURL("locate.js");
+    (document.head || document.documentElement).appendChild(script);
+    script.remove();
+
+    window.postMessage({ type: "LOCATE_ME" }, "*");
   }
 });

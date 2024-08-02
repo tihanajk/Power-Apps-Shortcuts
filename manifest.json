@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "version": "1.0",
-  "name": "God Mode",
+  "name": "Levelup Shortcuts",
   "icons": {
     "32": "icon.png"
   },
@@ -27,17 +27,23 @@
         "default": "Shift+Alt+F"
       },
       "description": "advanced find"
+    },
+    "locate_on_form": {
+      "suggested_key": {
+        "default": "Shift+Alt+L"
+      },
+      "description": "locate on form"
     }
   },
-  "web_accessible_resources": ["godMode.js"],
+  "web_accessible_resources": ["godMode.js", "locate.js"],
   "permissions": ["activeTab"],
   "content_scripts": [
     {
-      "matches": ["*://*.crm4.dynamics.com/*"],
+      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*"],
       "js": ["content.js"]
     }
   ],
   "browser_action": {
-    "default_title": "Enable God Mode"
+    "default_title": "My levelup shortcuts"
   }
 }

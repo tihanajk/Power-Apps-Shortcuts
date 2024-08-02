@@ -1,10 +1,12 @@
 // Function to enable all controls
+var didGodMode = false;
+
 function god() {
+  if (didGodMode) return;
+
   console.log("enableAllControls called");
   if (typeof Xrm !== "undefined" && Xrm.Page) {
-    const selectedTab = Xrm.Page.ui.tabs.get(
-      (x) => x.getDisplayState() === "expanded"
-    )[0];
+    const selectedTab = Xrm.Page.ui.tabs.get((x) => x.getDisplayState() === "expanded")[0];
 
     Xrm.Page.data.entity.attributes.forEach((a) => a.setRequiredLevel("none"));
 
@@ -28,11 +30,12 @@ function god() {
       selectedTab.setDisplayState("expanded");
       selectedTab.setFocus();
     }
+
+    didGodMode = true;
   }
 }
 
 window.addEventListener("message", function (event) {
-  console.log("Message received:", event.data);
   if (event.source === window && event.data.type === "YOU_HAVE_THE_SIGHT") {
     god();
   }
