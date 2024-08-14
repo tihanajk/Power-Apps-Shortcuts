@@ -17,7 +17,16 @@ function loc() {
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
-          if (c.getName() == field) {
+          var attr;
+
+          try {
+            attr = c?.getAttribute();
+          } catch (e) {
+            console.log(e);
+            return;
+          }
+
+          if (attr?.getName() == field) {
             tab = `${t?.getLabel()}  (${t?.getName()})`;
             section = `${s?.getLabel()}  (${s?.getName()})`;
           }
