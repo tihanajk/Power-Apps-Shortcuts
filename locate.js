@@ -17,18 +17,20 @@ function loc() {
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
-          var attr;
-
+          var name = "";
           try {
-            attr = c?.getAttribute();
+            var attr = c?.getAttribute();
+            name = attr?.getName();
           } catch (e) {
             console.log(e);
             return;
           }
 
-          if (attr?.getName() == field) {
-            tab = `${t?.getLabel()}  (${t?.getName()})`;
-            section = `${s?.getLabel()}  (${s?.getName()})`;
+          if (name == field) {
+            if (tab != "") tab += ", ";
+            if (section != "") section += ", ";
+            tab += `${t?.getLabel()}  (${t?.getName()})`;
+            section += `${s?.getLabel()}  (${s?.getName()})`;
           }
         })
       )
