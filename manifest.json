@@ -39,7 +39,7 @@
   "permissions": ["activeTab"],
   "content_scripts": [
     {
-      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*"],
+      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
       "js": ["content.js"]
     }
   ],
