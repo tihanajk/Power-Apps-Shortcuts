@@ -20,8 +20,8 @@ function loc() {
       if (name == field) header = true;
     });
 
-    var tab = "";
-    var section = "";
+    var tabs = [];
+    var sections = [];
 
     var supportedTypes = ["standard", "lookup", "choices", "choice", "optionset"];
     Xrm.Page.ui.tabs.get().forEach((t) =>
@@ -34,25 +34,24 @@ function loc() {
           var name = attr?.getName();
 
           if (name == field) {
-            if (tab != "") tab += ", ";
-            if (section != "") section += ", ";
-            tab += `${t?.getLabel()}  (${t?.getName()})`;
-            section += `${s?.getLabel()}  (${s?.getName()})`;
+            tabs.push(`${t?.getLabel()}  (${t?.getName()})`);
+            sections.push(`${s?.getLabel()}  (${s?.getName()})`);
           }
         })
       )
     );
 
-    var message = header ? "Field found in header" : "";
-    if (tab != "" && section != "") {
+    var message = header ? "✨ Field found in header ✨" : "";
+    if (tabs && sections) {
       if (header) message += "\n";
-      message += `Tab: ${tab}\nSection: ${section}`;
+      tabs.forEach((tab, i) => {
+        var section = sections[i];
+        message += `🚀 Tab: ${tab}\nSection: ${section}\n`;
+      });
     }
-    if (message != "") {
-      alert(message);
-    } else {
-      alert("Field not found");
-    }
+
+    if (message != "") alert(message);
+    else alert("⚠️ Field not found");
 
     located = true;
   }
