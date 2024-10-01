@@ -23,7 +23,7 @@ function loc() {
     var tab = "";
     var section = "";
 
-    var supportedTypes = ["standard", "lookup", "choices", "choice"];
+    var supportedTypes = ["standard", "lookup", "choices", "choice", "optionset"];
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
