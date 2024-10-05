@@ -1,4 +1,4 @@
-chrome.browserAction.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener((tab) => {
   // Send a message to the active tab
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     var activeTab = tabs[0];
@@ -9,7 +9,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
 });
 
 chrome.commands.onCommand.addListener(function (command) {
-  if (command === "_execute_browser_action") {
+  if (command === "_execute_action") {
     // Send a message to the active tab
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       var activeTab = tabs[0];

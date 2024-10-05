@@ -1,16 +1,18 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "version": "1.0",
   "name": "Levelup Shortcuts",
   "icons": {
     "32": "icon.png"
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "My levelup shortcuts"
   },
   "commands": {
-    "_execute_browser_action": {
+    "_execute_action": {
       "suggested_key": {
         "default": "Shift+Alt+G"
       },
@@ -35,15 +37,21 @@
       "description": "locate on form"
     }
   },
-  "web_accessible_resources": ["godMode.js", "locate.js"],
+  "web_accessible_resources": [
+    {
+      "resources": ["godMode.js", "locate.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "permissions": ["activeTab"],
   "content_scripts": [
     {
-      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
+      "matches": [
+        "*://*.crm4.dynamics.com/*",
+        "*://*.crm4.dynamics.com.mcas.ms/*",
+        "*://*.crm.dynamics.com/*"
+      ],
       "js": ["content.js"]
     }
-  ],
-  "browser_action": {
-    "default_title": "My levelup shortcuts"
-  }
+  ]
 }
