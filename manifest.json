@@ -9,14 +9,12 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "My levelup shortcuts"
+    "default_title": "My levelup shortcuts",
+    "default_popup": "popup/info.html"
   },
   "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Shift+Alt+G"
-      },
-      "description": "godmode shortcut"
+    "god_mode": {
+      "description": "god mode"
     },
     "ribbon_debug": {
       "suggested_key": {
@@ -35,11 +33,17 @@
         "default": "Shift+Alt+L"
       },
       "description": "locate on form"
+    },
+    "open_list": {
+      "description": "open entity list"
+    },
+    "open_record": {
+      "description": "open record"
     }
   },
   "web_accessible_resources": [
     {
-      "resources": ["godMode.js", "locate.js"],
+      "resources": ["godMode.js", "locate.js", "info.js"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -51,7 +55,7 @@
         "*://*.crm4.dynamics.com.mcas.ms/*",
         "*://*.crm.dynamics.com/*"
       ],
-      "js": ["content.js"]
+      "js": ["content.js", "popup/info.js"]
     }
   ]
 }

@@ -6,7 +6,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     //tab url
     var url = location.href;
 
-    if (url.includes("&ribbondebug=true")) url = url.replace("&ribbondebug=true", "");
+    if (url.includes("&ribbondebug=true"))
+      url = url.replace("&ribbondebug=true", "");
     else url = url + "&ribbondebug=true";
 
     window.location.href = url;
@@ -15,6 +16,22 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     window.open(`${url}&pagetype=advancedfind`, "_blank");
   } else if (request.message === "locateOnForm") {
     executeInScript("LOCATE_ME", "locate.js");
+  } else if (request.message === "openList") {
+    var entityName = prompt("Entity name for view?");
+
+    var url = location.href.split("&pagetype")[0];
+
+    window.open(`${url}&pagetype=entitylist&etn=${entityName}`, "_blank");
+  } else if (request.message === "openRecord") {
+    var entityName = prompt("Entity name of record?");
+    var recordId = prompt(`Id of ${entityName}?`);
+
+    var url = location.href.split("&pagetype")[0];
+
+    window.open(
+      `${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`,
+      "_blank"
+    );
   }
 });
 
