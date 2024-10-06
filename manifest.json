@@ -1,18 +1,18 @@
 {
   "manifest_version": 3,
   "version": "2.0",
-  "name": "Levelup Shortcuts",
+  "name": "Power Apps Shortcuts",
   "icons": {
-    "16": "icon.png",
-    "32": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "img/icon.png",
+    "32": "img/icon.png",
+    "48": "img/icon.png",
+    "128": "img/icon.png"
   },
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "My levelup shortcuts",
+    "default_title": "My Power Apps shortcuts",
     "default_popup": "popup/info.html"
   },
   "commands": {

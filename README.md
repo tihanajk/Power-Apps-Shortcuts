@@ -1,5 +1,8 @@
-# Levelup Shortcuts 
-- Shift+Alt+G - god mode
-- Shift+Alt+C - toggle ribbon debug
-- Shift+Alt+F - open advanced find
-- Shift+Alt+L - prompt for finding field on form (tab and section)
+# Power Apps Shortcuts
+
+- Alt+Shift+F - open advanced find
+- Alt+Shift+G - god mode
+- Alt+Shift+L - locate on form
+- Alt+Shift+O - open entity list
+- Alt+Shift+U - open record
+- Alt+Shift+C - toggle ribbon debug
