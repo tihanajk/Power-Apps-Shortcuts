@@ -32,6 +32,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       `${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`,
       "_blank"
     );
+  } else if (request.message === "seeOptions") {
+    executeInScript("SHOW_OPTIONS", "dataverse.js");
   }
 });
 

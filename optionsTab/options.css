@@ -1,0 +1,39 @@
+body {
+  background-color: #111827; /* Dark background */
+  color: #ffffff; /* White text color */
+}
+/* Container for table styling */
+.dynamic-content {
+  position: relative;
+  overflow-x: auto;
+  margin: 20px;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #9ca3af; /* Light gray text color */
+}
+tbody td {
+  padding: 16px 24px;
+  font-weight: 500;
+  color: #ffffff; /* Darker text color */
+  white-space: nowrap;
+}
+
+thead th {
+  padding: 12px 24px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #ffffff; /* Dark gray text color */
+  background-color: #374151; /* Dark header background */
+}
+
+tbody tr {
+  background-color: #1f2937; /* White background for rows */
+  border-bottom: 1px solid #374151; /* Light gray border */
+  color: #e5e7eb; /* Light text color */
+}

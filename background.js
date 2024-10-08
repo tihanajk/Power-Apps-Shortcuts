@@ -11,6 +11,22 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
+  } else if (request.action === "showOptions") {
+    var options = request.options;
+    chrome.tabs.create(
+      { url: chrome.runtime.getURL("optionsTab/options.html") },
+      (tab) => {
+        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+          if (tabId === tab.id && changeInfo.status === "complete") {
+            chrome.tabs.sendMessage(tabId, {
+              action: "updateContentOfOptions",
+              options: options,
+            });
+            chrome.tabs.onUpdated.removeListener(listener);
+          }
+        });
+      }
+    );
   }
 });
 
@@ -60,6 +76,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "open_record":
       sendMessageToTab("openRecord");
+      break;
+    case "see_optionsets":
+      sendMessageToTab("seeOptions");
       break;
     default:
       break;
