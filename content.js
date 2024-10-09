@@ -6,8 +6,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     //tab url
     var url = location.href;
 
-    if (url.includes("&ribbondebug=true"))
-      url = url.replace("&ribbondebug=true", "");
+    if (url.includes("&ribbondebug=true")) url = url.replace("&ribbondebug=true", "");
     else url = url + "&ribbondebug=true";
 
     window.location.href = url;
@@ -28,10 +27,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     var url = location.href.split("&pagetype")[0];
 
-    window.open(
-      `${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`,
-      "_blank"
-    );
+    window.open(`${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`, "_blank");
   } else if (request.message === "seeOptions") {
     executeInScript("SHOW_OPTIONS", "dataverse.js");
   }
@@ -50,3 +46,16 @@ function executeInScript(message, scriptName) {
 
   script.remove();
 }
+
+// Listen for messages from the injected script
+window.addEventListener("message", (event) => {
+  // Ensure we're receiving a message from our injected script
+  if (event.source === window && event.data.type === "GIVE_ME_OPTIONS") {
+    var options = event.data.options;
+
+    chrome.runtime.sendMessage({
+      action: "showOptions",
+      options: options,
+    });
+  }
+});

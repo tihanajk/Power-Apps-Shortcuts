@@ -3,9 +3,6 @@ var located = false;
 
 function loc() {
   if (located) return;
-
-  located = true;
-
   console.log("loc called");
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = prompt("Locate field by name");
@@ -25,19 +22,10 @@ function loc() {
     var tabs = [];
     var sections = [];
 
-    var supportedTypes = [
-      "standard",
-      "lookup",
-      "choices",
-      "choice",
-      "optionset",
-    ];
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
           if (typeof c.getAttribute != "function") return;
-          // var type = c?.getControlType();
-          // if (supportedTypes.indexOf(type) == -1) return;
 
           var attr = c?.getAttribute();
 

@@ -49,30 +49,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "godMode.js",
-        "locate.js",
-        "info.js",
-        "dataverse.js",
-        "optionsTab/options.html"
-      ],
+      "resources": ["godMode.js", "locate.js", "dataverse.js", "optionsTab/options.html"],
       "matches": ["<all_urls>"]
     }
   ],
-  "permissions": ["tabs"],
+  "permissions": ["tabs", "activeTab", "scripting"],
   "content_scripts": [
     {
-      "matches": [
-        "*://*.crm4.dynamics.com/*",
-        "*://*.crm4.dynamics.com.mcas.ms/*",
-        "*://*.crm.dynamics.com/*"
-      ],
-      "js": [
-        "content.js",
-        "popup/info.js",
-        "optionsTab/options.js",
-        "dataverse.js"
-      ]
+      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
+      "js": ["content.js", "popup/info.js", "optionsTab/options.js"]
     }
   ]
 }
