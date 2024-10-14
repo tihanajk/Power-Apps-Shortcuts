@@ -76,8 +76,52 @@ async function getOptionSetsMetadata(url, entityName) {
   return data;
 }
 
+async function listSecurityRoles() {
+  var currentUser = Xrm.Utility.getGlobalContext().userSettings.userName;
+  var userName = prompt("Enter the full name of the user to list security roles for", currentUser);
+
+  var originalFetchXML = `<fetch>
+  <entity name="role">
+    <attribute name="name" />
+    <attribute name="roleid" />
+    <link-entity name="systemuserroles" from="roleid" to="roleid" intersect="true">
+      <link-entity name="systemuser" from="systemuserid" to="systemuserid" intersect="true">
+        <filter>
+          <condition attribute="fullname" operator="eq" value="${userName}" />
+        </filter>
+      </link-entity>
+    </link-entity>
+  </entity>
+</fetch>`;
+  var escapedFetchXML = encodeURIComponent(originalFetchXML);
+
+  var url = Xrm.Page.context.getClientUrl();
+  var result = await fetch(url + "/api/data/v9.2/roles?fetchXml=" + escapedFetchXML, {
+    method: "GET",
+    headers: header,
+  });
+  var resp = await result.json();
+
+  if (resp.error) {
+    alert("Error: " + resp.error.message);
+    return;
+  }
+
+  var values = resp.value;
+  if (values.length == 0) {
+    alert(`⚠️ No roles found for the user ${userName}`);
+    return;
+  }
+
+  var roles = values.map((r) => `${r.name} (${r.roleid})`);
+
+  alert("✨ Roles ✨\n" + roles.join("\n"));
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
+  } else if (event.source === window && event.data.type === "LIST_SECURITY_ROLES") {
+    listSecurityRoles();
   }
 });

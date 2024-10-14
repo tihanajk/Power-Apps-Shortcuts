@@ -45,6 +45,9 @@
     },
     "see_optionsets": {
       "description": "see optionsets"
+    },
+    "list_securityroles": {
+      "description": "list security roles"
     }
   },
   "web_accessible_resources": [

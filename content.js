@@ -30,10 +30,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     window.open(`${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`, "_blank");
   } else if (request.message === "seeOptions") {
     executeInScript("SHOW_OPTIONS", "dataverse.js");
+  } else if (request.message == "listSecurityRoles") {
+    executeInScript("LIST_SECURITY_ROLES", "dataverse.js");
   }
 });
 
-function executeInScript(message, scriptName) {
+function executeInScript(message, scriptName, dataForScript) {
   var script = document.createElement("script");
   script.type = "text/javascript";
 
