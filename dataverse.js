@@ -53,10 +53,15 @@ async function getOptionSetsMetadata(url, entityName) {
   var resp3 = await result3.json();
   var allOptionsets = resp.value.concat(resp2.value).concat(resp3.value);
   var data = [];
+
+  var formControls = Xrm.Page.ui.controls.get();
+  formControls = formControls.filter((c) => c.getControlType() == "optionset").map((c) => c.getAttribute().getName());
+
   allOptionsets.forEach((optionSet) => {
     try {
       var obj = {};
-      obj.LogicalName = optionSet.LogicalName;
+      var logName = optionSet.LogicalName;
+      obj.LogicalName = logName;
       obj.DefaultValue = optionSet.DefaultFormValue;
       var options = optionSet.OptionSet.Options;
       var ops = [];
@@ -69,6 +74,7 @@ async function getOptionSetsMetadata(url, entityName) {
         ops.push(op);
       });
       obj.Options = ops;
+      obj.OnForm = formControls.includes(logName);
       data.push(obj);
     } catch (e) {}
   });
