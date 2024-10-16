@@ -1,3 +1,5 @@
+var allOptions = [];
+
 document.addEventListener("DOMContentLoaded", function () {
   chrome.runtime.sendMessage(
     {
@@ -5,31 +7,38 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     function (response) {
       console.log(response);
-      var options = response.options;
-      var content = `${
-        options &&
-        options
-          .map(
-            (o) =>
-              `<tr id="main">
-                <td>${o?.LogicalName} ${o?.OnForm ? "🟢" : ""}</td>
-                <td> ${makeMiniTable(o.Options)}</td>
-              </tr>`
-          )
-          .join("")
-      }`;
+      allOptions = response.options;
 
-      var opt = `${options && options.map((o) => `<div id="option">${o?.LogicalName}${makeMiniTable(o.Options)}</div>`).join("")}`;
-
-      document.getElementById("dynamic-content").innerHTML = content;
-      //document.getElementById("options").innerHTML = opt;
+      renderTable(allOptions);
     }
   );
 });
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.action === "updateContentOfOptions") {
-    var options = request.options;
+function renderTable(options) {
+  var content = `${
+    options &&
+    options
+      .map(
+        (o) =>
+          `<tr id="main">
+            <td>${o?.LogicalName} ${o?.OnForm ? "🟢" : ""}</td>
+            <td> ${makeMiniTable(o.Options)}</td>
+          </tr>`
+      )
+      .join("")
+  }`;
+
+  document.getElementById("dynamic-content").innerHTML = content;
+}
+
+var checkbox = document.querySelector("input[name=formOnly]");
+
+checkbox.addEventListener("change", function () {
+  if (this.checked) {
+    var formOnly = allOptions.filter((o) => o.OnForm);
+    renderTable(formOnly);
+  } else {
+    renderTable(allOptions);
   }
 });
 
