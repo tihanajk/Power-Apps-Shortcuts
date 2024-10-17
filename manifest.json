@@ -48,6 +48,9 @@
     },
     "list_securityroles": {
       "description": "list security roles"
+    },
+    "quick_field_update": {
+      "description": "quick field update"
     }
   },
   "web_accessible_resources": [

@@ -32,6 +32,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     executeInScript("SHOW_OPTIONS", "dataverse.js");
   } else if (request.message == "listSecurityRoles") {
     executeInScript("LIST_SECURITY_ROLES", "dataverse.js");
+  } else if (request.message == "quickFieldUpdate") {
+    executeInScript("QUICK_FIELD_UPDATE", "dataverse.js");
   }
 });
 

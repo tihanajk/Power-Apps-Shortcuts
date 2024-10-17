@@ -124,10 +124,40 @@ async function listSecurityRoles() {
   alert("✨ Roles ✨\n" + roles.join("\n"));
 }
 
+async function updateField() {
+  var entityName = Xrm.Page.data.entity.getEntityName();
+  var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+  var field = prompt("Enter the logical name of the field to update", "fieldname");
+  var value = prompt("Enter the value to set", "value");
+
+  var onForm = Xrm.Page.getAttribute(field);
+  if (onForm) {
+    try {
+      Xrm.Page.getAttribute(field).setValue(value);
+      return;
+    } catch (e) {
+      alert("Error: " + e.message);
+      return;
+    }
+  }
+
+  var entity = {};
+  entity[field] = value;
+
+  try {
+    await Xrm.WebApi.updateRecord(entityName, entityId, entity);
+    alert("Field updated successfully!");
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
   } else if (event.source === window && event.data.type === "LIST_SECURITY_ROLES") {
     listSecurityRoles();
+  } else if (event.source === window && event.data.type === "QUICK_FIELD_UPDATE") {
+    updateField();
   }
 });
