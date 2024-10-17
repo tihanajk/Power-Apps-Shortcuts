@@ -17,13 +17,16 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     executeInScript("LOCATE_ME", "locate.js");
   } else if (request.message === "openList") {
     var entityName = prompt("Entity name for view?");
+    if (!entityName) return;
 
     var url = location.href.split("&pagetype")[0];
 
     window.open(`${url}&pagetype=entitylist&etn=${entityName}`, "_blank");
   } else if (request.message === "openRecord") {
     var entityName = prompt("Entity name of record?");
+    if (!entityName) return;
     var recordId = prompt(`Id of ${entityName}?`);
+    if (!recordId) return;
 
     var url = location.href.split("&pagetype")[0];
 
