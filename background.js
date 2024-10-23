@@ -8,7 +8,9 @@ chrome.action.onClicked.addListener((tab) => {
   });
 });
 
-var optionsetsdata = [];
+var optionsetsData = [];
+var securityData = [];
+var doneFetchingSecurity = false;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -17,7 +19,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     optionsetsdata = request.options;
     chrome.tabs.create({ url: chrome.runtime.getURL("optionsTab/options.html") });
   } else if (request.action === "LOAD_OPTIONS") {
-    sendResponse({ options: optionsetsdata });
+    sendResponse({ options: optionsetsData });
+  } else if (request.action == "showSecurity") {
+    securityData = request.roles;
+    doneFetchingSecurity = request.last;
+    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("securityTab/security.html") });
+  } else if (request.action === "GET_SECURITY") {
+    sendResponse({ roles: securityData, last: doneFetchingSecurity });
   }
 });
 

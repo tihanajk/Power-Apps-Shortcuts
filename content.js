@@ -58,11 +58,16 @@ function executeInScript(message, scriptName, dataForScript) {
 window.addEventListener("message", (event) => {
   // Ensure we're receiving a message from our injected script
   if (event.source === window && event.data.type === "GIVE_ME_OPTIONS") {
-    var options = event.data.options;
-
     chrome.runtime.sendMessage({
       action: "showOptions",
-      options: options,
+      options: event.data.options,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_SECURITY") {
+    chrome.runtime.sendMessage({
+      action: "showSecurity",
+      roles: event.data.roles,
+      first: event.data.first,
+      last: event.data.last,
     });
   }
 });

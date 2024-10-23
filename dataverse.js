@@ -82,11 +82,66 @@ async function getOptionSetsMetadata(url, entityName) {
   return data;
 }
 
+async function getTeamSecurityRoles(name) {
+  var originalFetchXML = `<fetch>
+  <entity name="role">
+    <attribute name="name" />
+    <attribute name="roleid" />
+    <link-entity name="teamroles" from="roleid" to="roleid" alias="tr" intersect="true">
+      <link-entity name="team" from="teamid" to="teamid" alias="t" intersect="true">
+        <attribute name="name" />
+        <attribute name="teamid" />
+        <link-entity name="teammembership" from="teamid" to="teamid" alias="tm" intersect="true">
+          <link-entity name="systemuser" from="systemuserid" to="systemuserid" alias="u" intersect="true">
+            <attribute name="fullname" />
+            <filter>
+              <condition attribute="fullname" operator="eq" value="${name}" />
+            </filter>
+          </link-entity>
+        </link-entity>
+      </link-entity>
+    </link-entity>
+  </entity>
+</fetch>`;
+  var escapedFetchXML = encodeURIComponent(originalFetchXML);
+
+  var result = await Xrm.WebApi.retrieveMultipleRecords("role", "?fetchXml=" + escapedFetchXML);
+
+  var rolesByTeam = [];
+  result.entities.forEach((r) => {
+    var r = {
+      name: r.name,
+      id: r.roleid,
+      teamName: r["t.name"],
+      teamId: r["t.teamid"],
+    };
+    rolesByTeam.push(r);
+  });
+
+  return rolesByTeam;
+}
+
 async function listSecurityRoles() {
   var currentUser = Xrm.Utility.getGlobalContext().userSettings.userName;
-  var userName = prompt("Enter the full name of the user to list security roles for", currentUser);
+  var userName = prompt("Enter the user's full name (enter '*' to get info for all users)", currentUser);
+  var users = [];
 
-  var originalFetchXML = `<fetch>
+  if (userName == "*") {
+    var res = await fetch(
+      "https://org9616a1ad.crm4.dynamics.com/api/data/v9.0/systemusers?%24select=systemuserid%2Cazureactivedirectoryobjectid%2Cdomainname%2Cfullname%2Cisdisabled%2Cislicensed%2Csetupuser%2Ctitle%2Cinternalemailaddress%2Cazurestate%2Cdeletedstate%2Caddress1_telephone1&%24expand=businessunitid(%24select%3Dname%2Cbusinessunitid)%2Cpositionid(%24select%3Dname%2Cpositionid)%2Cparentsystemuserid(%24select%3Dfullname%2Csystemuserid)&%24filter=fullname%20ne%20%27INTEGRATION%27%20and%0A%20%20%20%20%20%20%20%20domainname%20ne%20%27crmoln2%40microsoft.com%27%20and%0A%20%20%20%20%20%20%20%20domainname%20ne%20%27crmoln2%40microsoft.com%27%20and%0A%20%20%20%20%20%20%20%20fullname%20ne%20%27SYSTEM%27%20and%0A%20%20%20%20%20%20%20%20applicationid%20eq%20null%20and%20issyncwithdirectory%20eq%20true&%24orderby=fullname%20asc"
+    );
+    var u = await res.json();
+    u.value.forEach((u) => {
+      users.push(u["fullname"]);
+    });
+  } else users.push(userName);
+
+  var allRoles = [];
+
+  for (let i = 0; i < users.length; i++) {
+    const userName = users[i];
+
+    var originalFetchXML = `<fetch>
   <entity name="role">
     <attribute name="name" />
     <attribute name="roleid" />
@@ -99,29 +154,53 @@ async function listSecurityRoles() {
     </link-entity>
   </entity>
 </fetch>`;
-  var escapedFetchXML = encodeURIComponent(originalFetchXML);
+    var escapedFetchXML = encodeURIComponent(originalFetchXML);
 
-  var url = Xrm.Page.context.getClientUrl();
-  var result = await fetch(url + "/api/data/v9.2/roles?fetchXml=" + escapedFetchXML, {
-    method: "GET",
-    headers: header,
-  });
-  var resp = await result.json();
+    var url = Xrm.Page.context.getClientUrl();
+    var result = await fetch(url + "/api/data/v9.2/roles?fetchXml=" + escapedFetchXML, {
+      method: "GET",
+      headers: header,
+    });
+    var resp = await result.json();
 
-  if (resp.error) {
-    alert("Error: " + resp.error.message);
-    return;
+    if (resp.error) {
+      alert("Error: " + resp.error.message);
+      return;
+    }
+
+    var values = resp.value;
+    // if (values.length == 0) {
+    //   alert(`⚠️ No roles found for the user ${userName}`);
+    //   return;
+    // }
+
+    var roles = values.map((r) => {
+      return { name: r.name, id: r.roleid };
+    });
+
+    var teamRoles = await getTeamSecurityRoles(userName);
+    allRoles.push({ user: userName, roles: roles.concat(teamRoles) });
+
+    window.postMessage(
+      {
+        type: "GIVE_ME_SECURITY",
+        roles: allRoles,
+        first: i == 0,
+        last: i == users.length - 1,
+      },
+      "*"
+    );
   }
 
-  var values = resp.value;
-  if (values.length == 0) {
-    alert(`⚠️ No roles found for the user ${userName}`);
-    return;
-  }
+  // window.postMessage(
+  //   {
+  //     type: "GIVE_ME_SECURITY",
+  //     roles: allRoles,
+  //   },
+  //   "*"
+  // );
 
-  var roles = values.map((r) => `${r.name} (${r.roleid})`);
-
-  alert("✨ Roles ✨\n" + roles.join("\n"));
+  //alert("✨ Roles ✨\n" + roles.join("\n"));
 }
 
 async function updateField() {

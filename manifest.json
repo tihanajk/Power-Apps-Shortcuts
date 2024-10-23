@@ -63,7 +63,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
-      "js": ["content.js", "popup/info.js", "optionsTab/options.js"]
+      "js": ["content.js", "popup/info.js", "optionsTab/options.js", "securityTab/security.js"]
     }
   ]
 }
