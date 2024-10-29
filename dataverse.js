@@ -124,6 +124,7 @@ async function getTeamSecurityRoles(name) {
 async function listSecurityRoles() {
   var currentUser = Xrm.Utility.getGlobalContext().userSettings.userName;
   var userName = prompt("Enter the user's full name (enter '*' to get info for all users)", currentUser);
+  if (userName == null) return;
   var users = [];
 
   if (userName == "*") {
@@ -169,10 +170,6 @@ async function listSecurityRoles() {
     }
 
     var values = resp.value;
-    // if (values.length == 0) {
-    //   alert(`⚠️ No roles found for the user ${userName}`);
-    //   return;
-    // }
 
     var roles = values.map((r) => {
       return { name: r.name, id: r.roleid };
@@ -191,23 +188,15 @@ async function listSecurityRoles() {
       "*"
     );
   }
-
-  // window.postMessage(
-  //   {
-  //     type: "GIVE_ME_SECURITY",
-  //     roles: allRoles,
-  //   },
-  //   "*"
-  // );
-
-  //alert("✨ Roles ✨\n" + roles.join("\n"));
 }
 
 async function updateField() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
   var field = prompt("Enter the logical name of the field to update", "fieldname");
+  if (field == null) return;
   var value = prompt("Enter the value to set", "value");
+  if (value == null) return;
 
   var onForm = Xrm.Page.getAttribute(field);
   if (onForm) {
