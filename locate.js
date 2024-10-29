@@ -25,7 +25,7 @@ function loc() {
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
         s.controls.get().forEach((c) => {
-          if (typeof c.getAttribute != "function") return;
+          if (typeof c.getAttribute != "function" || c.getControlType() == "formcomponent") return;
 
           var attr = c?.getAttribute();
 
