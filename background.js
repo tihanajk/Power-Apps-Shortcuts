@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
   } else if (request.action === "showOptions") {
-    optionsetsdata = request.options;
+    optionsetsData = request.options;
     chrome.tabs.create({ url: chrome.runtime.getURL("optionsTab/options.html") });
   } else if (request.action === "LOAD_OPTIONS") {
     sendResponse({ options: optionsetsData });
