@@ -32,6 +32,7 @@ tbody tr {
   color: #242b35;
 }
 
-/* #security-content {
-  display: flex;
-} */
+#security-content {
+  display: grid;
+  justify-content: center;
+}

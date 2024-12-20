@@ -82,27 +82,24 @@ async function getOptionSetsMetadata(url, entityName) {
   return data;
 }
 
-async function getTeamSecurityRoles(name) {
+async function getTeamSecurityRoles(userId) {
   var originalFetchXML = `<fetch>
-  <entity name="role">
-    <attribute name="name" />
-    <attribute name="roleid" />
-    <link-entity name="teamroles" from="roleid" to="roleid" alias="tr" intersect="true">
-      <link-entity name="team" from="teamid" to="teamid" alias="t" intersect="true">
-        <attribute name="name" />
-        <attribute name="teamid" />
-        <link-entity name="teammembership" from="teamid" to="teamid" alias="tm" intersect="true">
-          <link-entity name="systemuser" from="systemuserid" to="systemuserid" alias="u" intersect="true">
-            <attribute name="fullname" />
-            <filter>
-              <condition attribute="fullname" operator="eq" value="${name}" />
-            </filter>
-          </link-entity>
-        </link-entity>
-      </link-entity>
-    </link-entity>
-  </entity>
-</fetch>`;
+                            <entity name="role">
+                              <attribute name="name" />
+                              <attribute name="roleid" />
+                              <link-entity name="teamroles" from="roleid" to="roleid" alias="tr" intersect="true">
+                                <link-entity name="team" from="teamid" to="teamid" alias="t" intersect="true">
+                                  <attribute name="name" />
+                                  <attribute name="teamid" />
+                                  <link-entity name="teammembership" from="teamid" to="teamid" alias="tm" intersect="true">          
+                                      <filter>
+                                        <condition attribute="systemuserid" operator="eq" value="${userId}" />
+                                      </filter>         
+                                  </link-entity>
+                                </link-entity>
+                              </link-entity>
+                            </entity>
+                          </fetch>`;
   var escapedFetchXML = encodeURIComponent(originalFetchXML);
 
   var result = await Xrm.WebApi.retrieveMultipleRecords("role", "?fetchXml=" + escapedFetchXML);
@@ -128,33 +125,40 @@ async function listSecurityRoles() {
   var users = [];
 
   if (userName == "*") {
+    var url = Xrm.Page.context.getClientUrl();
     var res = await fetch(
-      "https://org9616a1ad.crm4.dynamics.com/api/data/v9.0/systemusers?%24select=systemuserid%2Cazureactivedirectoryobjectid%2Cdomainname%2Cfullname%2Cisdisabled%2Cislicensed%2Csetupuser%2Ctitle%2Cinternalemailaddress%2Cazurestate%2Cdeletedstate%2Caddress1_telephone1&%24expand=businessunitid(%24select%3Dname%2Cbusinessunitid)%2Cpositionid(%24select%3Dname%2Cpositionid)%2Cparentsystemuserid(%24select%3Dfullname%2Csystemuserid)&%24filter=fullname%20ne%20%27INTEGRATION%27%20and%0A%20%20%20%20%20%20%20%20domainname%20ne%20%27crmoln2%40microsoft.com%27%20and%0A%20%20%20%20%20%20%20%20domainname%20ne%20%27crmoln2%40microsoft.com%27%20and%0A%20%20%20%20%20%20%20%20fullname%20ne%20%27SYSTEM%27%20and%0A%20%20%20%20%20%20%20%20applicationid%20eq%20null%20and%20issyncwithdirectory%20eq%20true&%24orderby=fullname%20asc"
+      `${url}/api/data/v9.0/systemusers?$select=systemuserid,fullname,domainname&$filter=fullname ne 'INTEGRATION' and domainname ne 'crmoln2@microsoft.com' and domainname ne 'crmoln2@microsoft.com' and fullname ne 'SYSTEM' and applicationid eq null and issyncwithdirectory eq true&$orderby=fullname asc`
     );
     var u = await res.json();
     u.value.forEach((u) => {
-      users.push(u["fullname"]);
+      users.push({ id: u["systemuserid"], name: u.fullname });
     });
-  } else users.push(userName);
+  } else {
+    var user = await Xrm.WebApi.retrieveMultipleRecords("systemuser", `?$filter=fullname eq '${userName}'`);
+    if (user.entities.length == 0) {
+      alert("User not found");
+      return;
+    }
+    users.push({ id: user.entities[0].systemuserid, name: userName });
+  }
 
   var allRoles = [];
 
   for (let i = 0; i < users.length; i++) {
-    const userName = users[i];
+    const userName = users[i].name;
+    const userId = users[i].id;
 
     var originalFetchXML = `<fetch>
-  <entity name="role">
-    <attribute name="name" />
-    <attribute name="roleid" />
-    <link-entity name="systemuserroles" from="roleid" to="roleid" intersect="true">
-      <link-entity name="systemuser" from="systemuserid" to="systemuserid" intersect="true">
-        <filter>
-          <condition attribute="fullname" operator="eq" value="${userName}" />
-        </filter>
-      </link-entity>
-    </link-entity>
-  </entity>
-</fetch>`;
+                              <entity name="role">
+                                <attribute name="name" />
+                                <attribute name="roleid" />
+                                <link-entity name="systemuserroles" from="roleid" to="roleid" intersect="true">     
+                                    <filter>
+                                      <condition attribute="systemuserid" operator="eq" value="${userId}" />
+                                    </filter>      
+                                </link-entity>
+                              </entity>
+                            </fetch>`;
     var escapedFetchXML = encodeURIComponent(originalFetchXML);
 
     var url = Xrm.Page.context.getClientUrl();
@@ -175,7 +179,7 @@ async function listSecurityRoles() {
       return { name: r.name, id: r.roleid };
     });
 
-    var teamRoles = await getTeamSecurityRoles(userName);
+    var teamRoles = await getTeamSecurityRoles(userId);
     allRoles.push({ user: userName, roles: roles.concat(teamRoles) });
 
     window.postMessage(
