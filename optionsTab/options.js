@@ -29,6 +29,7 @@ function renderTable(options) {
   }`;
 
   document.getElementById("dynamic-content").innerHTML = content;
+  document.getElementById("options-count").innerHTML = "count:" + options.length;
 }
 
 var checkbox = document.querySelector("input[name=formOnly]");
