@@ -21,7 +21,7 @@ function renderTable(options) {
       .map(
         (o) =>
           `<tr id="main">
-            <td>${o?.LogicalName} ${o?.OnForm ? "🟢" : ""}</td>
+            <td>${o?.Multi ? "Ⓜ️ " : ""}${o?.LogicalName}${o?.OnForm ? " 🟢" : ""}</td>
             <td> ${makeMiniTable(o.Options)}</td>
           </tr>`
       )

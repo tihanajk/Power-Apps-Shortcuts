@@ -33,6 +33,7 @@ async function getOptionSetsMetadata(url, entityName) {
     }
   );
   var resp = await result.json();
+
   var result2 = await fetch(
     url +
       `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
@@ -42,6 +43,7 @@ async function getOptionSetsMetadata(url, entityName) {
     }
   );
   var resp2 = await result2.json();
+
   var result3 = await fetch(
     url +
       `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.StateAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
@@ -51,18 +53,33 @@ async function getOptionSetsMetadata(url, entityName) {
     }
   );
   var resp3 = await result3.json();
-  var allOptionsets = resp.value.concat(resp2.value).concat(resp3.value);
-  var data = [];
+
+  var result4 = await fetch(
+    url +
+      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)`,
+    {
+      method: "GET",
+      headers: header,
+    }
+  );
+  var resp4 = await result4.json();
+
+  resp4.value = resp4.value.map((r) => {
+    return { ...r, Multi: true };
+  });
+
+  var allOptionsets = resp.value
+    .concat(resp2.value)
+    .concat(resp3.value)
+    .concat(resp4.value)
+    .sort((a, b) => (a.LogicalName > b.LogicalName ? 1 : -1));
 
   var formControls = Xrm.Page.ui.controls.get();
   formControls = formControls.filter((c) => c.getControlType() == "optionset").map((c) => c.getAttribute().getName());
 
+  var data = [];
   allOptionsets.forEach((optionSet) => {
     try {
-      var obj = {};
-      var logName = optionSet.LogicalName;
-      obj.LogicalName = logName;
-      obj.DefaultValue = optionSet.DefaultFormValue;
       var options = optionSet.OptionSet.Options;
       var ops = [];
       options.forEach((o) => {
@@ -73,8 +90,15 @@ async function getOptionSetsMetadata(url, entityName) {
         };
         ops.push(op);
       });
+
+      var logName = optionSet.LogicalName;
+
+      var obj = {};
+      obj.LogicalName = logName;
+      obj.DefaultValue = optionSet.DefaultFormValue;
       obj.Options = ops;
       obj.OnForm = formControls.includes(logName);
+      obj.Multi = optionSet.Multi;
       data.push(obj);
     } catch (e) {}
   });
