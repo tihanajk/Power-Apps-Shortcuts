@@ -64,6 +64,20 @@ async function getOptionSetsMetadata(url, entityName) {
   );
   var resp4 = await result4.json();
 
+  //BOOLEAN
+  var result5 = await fetch(
+    url +
+      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata?$select=LogicalName,DefaultValue&$expand=OptionSet($select=TrueOption,FalseOption)`,
+    {
+      method: "GET",
+      headers: header,
+    }
+  );
+  var resp5 = await result5.json();
+  resp5.value = resp5.value.map((r) => {
+    return { ...r, Bool: true };
+  });
+
   resp4.value = resp4.value.map((r) => {
     return { ...r, Multi: true };
   });
@@ -72,6 +86,7 @@ async function getOptionSetsMetadata(url, entityName) {
     .concat(resp2.value)
     .concat(resp3.value)
     .concat(resp4.value)
+    .concat(resp5.value)
     .sort((a, b) => (a.LogicalName > b.LogicalName ? 1 : -1));
 
   var formControls = Xrm.Page.ui.controls.get();
@@ -80,7 +95,7 @@ async function getOptionSetsMetadata(url, entityName) {
   var data = [];
   allOptionsets.forEach((optionSet) => {
     try {
-      var options = optionSet.OptionSet.Options;
+      var options = optionSet.OptionSet.Options ? optionSet.OptionSet.Options : [optionSet.OptionSet.FalseOption, optionSet.OptionSet.TrueOption];
       var ops = [];
       options.forEach((o) => {
         var op = {
@@ -97,8 +112,9 @@ async function getOptionSetsMetadata(url, entityName) {
       obj.LogicalName = logName;
       obj.DefaultValue = optionSet.DefaultFormValue;
       obj.Options = ops;
-      obj.OnForm = formControls.includes(logName);
+      obj.OnForm = Xrm.Page.getAttribute(logName) != null;
       obj.Multi = optionSet.Multi;
+      obj.Bool = optionSet.Bool;
       data.push(obj);
     } catch (e) {}
   });

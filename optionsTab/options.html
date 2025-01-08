@@ -8,12 +8,19 @@
   <body>
     <div id="header" style="padding-left: 10px">
       <h1>OPTIONSET VALUES</h1>
-      <div>
+      <div id="filters">        
         <input type="checkbox" id="formOnlyCheckbox" name="formOnly" style="accent-color: #6a7e9d"/>
         <label for="horns">Show only those on form</label>
+      
+        <input type="checkbox" id="multiOnlyCheckbox" name="multiOnly" style="accent-color: #6a7e9d"/>
+        <label for="horns">Show only multiselect</label>   
+        
+        <input type="checkbox" id="boolOnlyCheckbox" name="boolOnly" style="accent-color: #6a7e9d"/>
+        <label for="horns">Show only boolean</label> 
       </div>
       <p>* fields that are on the form have 🟢 next to them</p>
       <p>* fields that are multiselect optionsets have Ⓜ️ next to them</p>
+      <p>* fields that are boolean have 🅱️ next to them</p>
     </div>
     <div id="options">
     <div id="options-count"></div>
