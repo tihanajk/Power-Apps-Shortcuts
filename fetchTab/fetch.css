@@ -1,0 +1,38 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #9ca3af;
+  border: solid 1px #6a7e9d;
+}
+tbody td {
+  padding: 16px 24px;
+  font-weight: 500;
+  color: #242b35;
+  white-space: nowrap;
+}
+
+thead th {
+  padding: 10px;
+  font-size: 0.75rem;
+
+  text-transform: uppercase;
+  color: #ffffff;
+  background-color: #6a7e9d;
+}
+
+th,
+td {
+  text-align: center;
+}
+
+tbody tr {
+  border-bottom: 1px solid #6a7e9d;
+  color: #242b35;
+}
+
+/* #fetch-content {
+  display: grid;
+  justify-content: center;
+} */

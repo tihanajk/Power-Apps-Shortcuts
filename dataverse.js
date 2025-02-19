@@ -264,6 +264,25 @@ async function updateField() {
   }
 }
 
+async function retrieveRecords() {
+  console.log("retrieveRecords");
+  var entityName = prompt("Enter entity name for fetchXml");
+  var fetchXml = prompt("Enter fetchXml");
+
+  var escapedFetchXML = encodeURIComponent(fetchXml);
+
+  var result = await Xrm.WebApi.retrieveMultipleRecords(entityName, "?fetchXml=" + escapedFetchXML);
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_FETCH_RESULTS",
+      result: result,
+      entityName: entityName,
+    },
+    "*"
+  );
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
@@ -271,5 +290,7 @@ window.addEventListener("message", function (event) {
     listSecurityRoles();
   } else if (event.source === window && event.data.type === "QUICK_FIELD_UPDATE") {
     updateField();
+  } else if (event.source === window && event.data.type === "EXECUTE_FETCH_XML") {
+    retrieveRecords();
   }
 });

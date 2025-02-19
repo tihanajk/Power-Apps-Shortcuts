@@ -37,6 +37,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     executeInScript("LIST_SECURITY_ROLES", "dataverse.js");
   } else if (request.message == "quickFieldUpdate") {
     executeInScript("QUICK_FIELD_UPDATE", "dataverse.js");
+  } else if (request.message == "executeFetchXml") {
+    console.log("executeFetchXml");
+    executeInScript("EXECUTE_FETCH_XML", "dataverse.js");
   }
 });
 
@@ -68,6 +71,12 @@ window.addEventListener("message", (event) => {
       roles: event.data.roles,
       first: event.data.first,
       last: event.data.last,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_FETCH_RESULTS") {
+    chrome.runtime.sendMessage({
+      action: "showRetrieveResult",
+      result: event.data.result,
+      entityName: event.data.entityName,
     });
   }
 });

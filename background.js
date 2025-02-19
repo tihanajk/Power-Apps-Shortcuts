@@ -11,6 +11,8 @@ chrome.action.onClicked.addListener((tab) => {
 var optionsetsData = [];
 var securityData = [];
 var doneFetchingSecurity = false;
+var fetchData = [];
+var fetchEntityName = "";
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -26,6 +28,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("securityTab/security.html") });
   } else if (request.action === "GET_SECURITY") {
     sendResponse({ roles: securityData, last: doneFetchingSecurity });
+  } else if (request.action === "showRetrieveResult") {
+    fetchData = request.result;
+    fetchEntityName = request.entityName;
+    chrome.tabs.create({ url: chrome.runtime.getURL("fetchTab/fetch.html") });
+  } else if (request.action === "GET_FETCH") {
+    sendResponse({ fetchData: fetchData, fetchEntityName: fetchEntityName });
   }
 });
 
@@ -58,7 +66,9 @@ chrome.commands.onCommand.addListener(function (command) {
     case "quick_field_update":
       sendMessageToTab("quickFieldUpdate");
       break;
-
+    case "execute_fetchxml":
+      sendMessageToTab("executeFetchXml");
+      break;
     default:
       break;
   }
