@@ -36,23 +36,28 @@ function renderResults(fetchData, entityName) {
   }
   console.log(columns);
 
-  var table = `<table id="main">                        
-                        <thead>
-                        <tr>
-                        ${columns.map((c) => `<th>${c}</th>`).join("")}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        ${fetchData.entities
-                          .map(
-                            (r) =>
-                              `<tr id="main-row">${columns
-                                .map((c) => (c == "_" ? `<td>${fetchData.entities.indexOf(r) + 1}</td>` : `<td>${r[c]}</td>`))
-                                .join("")}</tr>`
-                          )
-                          .join("")}
-                        </tbody>
-                    </table>`;
+  var table = `
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table id="main">                        
+          <thead>
+            <tr>
+            ${columns.map((c) => `<th>${c}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+          ${fetchData.entities
+            .map(
+              (r) =>
+                `<tr id="main-row">${columns
+                  .map((c) => (c == "_" ? `<td>${fetchData.entities.indexOf(r) + 1}</td>` : `<td>${r[c]}</td>`))
+                  .join("")}</tr>`
+            )
+            .join("")}
+          </tbody>
+      </table>
+    </div>
+  </div>`;
 
   content += table;
   return content;
