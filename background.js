@@ -13,6 +13,7 @@ var securityData = [];
 var doneFetchingSecurity = false;
 var fetchData = [];
 var fetchEntityName = "";
+var orgId = "";
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -25,9 +26,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action == "showSecurity") {
     securityData = request.roles;
     doneFetchingSecurity = request.last;
+    orgId = request.orgId;
     if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("securityTab/security.html") });
   } else if (request.action === "GET_SECURITY") {
-    sendResponse({ roles: securityData, last: doneFetchingSecurity });
+    sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId });
   } else if (request.action === "showRetrieveResult") {
     fetchData = request.result;
     fetchEntityName = request.entityName;

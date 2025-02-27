@@ -71,6 +71,7 @@ window.addEventListener("message", (event) => {
       roles: event.data.roles,
       first: event.data.first,
       last: event.data.last,
+      orgId: event.data.orgId,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_FETCH_RESULTS") {
     chrome.runtime.sendMessage({

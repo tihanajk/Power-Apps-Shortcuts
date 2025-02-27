@@ -9,6 +9,9 @@ function getSecurity() {
     },
     function (response) {
       console.log(response);
+
+      document.getElementById("sec_link").href = `https://admin.powerplatform.microsoft.com/settingredirect/${response.orgId}/securityroles`;
+
       var content = handleContent(response.roles);
 
       document.getElementById("security-content").innerHTML = content;

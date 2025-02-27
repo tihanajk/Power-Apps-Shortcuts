@@ -228,6 +228,7 @@ async function listSecurityRoles() {
         roles: allRoles,
         first: i == 0,
         last: i == users.length - 1,
+        orgId: Xrm.Utility.getGlobalContext()._organizationSettings.organizationId,
       },
       "*"
     );
