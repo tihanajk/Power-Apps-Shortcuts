@@ -10,9 +10,10 @@ function getSecurity() {
     function (response) {
       console.log(response);
 
-      document.getElementById("sec_link").href = `https://admin.powerplatform.microsoft.com/settingredirect/${response.orgId}/securityroles`;
+      var secRolesLink = `https://admin.powerplatform.microsoft.com/settingredirect/${response.orgId}/securityroles`;
+      document.getElementById("sec_link").href = secRolesLink;
 
-      var content = handleContent(response.roles);
+      var content = handleContent(response.roles, secRolesLink);
 
       document.getElementById("security-content").innerHTML = content;
 
@@ -23,7 +24,7 @@ function getSecurity() {
   );
 }
 
-function handleContent(allRoles) {
+function handleContent(allRoles, link) {
   if (allRoles.length == 0) return "";
   var content = "";
 
@@ -47,7 +48,7 @@ function handleContent(allRoles) {
                           .map(
                             (r) =>
                               `<tr id="main-row">
-                                <td>${r.name}</td>
+                                <td><a href="${link}/${r.id}/roleeditor" target="_blank">${r.name}</a></td>
                                 <td>${r.id}</td>
                                 <td>${r?.teamName ? r.teamName : ""}</td>
                                 <td>${r?.teamId ? r.teamId : ""}</td>

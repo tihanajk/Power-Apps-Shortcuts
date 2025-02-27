@@ -222,13 +222,15 @@ async function listSecurityRoles() {
     var teamRoles = await getTeamSecurityRoles(userId);
     allRoles.push({ user: userName, roles: roles.concat(teamRoles) });
 
+    var orgSettings = Xrm.Utility.getGlobalContext().organizationSettings;
     window.postMessage(
       {
         type: "GIVE_ME_SECURITY",
         roles: allRoles,
         first: i == 0,
         last: i == users.length - 1,
-        orgId: Xrm.Utility.getGlobalContext()._organizationSettings.organizationId,
+        orgId: orgSettings.organizationId,
+        envId: orgSettings.bapEnvironmentId,
       },
       "*"
     );
