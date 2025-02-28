@@ -270,7 +270,11 @@ async function updateField() {
 async function retrieveRecords() {
   console.log("retrieveRecords");
   var entityName = prompt("Enter entity name for fetchXml");
-  var fetchXml = prompt("Enter fetchXml");
+  var fetchXml = prompt("Enter fetchXml (or '*' for all)");
+
+  if (fetchXml == "*") {
+    fetchXml = `<fetch><entity name="${entityName}" /></fetch>`;
+  }
 
   var escapedFetchXML = encodeURIComponent(fetchXml);
 
