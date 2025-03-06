@@ -12,7 +12,7 @@ var optionsetsData = [];
 var securityData = [];
 var doneFetchingSecurity = false;
 var fetchData = [];
-var fetchEntityName = "";
+var entityName = "";
 var orgId = "";
 var envId = "";
 
@@ -34,10 +34,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId });
   } else if (request.action === "showRetrieveResult") {
     fetchData = request.result;
-    fetchEntityName = request.entityName;
+    entityName = request.entityName;
     chrome.tabs.create({ url: chrome.runtime.getURL("fetchTab/fetch.html") });
   } else if (request.action === "GET_FETCH") {
-    sendResponse({ fetchData: fetchData, fetchEntityName: fetchEntityName });
+    sendResponse({ fetchData: fetchData, fetchEntityName: entityName });
+  } else if (request.action === "showAllFields") {
+    allFields = request.result;
+    entityName = request.entityName;
+    chrome.tabs.create({ url: chrome.runtime.getURL("fieldsTab/fields.html") });
+  } else if (request.action === "GET_ALL_FIELDS") {
+    sendResponse({ allFields: allFields, entityName: entityName });
   }
 });
 
@@ -72,6 +78,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "execute_fetchxml":
       sendMessageToTab("executeFetchXml");
+      break;
+    case "all_fields":
+      sendMessageToTab("allFields");
       break;
     default:
       break;

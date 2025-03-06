@@ -290,6 +290,22 @@ async function retrieveRecords() {
   );
 }
 
+async function getAllFields() {
+  var entityName = Xrm.Page.data.entity.getEntityName();
+  var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+
+  var result = await Xrm.WebApi.retrieveRecord(entityName, entityId);
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_ALL_FIELDS",
+      result: result,
+      entityName: entityName,
+    },
+    "*"
+  );
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
@@ -299,5 +315,7 @@ window.addEventListener("message", function (event) {
     updateField();
   } else if (event.source === window && event.data.type === "EXECUTE_FETCH_XML") {
     retrieveRecords();
+  } else if (event.source === window && event.data.type === "SHOW_ALL_FIELDS") {
+    getAllFields();
   }
 });

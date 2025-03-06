@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.4",
+  "version": "2.0.0.5",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -54,11 +54,14 @@
     },
     "execute_fetchxml": {
       "description": "execute fetchxml"
+    },
+    "all_fields": {
+      "description": "all fields"
     }
   },
   "web_accessible_resources": [
     {
-      "resources": ["godMode.js", "locate.js", "dataverse.js", "optionsTab/options.html"],
+      "resources": ["godMode.js", "locate.js", "dataverse.js"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -66,7 +69,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
-      "js": ["content.js", "popup/info.js", "optionsTab/options.js", "securityTab/security.js", "fetchTab/fetch.js"]
+      "js": ["content.js", "popup/info.js", "optionsTab/options.js", "securityTab/security.js", "fetchTab/fetch.js", "fieldsTab/fields.js"]
     }
   ]
 }

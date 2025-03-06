@@ -2,7 +2,7 @@
 
 First thing you have to do is configure which shortcuts you want for each action.
 
-Here is my recommendation:
+This is my configuration:
 
 - Alt+Shift+F - open advanced find
 - Alt+Shift+G - god mode
@@ -12,4 +12,6 @@ Here is my recommendation:
 - Alt+Shift+U - open record
 - Alt+Shift+M - quick field update
 - Alt+Shift+C - toggle ribbon debug
-- Alt+Shift+P - see optionsets (multiselect and boolean too)
+- Alt+Shift+P - see option sets (multiselect and boolean too)
+- Alt+Shift+X - execute retrieve with fetchXml
+- Alt+Shift+I - all fields

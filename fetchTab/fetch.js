@@ -12,8 +12,6 @@ function getFetchResults() {
       var content = renderResults(response.fetchData, response.fetchEntityName);
 
       document.getElementById("fetch-content").innerHTML = content;
-
-      content;
     }
   );
 }
