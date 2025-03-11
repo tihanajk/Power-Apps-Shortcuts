@@ -300,6 +300,15 @@ async function getAllFields() {
 
   Object.entries(result).forEach(([key, value]) => {
     var onForm = Xrm.Page.getAttribute(key) != null;
+
+    if (!onForm) {
+      var parts = key.split("_value");
+      if (parts.length > 1) {
+        var fieldName = key.split("_")[1];
+        onForm = Xrm.Page.getAttribute(fieldName) != null;
+      }
+    }
+
     fields.push({ name: key, value: value, onForm: onForm });
   });
   window.postMessage(
