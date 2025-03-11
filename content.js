@@ -85,6 +85,7 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showAllFields",
       result: event.data.result,
+      fields: event.data.fields,
       entityName: event.data.entityName,
     });
   }

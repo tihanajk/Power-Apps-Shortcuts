@@ -296,10 +296,17 @@ async function getAllFields() {
 
   var result = await Xrm.WebApi.retrieveRecord(entityName, entityId);
 
+  var fields = [];
+
+  Object.entries(result).forEach(([key, value]) => {
+    var onForm = Xrm.Page.getAttribute(key) != null;
+    fields.push({ name: key, value: value, onForm: onForm });
+  });
   window.postMessage(
     {
       type: "GIVE_ME_ALL_FIELDS",
       result: result,
+      fields: fields,
       entityName: entityName,
     },
     "*"

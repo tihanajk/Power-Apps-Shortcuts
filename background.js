@@ -15,6 +15,8 @@ var fetchData = [];
 var entityName = "";
 var orgId = "";
 var envId = "";
+var allFields = [];
+var fields = [];
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -40,10 +42,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ fetchData: fetchData, fetchEntityName: entityName });
   } else if (request.action === "showAllFields") {
     allFields = request.result;
+    fields = request.fields;
     entityName = request.entityName;
     chrome.tabs.create({ url: chrome.runtime.getURL("fieldsTab/fields.html") });
   } else if (request.action === "GET_ALL_FIELDS") {
-    sendResponse({ allFields: allFields, entityName: entityName });
+    sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
   }
 });
 

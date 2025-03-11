@@ -14,7 +14,7 @@ function getFieldsResults() {
 
       document.getElementById("entity-name").innerHTML = response.entityName.toUpperCase();
 
-      allFields = response.allFields;
+      allFields = response.fields;
       renderResults(allFields);
     }
   );
@@ -25,20 +25,25 @@ search.addEventListener("input", function () {
   filterFields();
 });
 
+var checkboxForm = document.querySelector("input[name=formOnly]");
+checkboxForm.addEventListener("change", function () {
+  filterFields();
+});
+
 function filterFields() {
   var searchFilter = search.value.toLowerCase();
+  var formOnly = checkboxForm.checked;
 
-  var filtered = Object.fromEntries(
-    Object.entries(allFields).filter(
-      ([key, value]) => key.toLowerCase().includes(searchFilter) || value?.toString().toLowerCase().includes(searchFilter)
-    )
+  var filtered = allFields.filter(
+    (f) =>
+      (!formOnly || (formOnly && f.onForm)) && (f.name.includes(searchFilter) || (f.value && f.value.toString().toLowerCase().includes(searchFilter)))
   );
 
   renderResults(filtered);
 }
 
 function renderResults(data) {
-  var content = `<div>count: ${Object.entries(data).length}</div`;
+  var content = `<div>count: ${data.length}</div`;
 
   var table = `
   <div class="table-container">
@@ -51,9 +56,7 @@ function renderResults(data) {
           </tr>
         </thead>
         <tbody>
-          ${Object.entries(data)
-            .map(([key, value]) => `<tr><td>${key}</td><td>${value == null ? "" : value}</td></tr>`)
-            .join("")}
+          ${data.map((d) => `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}</td><td>${d.value == null ? "" : d.value}</td></tr>`).join("")}
         </tbody>
       </table>
     </div>
