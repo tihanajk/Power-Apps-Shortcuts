@@ -322,6 +322,50 @@ async function getAllFields() {
   );
 }
 
+async function listFlowDependencies() {
+  var field = prompt("Field name");
+  if (field == null) return;
+
+  var fetchXml = `<fetch>
+  <entity name="workflow">
+    <attribute name="name" />
+    <attribute name="category" />
+    <attribute name="statecode" />
+    <attribute name="statuscode" />
+    <attribute name="workflowid" />
+    <filter>
+      <condition attribute="clientdata" operator="like" value="%${field}%" />
+    </filter>
+    <order attribute="name"/>
+  </entity>
+</fetch>`;
+
+  var escapedFetchXML = encodeURIComponent(fetchXml);
+
+  var result = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchXML);
+
+  var processes = [];
+  result.entities.forEach((e) => {
+    processes.push({
+      id: e["workflowid"],
+      name: e["name"],
+      status: e["statecode@OData.Community.Display.V1.FormattedValue"],
+      category: e["category@OData.Community.Display.V1.FormattedValue"],
+    });
+  });
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_FLOW_DEPENDENCIES",
+      processes: processes,
+      fieldName: field,
+      url: location.href.split("/main")[0],
+      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+    },
+    "*"
+  );
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
@@ -333,5 +377,7 @@ window.addEventListener("message", function (event) {
     retrieveRecords();
   } else if (event.source === window && event.data.type === "SHOW_ALL_FIELDS") {
     getAllFields();
+  } else if (event.source === window && event.data.type === "GET_FLOW_DEPENDENCIES") {
+    listFlowDependencies();
   }
 });

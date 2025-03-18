@@ -41,6 +41,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     executeInScript("EXECUTE_FETCH_XML", "dataverse.js");
   } else if (request.message == "allFields") {
     executeInScript("SHOW_ALL_FIELDS", "dataverse.js");
+  } else if (request.message == "flowDependencyCheck") {
+    executeInScript("GET_FLOW_DEPENDENCIES", "dataverse.js");
   }
 });
 
@@ -87,6 +89,11 @@ window.addEventListener("message", (event) => {
       result: event.data.result,
       fields: event.data.fields,
       entityName: event.data.entityName,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_FLOW_DEPENDENCIES") {
+    chrome.runtime.sendMessage({
+      action: "showFlowDependencies",
+      data: event.data,
     });
   }
 });

@@ -17,6 +17,9 @@ var orgId = "";
 var envId = "";
 var allFields = [];
 var fields = [];
+var fieldName = "";
+var processes = [];
+var url = "";
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -47,6 +50,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: chrome.runtime.getURL("fieldsTab/fields.html") });
   } else if (request.action === "GET_ALL_FIELDS") {
     sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
+  } else if (request.action === "showFlowDependencies") {
+    fieldName = request.data.fieldName;
+    processes = request.data.processes;
+    url = request.data.url;
+    envId = request.data.envId;
+    chrome.tabs.create({ url: chrome.runtime.getURL("processDependenciesTab/dependency.html") });
+  } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
+    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
   }
 });
 
@@ -84,6 +95,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "all_fields":
       sendMessageToTab("allFields");
+      break;
+    case "flow_dependency_check":
+      sendMessageToTab("flowDependencyCheck");
       break;
     default:
       break;

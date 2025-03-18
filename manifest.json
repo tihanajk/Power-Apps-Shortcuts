@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.5",
+  "version": "2.0.0.6",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -57,6 +57,9 @@
     },
     "all_fields": {
       "description": "all fields"
+    },
+    "flow_dependency_check": {
+      "description": "process dependency checker"
     }
   },
   "web_accessible_resources": [
@@ -69,7 +72,15 @@
   "content_scripts": [
     {
       "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
-      "js": ["content.js", "popup/info.js", "optionsTab/options.js", "securityTab/security.js", "fetchTab/fetch.js", "fieldsTab/fields.js"]
+      "js": [
+        "content.js",
+        "popup/info.js",
+        "optionsTab/options.js",
+        "securityTab/security.js",
+        "fetchTab/fetch.js",
+        "fieldsTab/fields.js",
+        "processDependenciesTab/dependency.js"
+      ]
     }
   ]
 }
