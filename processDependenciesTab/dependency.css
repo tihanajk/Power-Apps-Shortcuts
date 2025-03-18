@@ -43,3 +43,8 @@ tbody tr {
   border-bottom: 1px solid #6a7e9d;
   color: #242b35;
 }
+
+#header,
+#filters {
+  margin: 10px;
+}

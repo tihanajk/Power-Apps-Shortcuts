@@ -7,6 +7,18 @@
   </head>
 
   <body>
+    <div id="header">
+      <h1 id="field-name"></h1>
+      <input id="search" placeholder="Search" name="filter" type="text" />
+    </div>
+    <div id="filters">
+      <input type="checkbox" id="activeOnlyCheckbox" name="activeOnly" style="accent-color: #6a7e9d" />
+      <label for="horns">Show only active</label>
+      <input type="checkbox" id="brOnlyCheckbox" name="brOnly" style="accent-color: #6a7e9d" />
+      <label for="horns">Show only business rules</label>
+      <input type="checkbox" id="flowOnlyCheckbox" name="flowOnly" style="accent-color: #6a7e9d" />
+      <label for="horns">Show only flows</label>
+    </div>
     <div id="dependency-content">Results</div>
     <script src="dependency.js"></script>
   </body>

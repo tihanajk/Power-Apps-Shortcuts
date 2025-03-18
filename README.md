@@ -15,3 +15,4 @@ This is my configuration:
 - Alt+Shift+P - see option sets (multiselect and boolean too)
 - Alt+Shift+X - execute retrieve with fetchXml
 - Alt+Shift+I - all fields
+- Alt+Shift+D - get BR and flow dependencies of field

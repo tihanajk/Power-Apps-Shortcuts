@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
   getDependencies();
 });
 
+var url;
+var envId;
+var processes = [];
 function getDependencies() {
   chrome.runtime.sendMessage(
     {
@@ -9,19 +12,58 @@ function getDependencies() {
     },
     function (response) {
       console.log(response);
-      var processes = response.processes;
       var fieldName = response.fieldName;
-      var content = renderDependencies(processes, fieldName, response.url, response.envId);
 
-      document.getElementById("dependency-content").innerHTML = content;
+      document.getElementById("field-name").innerHTML = fieldName;
+
+      processes = response.processes;
+      url = response.url;
+      envId = response.envId;
+
+      renderDependencies(processes);
     }
   );
 }
 
-function renderDependencies(processes, fieldName, url, envId) {
-  var content = "";
+var checkboxActive = document.querySelector("input[name=activeOnly]");
+checkboxActive.addEventListener("change", function () {
+  filter();
+});
 
-  content += `<h1>${fieldName}</h1>`;
+var checkboxBR = document.querySelector("input[name=brOnly]");
+checkboxBR.addEventListener("change", function () {
+  filter();
+});
+var checkboxFlow = document.querySelector("input[name=flowOnly]");
+checkboxFlow.addEventListener("change", function () {
+  filter();
+});
+
+var search = document.querySelector("input[name=filter]");
+search.addEventListener("input", function () {
+  filter();
+});
+
+function filter() {
+  var onlyActive = checkboxActive.checked;
+  var onlyBR = checkboxBR.checked;
+  var onlyFlow = checkboxFlow.checked;
+
+  var searchFilter = search.value.toLowerCase();
+
+  var filtered = processes.filter(
+    (p) =>
+      (!onlyActive || p.status == "Activated") &&
+      (!onlyFlow || p.category == "Modern Flow") &&
+      (!onlyBR || p.category == "Business Rule") &&
+      p.name.toLowerCase().includes(searchFilter)
+  );
+
+  renderDependencies(filtered);
+}
+
+function renderDependencies(processes) {
+  var content = "";
 
   var brLink = `${url}/sfa/workflow/edit.aspx?id=`;
   var flowLink = `https://make.powerautomate.com/environments/${envId}/flows/`;
@@ -43,7 +85,7 @@ function renderDependencies(processes, fieldName, url, envId) {
             .map(
               (e) =>
                 `<tr>
-                    <td>${processes.indexOf(e) + 1}</td>
+                    <td style="width:10px">${processes.indexOf(e) + 1}</td>
                     <td>
                         <a target="_blank" href=${
                           e.category == "Business Rule" ? `${brLink}${e.id}&newWindow=true` : `${flowLink}${e.id}?v3=false`
@@ -61,5 +103,5 @@ function renderDependencies(processes, fieldName, url, envId) {
 
   content += table;
 
-  return content;
+  document.getElementById("dependency-content").innerHTML = content;
 }
