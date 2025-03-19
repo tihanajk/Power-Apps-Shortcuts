@@ -5,6 +5,11 @@ document.addEventListener("DOMContentLoaded", function () {
 var url;
 var envId;
 var processes = [];
+
+var FLOW = 5;
+var BPF = 4;
+var BR = 2;
+
 function getDependencies() {
   chrome.runtime.sendMessage(
     {
@@ -34,8 +39,14 @@ var checkboxBR = document.querySelector("input[name=brOnly]");
 checkboxBR.addEventListener("change", function () {
   filter();
 });
+
 var checkboxFlow = document.querySelector("input[name=flowOnly]");
 checkboxFlow.addEventListener("change", function () {
+  filter();
+});
+
+var checkboxBPF = document.querySelector("input[name=bpfOnly]");
+checkboxBPF.addEventListener("change", function () {
   filter();
 });
 
@@ -48,14 +59,16 @@ function filter() {
   var onlyActive = checkboxActive.checked;
   var onlyBR = checkboxBR.checked;
   var onlyFlow = checkboxFlow.checked;
+  var onlyBPF = checkboxBPF.checked;
 
   var searchFilter = search.value.toLowerCase();
 
   var filtered = processes.filter(
     (p) =>
-      (!onlyActive || p.status == "Activated") &&
-      (!onlyFlow || p.category == "Modern Flow") &&
-      (!onlyBR || p.category == "Business Rule") &&
+      (!onlyActive || p.status == 1) &&
+      (!onlyFlow || p.category == FLOW) &&
+      (!onlyBR || p.category == BR) &&
+      (!onlyBPF || p.category == BPF) &&
       p.name.toLowerCase().includes(searchFilter)
   );
 
@@ -67,6 +80,7 @@ function renderDependencies(processes) {
 
   var brLink = `${url}/sfa/workflow/edit.aspx?id=`;
   var flowLink = `https://make.powerautomate.com/environments/${envId}/flows/`;
+  var bpfLink = `${url}/Tools/ProcessControl/UnifiedProcessDesigner.aspx?id=`;
 
   var table = `
   <div class="table-container">
@@ -88,11 +102,17 @@ function renderDependencies(processes) {
                     <td style="width:10px">${processes.indexOf(e) + 1}</td>
                     <td>
                         <a target="_blank" href=${
-                          e.category == "Business Rule" ? `${brLink}${e.id}&newWindow=true` : `${flowLink}${e.id}?v3=false`
+                          e.category == BR
+                            ? `${brLink}${e.id}&newWindow=true`
+                            : e.category == FLOW
+                            ? `${flowLink}${e.id}?v3=false`
+                            : `${bpfLink}${e.id}`
                         }>${e.name}</a>
                     </td>
-                    <td id="category" style="color:${e.category == "Business Rule" ? "#8871cf" : "#72bdfd"}">${e.category}</td>
-                    <td>${e.status}</td>
+                    <td id="category" style="color:${e.category == BR ? "#8871cf" : e.category == FLOW ? "#72bdfd" : "#10368c"}">${
+                  e.category_display
+                }</td>
+                    <td style="color:${e.status == 1 ? "" : "grey"}">${e.status_display}</td>
                 </tr>`
             )
             .join("")}

@@ -349,8 +349,10 @@ async function listFlowDependencies() {
     processes.push({
       id: e["workflowid"],
       name: e["name"],
-      status: e["statecode@OData.Community.Display.V1.FormattedValue"],
-      category: e["category@OData.Community.Display.V1.FormattedValue"],
+      status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
+      status: e["statecode"],
+      category_display: e["category@OData.Community.Display.V1.FormattedValue"],
+      category: e["category"],
     });
   });
 
