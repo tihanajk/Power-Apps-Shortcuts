@@ -335,6 +335,7 @@ async function listFlowDependencies() {
     <attribute name="workflowid" />
     <filter>
       <condition attribute="clientdata" operator="like" value="%${field}%" />
+      <condition attribute="type" operator="eq" value="1" />
     </filter>
     <order attribute="name"/>
   </entity>
