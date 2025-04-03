@@ -10,7 +10,38 @@ var FLOW = 5;
 var BPF = 4;
 var BR = 2;
 
+var checkboxActive;
+var checkboxBR;
+var checkboxFlow;
+var checkboxBPF;
+var search;
+
 function getDependencies() {
+  checkboxActive = document.querySelector("input[name=activeOnly]");
+  checkboxActive.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxBR = document.querySelector("input[name=brOnly]");
+  checkboxBR.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxFlow = document.querySelector("input[name=flowOnly]");
+  checkboxFlow.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxBPF = document.querySelector("input[name=bpfOnly]");
+  checkboxBPF.addEventListener("change", function () {
+    filter();
+  });
+
+  search = document.querySelector("input[name=filter]");
+  search.addEventListener("input", function () {
+    filter();
+  });
+
   chrome.runtime.sendMessage(
     {
       action: "GET_PROCESS_DEPENDENCIES",
@@ -29,31 +60,6 @@ function getDependencies() {
     }
   );
 }
-
-var checkboxActive = document.querySelector("input[name=activeOnly]");
-checkboxActive.addEventListener("change", function () {
-  filter();
-});
-
-var checkboxBR = document.querySelector("input[name=brOnly]");
-checkboxBR.addEventListener("change", function () {
-  filter();
-});
-
-var checkboxFlow = document.querySelector("input[name=flowOnly]");
-checkboxFlow.addEventListener("change", function () {
-  filter();
-});
-
-var checkboxBPF = document.querySelector("input[name=bpfOnly]");
-checkboxBPF.addEventListener("change", function () {
-  filter();
-});
-
-var search = document.querySelector("input[name=filter]");
-search.addEventListener("input", function () {
-  filter();
-});
 
 function filter() {
   var onlyActive = checkboxActive.checked;

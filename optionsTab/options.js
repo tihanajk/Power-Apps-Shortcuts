@@ -1,4 +1,7 @@
 var allOptions = [];
+var checkboxForm;
+var checkboxMulti;
+var checkboxBool;
 
 document.addEventListener("DOMContentLoaded", function () {
   chrome.runtime.sendMessage(
@@ -12,6 +15,21 @@ document.addEventListener("DOMContentLoaded", function () {
       renderTable(allOptions);
     }
   );
+
+  checkboxForm = document.querySelector("input[name=formOnly]");
+  checkboxForm.addEventListener("change", function () {
+    filterTable();
+  });
+
+  checkboxMulti = document.querySelector("input[name=multiOnly]");
+  checkboxMulti.addEventListener("change", function () {
+    filterTable();
+  });
+
+  checkboxBool = document.querySelector("input[name=boolOnly]");
+  checkboxBool.addEventListener("change", function () {
+    filterTable();
+  });
 });
 
 function renderTable(options) {
@@ -31,21 +49,6 @@ function renderTable(options) {
   document.getElementById("dynamic-content").innerHTML = content;
   document.getElementById("options-count").innerHTML = "count:" + options.length;
 }
-
-var checkboxForm = document.querySelector("input[name=formOnly]");
-checkboxForm.addEventListener("change", function () {
-  filterTable();
-});
-
-var checkboxMulti = document.querySelector("input[name=multiOnly]");
-checkboxMulti.addEventListener("change", function () {
-  filterTable();
-});
-
-var checkboxBool = document.querySelector("input[name=boolOnly]");
-checkboxBool.addEventListener("change", function () {
-  filterTable();
-});
 
 function filterTable() {
   var formOnly = checkboxForm.checked;

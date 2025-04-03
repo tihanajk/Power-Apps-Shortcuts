@@ -1,7 +1,19 @@
 var allFields = [];
+var search;
+var checkboxForm;
 
 document.addEventListener("DOMContentLoaded", function () {
   getFieldsResults();
+
+  search = document.querySelector("input[name=filter]");
+  search.addEventListener("input", function () {
+    filterFields();
+  });
+
+  checkboxForm = document.querySelector("input[name=formOnly]");
+  checkboxForm.addEventListener("change", function () {
+    filterFields();
+  });
 });
 
 function getFieldsResults() {
@@ -19,16 +31,6 @@ function getFieldsResults() {
     }
   );
 }
-
-var search = document.querySelector("input[name=filter]");
-search.addEventListener("input", function () {
-  filterFields();
-});
-
-var checkboxForm = document.querySelector("input[name=formOnly]");
-checkboxForm.addEventListener("change", function () {
-  filterFields();
-});
 
 function filterFields() {
   var searchFilter = search.value.toLowerCase();
