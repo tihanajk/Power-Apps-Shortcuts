@@ -237,6 +237,19 @@ async function listSecurityRoles() {
   }
 }
 
+function checkInput(input) {
+  if (!isNaN(input) && input.trim() !== "") {
+    return Number(input);
+  }
+
+  let lowerInput = input.toLowerCase();
+
+  if (lowerInput === "true") return true;
+  if (lowerInput === "false") return false;
+
+  return input;
+}
+
 async function updateField() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
@@ -244,6 +257,8 @@ async function updateField() {
   if (field == null) return;
   var value = prompt("Enter the value to set", "value");
   if (value == null) return;
+
+  value = checkInput(value);
 
   var onForm = Xrm.Page.getAttribute(field);
   if (onForm) {
