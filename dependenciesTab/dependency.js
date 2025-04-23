@@ -93,13 +93,43 @@ function filter() {
   renderDependencies(filtered);
 }
 
-function renderDependencies(processes) {
-  var content = "";
-
+function handleLink(category, id) {
   var brLink = `${url}/sfa/workflow/edit.aspx?id=`;
   var flowLink = `https://make.powerautomate.com/environments/${envId}/flows/`;
   var bpfLink = `${url}/Tools/ProcessControl/UnifiedProcessDesigner.aspx?id=`;
   var wfLink = `${url}/sfa/workflow/edit.aspx?id=`;
+
+  switch (category) {
+    case CATEGORIES.BR:
+      return `${brLink}${id}&newWindow=true`;
+    case CATEGORIES.FLOW:
+      return `${flowLink}${id}?v3=false`;
+    case CATEGORIES.WF:
+      return `${wfLink}${id}`;
+    case CATEGORIES.BPF:
+      return `${bpfLink}${id}`;
+    default:
+      return "";
+  }
+}
+
+function handleColor(category) {
+  switch (category) {
+    case CATEGORIES.BR:
+      return "#8871cf";
+    case CATEGORIES.FLOW:
+      return "#72bdfd";
+    case CATEGORIES.WF:
+      return "#dc6edc";
+    case CATEGORIES.BPF:
+      return "#406fda";
+    default:
+      return "";
+  }
+}
+
+function renderDependencies(processes) {
+  var content = "";
 
   var table = `
   <div class="table-container">
@@ -120,25 +150,9 @@ function renderDependencies(processes) {
                 `<tr>
                     <td style="width:10px">${processes.indexOf(e) + 1}</td>
                     <td>
-                        <a target="_blank" href=${
-                          e.category == CATEGORIES.BR
-                            ? `${brLink}${e.id}&newWindow=true`
-                            : e.category == CATEGORIES.FLOW
-                            ? `${flowLink}${e.id}?v3=false`
-                            : e.category == CATEGORIES.WF
-                            ? `${wfLink}${e.id}`
-                            : `${bpfLink}${e.id}`
-                        }>${e.name}</a>
+                        <a target="_blank" href=${handleLink(e.category, e.id)}>${e.name}</a>
                     </td>
-                    <td id="category" style="color:${
-                      e.category == CATEGORIES.BR
-                        ? "#8871cf"
-                        : e.category == CATEGORIES.FLOW
-                        ? "#72bdfd"
-                        : e.category == CATEGORIES.WF
-                        ? "#742774"
-                        : "#10368c"
-                    }">${e.category_display}</td>
+                    <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
                     <td style="color:${e.status == 1 ? "" : "grey"}">${e.status_display}</td>
                 </tr>`
             )

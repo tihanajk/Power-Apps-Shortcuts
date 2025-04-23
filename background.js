@@ -55,7 +55,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     processes = request.data.processes;
     url = request.data.url;
     envId = request.data.envId;
-    chrome.tabs.create({ url: chrome.runtime.getURL("processDependenciesTab/dependency.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("dependenciesTab/dependency.html") });
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
     sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
   }
