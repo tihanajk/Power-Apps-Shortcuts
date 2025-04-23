@@ -6,14 +6,19 @@ var url;
 var envId;
 var processes = [];
 
-var FLOW = 5;
-var BPF = 4;
-var BR = 2;
+const CATEGORIES = {
+  FLOW: 5,
+  BPF: 4,
+  BR: 2,
+  WF: 0,
+};
 
 var checkboxActive;
 var checkboxBR;
 var checkboxFlow;
 var checkboxBPF;
+var checkboxWF;
+
 var search;
 
 function getDependencies() {
@@ -22,18 +27,23 @@ function getDependencies() {
     filter();
   });
 
-  checkboxBR = document.querySelector("input[name=brOnly]");
+  checkboxBR = document.querySelector("input[name=br]");
   checkboxBR.addEventListener("change", function () {
     filter();
   });
 
-  checkboxFlow = document.querySelector("input[name=flowOnly]");
+  checkboxFlow = document.querySelector("input[name=flow]");
   checkboxFlow.addEventListener("change", function () {
     filter();
   });
 
-  checkboxBPF = document.querySelector("input[name=bpfOnly]");
+  checkboxBPF = document.querySelector("input[name=bpf]");
   checkboxBPF.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxWF = document.querySelector("input[name=wf]");
+  checkboxWF.addEventListener("change", function () {
     filter();
   });
 
@@ -63,19 +73,21 @@ function getDependencies() {
 
 function filter() {
   var onlyActive = checkboxActive.checked;
-  var onlyBR = checkboxBR.checked;
-  var onlyFlow = checkboxFlow.checked;
-  var onlyBPF = checkboxBPF.checked;
+  var checkedBR = checkboxBR.checked;
+  var checkedFlow = checkboxFlow.checked;
+  var checkedBPF = checkboxBPF.checked;
+  var checkedWF = checkboxWF.checked;
 
   var searchFilter = search.value.toLowerCase();
 
   var filtered = processes.filter(
     (p) =>
       (!onlyActive || p.status == 1) &&
-      (!onlyFlow || p.category == FLOW) &&
-      (!onlyBR || p.category == BR) &&
-      (!onlyBPF || p.category == BPF) &&
-      p.name.toLowerCase().includes(searchFilter)
+      p.name.toLowerCase().includes(searchFilter) &&
+      ((checkedBPF && p.category == CATEGORIES.BPF) ||
+        (checkedFlow && p.category == CATEGORIES.FLOW) ||
+        (checkedBR && p.category == CATEGORIES.BR) ||
+        (checkedWF && p.category == CATEGORIES.WF))
   );
 
   renderDependencies(filtered);
@@ -87,6 +99,7 @@ function renderDependencies(processes) {
   var brLink = `${url}/sfa/workflow/edit.aspx?id=`;
   var flowLink = `https://make.powerautomate.com/environments/${envId}/flows/`;
   var bpfLink = `${url}/Tools/ProcessControl/UnifiedProcessDesigner.aspx?id=`;
+  var wfLink = `${url}/sfa/workflow/edit.aspx?id=`;
 
   var table = `
   <div class="table-container">
@@ -108,16 +121,24 @@ function renderDependencies(processes) {
                     <td style="width:10px">${processes.indexOf(e) + 1}</td>
                     <td>
                         <a target="_blank" href=${
-                          e.category == BR
+                          e.category == CATEGORIES.BR
                             ? `${brLink}${e.id}&newWindow=true`
-                            : e.category == FLOW
+                            : e.category == CATEGORIES.FLOW
                             ? `${flowLink}${e.id}?v3=false`
+                            : e.category == CATEGORIES.WF
+                            ? `${wfLink}${e.id}`
                             : `${bpfLink}${e.id}`
                         }>${e.name}</a>
                     </td>
-                    <td id="category" style="color:${e.category == BR ? "#8871cf" : e.category == FLOW ? "#72bdfd" : "#10368c"}">${
-                  e.category_display
-                }</td>
+                    <td id="category" style="color:${
+                      e.category == CATEGORIES.BR
+                        ? "#8871cf"
+                        : e.category == CATEGORIES.FLOW
+                        ? "#72bdfd"
+                        : e.category == CATEGORIES.WF
+                        ? "#742774"
+                        : "#10368c"
+                    }">${e.category_display}</td>
                     <td style="color:${e.status == 1 ? "" : "grey"}">${e.status_display}</td>
                 </tr>`
             )

@@ -1,6 +1,6 @@
 .table-container {
   width: 100%;
-  height: calc(100vh - 150px); /* 50% of viewport height */
+  height: calc(100vh - 170px); /* 50% of viewport height */
   border: 1px solid #6a7e9d;
   overflow: hidden; /* Prevents outer scrolling */
   display: flex;

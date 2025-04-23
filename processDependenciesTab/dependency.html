@@ -9,19 +9,26 @@
   <body>
     <div id="header">
       <h1 id="field-name"></h1>
-      <input id="search" placeholder="Search" name="filter" type="text" />
+      <input id="search" placeholder="Search" name="filter" type="text" style="width: 200px; height: 20px" />
     </div>
     <div id="filters">
-      <input type="checkbox" id="activeOnlyCheckbox" name="activeOnly" style="accent-color: #6a7e9d" />
-      <label for="horns">Show only active</label>
-      <input type="checkbox" id="brOnlyCheckbox" name="brOnly" style="accent-color: #6a7e9d" />
-      <label for="horns">Show only business rules</label>
-      <input type="checkbox" id="flowOnlyCheckbox" name="flowOnly" style="accent-color: #6a7e9d" />
-      <label for="horns">Show only flows</label>
-      <input type="checkbox" id="bpfOnlyCheckbox" name="bpfOnly" style="accent-color: #6a7e9d" />
-      <label for="horns">Show only BPF</label>
+      <div>
+        <input type="checkbox" id="activeOnlyCheckbox" name="activeOnly" style="accent-color: #6a7e9d" />
+        <label for="horns">Only active</label>
+      </div>
+      <div>
+        <input type="checkbox" id="brCheckbox" name="br" style="accent-color: #6a7e9d" checked />
+        <label for="horns">Business rules</label>
+        <input type="checkbox" id="flowCheckbox" name="flow" style="accent-color: #6a7e9d" checked />
+        <label for="horns">Flows</label>
+        <input type="checkbox" id="bpfCheckbox" name="bpf" style="accent-color: #6a7e9d" checked />
+        <label for="horns">BPF</label>
+        <input type="checkbox" id="wfCheckbox" name="wf" style="accent-color: #6a7e9d" checked />
+        <label for="horns">WF</label>
+      </div>
     </div>
     <div id="dependency-content">Results</div>
+
     <script src="dependency.js"></script>
   </body>
 </html>

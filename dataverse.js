@@ -348,9 +348,13 @@ async function listFlowDependencies() {
     <attribute name="statecode" />
     <attribute name="statuscode" />
     <attribute name="workflowid" />
-    <filter>
-      <condition attribute="clientdata" operator="like" value="%${field}%" />
+    <filter>       
       <condition attribute="type" operator="eq" value="1" />
+      <filter type="or">
+       <condition attribute="clientdata" operator="like" value="%${field}%" />
+        <condition attribute='triggeronupdateattributelist' operator='like' value='%${field}%' />
+        <condition attribute='xaml' operator='like' value='%Attribute=&quot;${field}&quot;%' />
+      </filter>
     </filter>
     <order attribute="name"/>
   </entity>
