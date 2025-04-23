@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.8",
+  "version": "2.0.0.9",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -79,7 +79,7 @@
         "securityTab/security.js",
         "fetchTab/fetch.js",
         "fieldsTab/fields.js",
-        "processDependenciesTab/dependency.js"
+        "dependenciesTab/dependency.js"
       ]
     }
   ]
