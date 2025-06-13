@@ -1,5 +1,7 @@
 # Power Apps Shortcuts
 
+## Make your life easier with Power Apps Shortcuts!
+
 First thing you have to do is configure which shortcuts you want for each action.
 
 This is my configuration:
