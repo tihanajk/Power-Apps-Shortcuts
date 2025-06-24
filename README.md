@@ -18,3 +18,4 @@ This is my configuration:
 - Alt+Shift+X - execute retrieve with fetchXml
 - Alt+Shift+I - all fields
 - Alt+Shift+D - get BR and flow dependencies of field
+- Alt+Shift+H - copy record guid to clipboard

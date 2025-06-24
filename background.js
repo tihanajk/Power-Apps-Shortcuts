@@ -99,6 +99,9 @@ chrome.commands.onCommand.addListener(function (command) {
     case "flow_dependency_check":
       sendMessageToTab("flowDependencyCheck");
       break;
+    case "copy_guid":
+      sendMessageToTab("copyGuid");
+      break;
     default:
       break;
   }

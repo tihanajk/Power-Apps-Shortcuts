@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.9",
+  "version": "2.0.0.10",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -60,6 +60,9 @@
     },
     "flow_dependency_check": {
       "description": "process dependency checker"
+    },
+    "copy_guid": {
+      "description": "copy record guid"
     }
   },
   "web_accessible_resources": [
@@ -68,7 +71,7 @@
       "matches": ["<all_urls>"]
     }
   ],
-  "permissions": ["tabs", "activeTab", "scripting"],
+  "permissions": ["tabs", "activeTab", "scripting", "clipboardWrite"],
   "content_scripts": [
     {
       "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],

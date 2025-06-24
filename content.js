@@ -43,6 +43,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     executeInScript("SHOW_ALL_FIELDS", "dataverse.js");
   } else if (request.message == "flowDependencyCheck") {
     executeInScript("GET_FLOW_DEPENDENCIES", "dataverse.js");
+  } else if (request.message == "copyGuid") {
+    var url = location.href.split("&id=")[1];
+    var guid = url.split("&")[0];
+
+    navigator.clipboard.writeText(guid);
+    alert("copied " + guid + " to clipboard");
   }
 });
 
