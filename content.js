@@ -48,7 +48,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     var guid = url.split("&")[0];
 
     navigator.clipboard.writeText(guid);
+
     alert("copied " + guid + " to clipboard");
+  } else if (request.message == "addWebresourceToSolution") {
+    executeInScript("ADD_WR_TO_SOL", "dataverse.js");
   }
 });
 

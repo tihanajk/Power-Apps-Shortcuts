@@ -102,6 +102,9 @@ chrome.commands.onCommand.addListener(function (command) {
     case "copy_guid":
       sendMessageToTab("copyGuid");
       break;
+    case "add_wr_to_solution":
+      sendMessageToTab("addWebresourceToSolution");
+      break;
     default:
       break;
   }

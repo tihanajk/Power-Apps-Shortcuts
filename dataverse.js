@@ -388,6 +388,54 @@ async function listFlowDependencies() {
   );
 }
 
+async function addWebresurceToSolution() {
+  var solutionName = prompt("Enter logical name of your solution");
+  if (!solutionName) return;
+
+  var webresourceName = prompt("Enter logical name of your webresource");
+  if (!webresourceName) return;
+
+  try {
+    var result = await Xrm.WebApi.retrieveMultipleRecords("webresource", `?$select=webresourceid,name&$filter=name eq '${webresourceName}'&$top=1`);
+
+    if (result.entities.length == 0) {
+      alert(`⚠️ Couldn't find webresource with name: ${webresourceName}`);
+      return;
+    }
+
+    var wrId = result.entities[0].webresourceid;
+
+    var execute_AddSolutionComponent_Request = {
+      // Parameters
+      ComponentId: { guid: wrId }, // Edm.Guid
+      ComponentType: 61, // Edm.Int32
+      SolutionUniqueName: solutionName, // Edm.String
+      AddRequiredComponents: false, // Edm.Boolean
+
+      getMetadata: function () {
+        return {
+          boundParameter: null,
+          parameterTypes: {
+            ComponentId: { typeName: "Edm.Guid", structuralProperty: 1 },
+            ComponentType: { typeName: "Edm.Int32", structuralProperty: 1 },
+            SolutionUniqueName: { typeName: "Edm.String", structuralProperty: 1 },
+            AddRequiredComponents: { typeName: "Edm.Boolean", structuralProperty: 1 },
+          },
+          operationType: 0,
+          operationName: "AddSolutionComponent",
+        };
+      },
+    };
+
+    await Xrm.WebApi.execute(execute_AddSolutionComponent_Request);
+  } catch (e) {
+    alert(`Error: ${e.message}`);
+    return;
+  }
+
+  alert(`✨ Successfully added "${webresourceName}" to "${solutionName}" ✨`);
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
@@ -401,5 +449,7 @@ window.addEventListener("message", function (event) {
     getAllFields();
   } else if (event.source === window && event.data.type === "GET_FLOW_DEPENDENCIES") {
     listFlowDependencies();
+  } else if (event.source === window && event.data.type === "ADD_WR_TO_SOL") {
+    addWebresurceToSolution();
   }
 });

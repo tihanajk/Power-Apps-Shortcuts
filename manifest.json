@@ -63,6 +63,9 @@
     },
     "copy_guid": {
       "description": "copy record guid"
+    },
+    "add_wr_to_solution": {
+      "description": "add webresource to solution"
     }
   },
   "web_accessible_resources": [
