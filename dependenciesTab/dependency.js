@@ -62,11 +62,14 @@ function getDependencies() {
 
       document.getElementById("field-name").innerHTML = fieldName;
 
-      processes = response.processes;
+      processes = response?.processes;
       url = response.url;
       envId = response.envId;
 
-      renderDependencies(processes);
+      var openTab = response.openTab;
+      if (!openTab) {
+        renderDependencies(processes);
+      }
     }
   );
 }

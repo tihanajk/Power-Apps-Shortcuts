@@ -20,6 +20,7 @@ var fields = [];
 var fieldName = "";
 var processes = [];
 var url = "";
+var openTab = false;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -52,12 +53,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
   } else if (request.action === "showFlowDependencies") {
     fieldName = request.data.fieldName;
-    processes = request.data.processes;
+    processes = request.data?.processes;
     url = request.data.url;
     envId = request.data.envId;
+    openTab = request.data?.start || false;
     chrome.tabs.create({ url: chrome.runtime.getURL("dependenciesTab/dependency.html") });
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
-    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
+    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId, openTab: openTab });
   }
 });
 

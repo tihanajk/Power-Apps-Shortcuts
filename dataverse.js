@@ -341,6 +341,17 @@ async function listFlowDependencies() {
   var field = prompt("Field name");
   if (field == null) return;
 
+  window.postMessage(
+    {
+      type: "GIVE_ME_FLOW_DEPENDENCIES",
+      start: true,
+      fieldName: field,
+      url: location.href.split("/main")[0],
+      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+    },
+    "*"
+  );
+
   var fetchXml = `<fetch>
   <entity name="workflow">
     <attribute name="name" />
