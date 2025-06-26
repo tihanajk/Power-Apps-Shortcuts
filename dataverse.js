@@ -387,6 +387,48 @@ async function listFlowDependencies() {
     });
   });
 
+  // PLUGIN STEPS
+  var fetchSteps = `<fetch>
+  <entity name='sdkmessageprocessingstep'>
+    <attribute name='filteringattributes' />
+    <attribute name='plugintypeid' />
+    <attribute name='statecode' />
+    <filter>
+      <condition attribute='filteringattributes' operator='like' value='${field}' />
+    </filter>
+    <link-entity name='plugintype' from='plugintypeid' to='plugintypeid' alias='p'>
+      <attribute name='name' />
+    </link-entity>
+    <link-entity name='sdkmessage' from='sdkmessageid' to='sdkmessageid' alias='m'>
+      <attribute name='name' />
+    </link-entity>
+  </entity>
+</fetch>`;
+
+  var escapedFetchXML2 = encodeURIComponent(fetchSteps);
+
+  var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
+
+  result2.entities.forEach((e) => {
+    processes.push({
+      id: e["sdkmessageprocessingstepid"],
+      name: e["p.name"],
+      status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
+      status: e["statecode"],
+      category_display: "Plugin",
+      category: -1,
+      message: e["m.name"],
+    });
+  });
+
+  processes.sort(function (a, b) {
+    var nameA = a.name.toLowerCase();
+    var nameB = b.name.toLowerCase();
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
+  });
+
   window.postMessage(
     {
       type: "GIVE_ME_FLOW_DEPENDENCIES",

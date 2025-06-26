@@ -11,6 +11,7 @@ const CATEGORIES = {
   BPF: 4,
   BR: 2,
   WF: 0,
+  PLUGIN: -1,
 };
 
 var checkboxActive;
@@ -18,10 +19,11 @@ var checkboxBR;
 var checkboxFlow;
 var checkboxBPF;
 var checkboxWF;
+var checkboxPL;
 
 var search;
 
-function getDependencies() {
+function initialize() {
   checkboxActive = document.querySelector("input[name=activeOnly]");
   checkboxActive.addEventListener("change", function () {
     filter();
@@ -47,10 +49,19 @@ function getDependencies() {
     filter();
   });
 
+  checkboxPL = document.querySelector("input[name=pl]");
+  checkboxPL.addEventListener("change", function () {
+    filter();
+  });
+
   search = document.querySelector("input[name=filter]");
   search.addEventListener("input", function () {
     filter();
   });
+}
+
+function getDependencies() {
+  initialize();
 
   chrome.runtime.sendMessage(
     {
@@ -80,17 +91,19 @@ function filter() {
   var checkedFlow = checkboxFlow.checked;
   var checkedBPF = checkboxBPF.checked;
   var checkedWF = checkboxWF.checked;
+  var checkedPL = checkboxPL.checked;
 
   var searchFilter = search.value.toLowerCase();
 
   var filtered = processes.filter(
     (p) =>
-      (!onlyActive || p.status == 1) &&
+      (!onlyActive || (p.category == CATEGORIES.PLUGIN && p.status == 0) || p.status == 1) &&
       p.name.toLowerCase().includes(searchFilter) &&
       ((checkedBPF && p.category == CATEGORIES.BPF) ||
         (checkedFlow && p.category == CATEGORIES.FLOW) ||
         (checkedBR && p.category == CATEGORIES.BR) ||
-        (checkedWF && p.category == CATEGORIES.WF))
+        (checkedWF && p.category == CATEGORIES.WF) ||
+        (checkedPL && p.category == CATEGORIES.PLUGIN))
   );
 
   renderDependencies(filtered);
@@ -112,7 +125,7 @@ function handleLink(category, id) {
     case CATEGORIES.BPF:
       return `${bpfLink}${id}`;
     default:
-      return "";
+      return "#";
   }
 }
 
@@ -126,6 +139,8 @@ function handleColor(category) {
       return "#dc6edc";
     case CATEGORIES.BPF:
       return "#406fda";
+    case CATEGORIES.PLUGIN:
+      return "#15ae19";
     default:
       return "";
   }
@@ -153,10 +168,16 @@ function renderDependencies(processes) {
                 `<tr>
                     <td style="width:10px">${processes.indexOf(e) + 1}</td>
                     <td>
-                        <a target="_blank" href=${handleLink(e.category, e.id)}>${e.name}</a>
+                    ${
+                      e.category == CATEGORIES.PLUGIN
+                        ? `<div style="color:blue">${e.name}</div>`
+                        : `<a target='_blank' href=${handleLink(e.category, e.id)}>${e.name}</a>`
+                    }
                     </td>
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
-                    <td style="color:${e.status == 1 ? "" : "grey"}">${e.status_display}</td>
+                    <td style="color:${e.category == CATEGORIES.PLUGIN ? (e.status == 0 ? "" : "grey") : e.status == 1 ? "" : "grey"}">
+                    ${e.category == CATEGORIES.PLUGIN ? (e.status == 0 ? "🟢" : "🟡") : e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
+                    </td>
                 </tr>`
             )
             .join("")}
