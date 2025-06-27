@@ -78,7 +78,11 @@ function getDependencies() {
       envId = response.envId;
 
       if (processes) renderDependencies(processes);
-      else getDependencies();
+      else {
+        setTimeout(() => {
+          getDependencies();
+        }, "1000");
+      }
     }
   );
 }
