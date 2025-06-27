@@ -172,7 +172,7 @@ function renderDependencies(processes) {
                     <td>
                     ${
                       e.category == CATEGORIES.PLUGIN
-                        ? `<div style="color:blue">${e.name}</div>`
+                        ? `<div style="color:blue">${e.name} ${e.pl_image ? "🖼️" : "⚡"}</div>`
                         : `<a target='_blank' href=${handleLink(e.category, e.id)}>${e.name}</a>`
                     }
                     </td>

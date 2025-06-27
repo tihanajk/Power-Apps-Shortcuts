@@ -393,15 +393,22 @@ async function listFlowDependencies() {
     <attribute name='filteringattributes' />
     <attribute name='plugintypeid' />
     <attribute name='statuscode' />
-    <filter>
-      <condition attribute='filteringattributes' operator='like' value='%${field}%' />
-    </filter>
     <link-entity name='plugintype' from='plugintypeid' to='plugintypeid' alias='p'>
       <attribute name='name' />
     </link-entity>
     <link-entity name='sdkmessage' from='sdkmessageid' to='sdkmessageid' alias='m'>
       <attribute name='name' />
     </link-entity>
+    <filter type='or'>
+      <link-entity name='sdkmessageprocessingstepimage' from='sdkmessageprocessingstepid' to='sdkmessageprocessingstepid' link-type='any' alias='i'>
+        <filter>
+          <condition attribute='attributes' operator='like' value='%${field}%' />
+        </filter>
+      </link-entity>
+      <filter>
+        <condition attribute='filteringattributes' operator='like' value='%${field}%' />
+      </filter>
+    </filter>
   </entity>
 </fetch>`;
 
@@ -418,6 +425,8 @@ async function listFlowDependencies() {
       category_display: "Plugin",
       category: -1,
       message: e["m.name"],
+
+      pl_image: !e["filteringattributes"]?.includes(field),
     });
   });
 
