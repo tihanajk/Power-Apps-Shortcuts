@@ -66,6 +66,9 @@
     },
     "add_wr_to_solution": {
       "description": "add webresource to solution"
+    },
+    "list_plugins": {
+      "description": "list plugin steps"
     }
   },
   "web_accessible_resources": [
@@ -85,7 +88,8 @@
         "securityTab/security.js",
         "fetchTab/fetch.js",
         "fieldsTab/fields.js",
-        "dependenciesTab/dependency.js"
+        "dependenciesTab/dependency.js",
+        "pluginsTab/plugins.js"
       ]
     }
   ]

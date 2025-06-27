@@ -1,0 +1,58 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 1rem;
+}
+
+#tree {
+  padding-top: 10px;
+  max-width: 500px;
+}
+
+.plugin-title {
+  font-weight: bold;
+  margin-top: 1rem;
+  cursor: pointer;
+
+  color: #2c3e50;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.plugin-title:hover {
+  background: #f0f0f0;
+}
+
+.steps {
+  list-style-type: none;
+  margin-left: 1.5rem;
+  padding-left: 0.5rem;
+  /* display: none; */
+}
+
+.steps.visible {
+  display: block;
+}
+
+.step {
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-top: 4px;
+  border-radius: 4px;
+  color: #34495e;
+}
+
+.step:hover {
+  background: #f2f2f2;
+}
+
+.filters {
+  margin-left: 1.5rem;
+  font-size: 0.9em;
+  color: #555;
+  display: none;
+}
+
+.filters.visible {
+  display: block;
+}

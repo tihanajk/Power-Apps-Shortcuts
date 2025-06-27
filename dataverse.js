@@ -392,9 +392,9 @@ async function listFlowDependencies() {
   <entity name='sdkmessageprocessingstep'>
     <attribute name='filteringattributes' />
     <attribute name='plugintypeid' />
-    <attribute name='statecode' />
+    <attribute name='statuscode' />
     <filter>
-      <condition attribute='filteringattributes' operator='like' value='${field}' />
+      <condition attribute='filteringattributes' operator='like' value='%${field}%' />
     </filter>
     <link-entity name='plugintype' from='plugintypeid' to='plugintypeid' alias='p'>
       <attribute name='name' />
@@ -413,8 +413,8 @@ async function listFlowDependencies() {
     processes.push({
       id: e["sdkmessageprocessingstepid"],
       name: e["p.name"],
-      status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
-      status: e["statecode"],
+      status_display: e["statuscode@OData.Community.Display.V1.FormattedValue"],
+      status: e["statuscode"],
       category_display: "Plugin",
       category: -1,
       message: e["m.name"],
@@ -489,6 +489,62 @@ async function addWebresurceToSolution() {
   alert(`✨ Successfully added "${webresourceName}" to "${solutionName}" ✨`);
 }
 
+async function listPlugins() {
+  var assemblyName = prompt("Assembly name", "Customer.CRM.Plugins");
+  if (!assemblyName) return;
+
+  var originalFetchXML = `<fetch>
+  <entity name='plugintype'>
+    <attribute name='name' />
+    <link-entity name='pluginassembly' from='pluginassemblyid' to='pluginassemblyid'>
+      <filter>
+        <condition attribute='name' operator='eq' value='${assemblyName}' />
+      </filter>
+    </link-entity>
+    <link-entity name='sdkmessageprocessingstep' from='plugintypeid' to='plugintypeid' link-type='outer' alias='s'>
+      <attribute name='name' />
+      <attribute name='filteringattributes' />
+      <attribute name='statuscode' />
+    </link-entity>
+  </entity>
+</fetch>`;
+  var escapedFetchXML = encodeURIComponent(originalFetchXML);
+
+  var result = await Xrm.WebApi.retrieveMultipleRecords("plugintype", "?fetchXml=" + escapedFetchXML);
+
+  var plugins = [];
+
+  result.entities.forEach((p) => {
+    var obj = plugins.find((o) => o.id == p.plugintypeid);
+    if (obj) {
+      var steps = obj?.steps;
+      steps.push({ name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"] });
+      plugins.find((o) => o.id == p.plugintypeid).steps = steps;
+    } else {
+      var steps = [];
+      if (p["s.name"]) {
+        steps.push({ name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"] });
+      }
+      plugins.push({
+        name: p.name,
+        id: p.plugintypeid,
+        steps: steps,
+      });
+    }
+  });
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_PLUGINS",
+      plugins: plugins,
+      assemblyName: assemblyName,
+      url: location.href.split("/main")[0],
+      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+    },
+    "*"
+  );
+}
+
 window.addEventListener("message", function (event) {
   if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
@@ -504,5 +560,7 @@ window.addEventListener("message", function (event) {
     listFlowDependencies();
   } else if (event.source === window && event.data.type === "ADD_WR_TO_SOL") {
     addWebresurceToSolution();
+  } else if (event.source === window && event.data.type === "LIST_PLUGINS") {
+    listPlugins();
   }
 });

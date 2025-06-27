@@ -20,7 +20,9 @@ var fields = [];
 var fieldName = "";
 var processes = [];
 var url = "";
-var openTab = false;
+
+var plugins = [];
+var assemblyName = "";
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
@@ -56,10 +58,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     processes = request.data?.processes;
     url = request.data.url;
     envId = request.data.envId;
-    openTab = request.data?.start || false;
-    chrome.tabs.create({ url: chrome.runtime.getURL("dependenciesTab/dependency.html") });
+
+    if (request.data?.start) chrome.tabs.create({ url: chrome.runtime.getURL("dependenciesTab/dependency.html") });
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
-    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId, openTab: openTab });
+    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
+  } else if (request.action === "showPlugins") {
+    plugins = request.data.plugins;
+    assemblyName = request.data.assemblyName;
+    chrome.tabs.create({ url: chrome.runtime.getURL("pluginsTab/plugins.html") });
+  } else if (request.action === "GET_PLUGINS") {
+    sendResponse({ plugins: plugins, assemblyName: assemblyName });
   }
 });
 
@@ -106,6 +114,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "add_wr_to_solution":
       sendMessageToTab("addWebresourceToSolution");
+      break;
+    case "list_plugins":
+      sendMessageToTab("listPlugins");
       break;
     default:
       break;

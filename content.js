@@ -52,6 +52,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     alert("copied " + guid + " to clipboard");
   } else if (request.message == "addWebresourceToSolution") {
     executeInScript("ADD_WR_TO_SOL", "dataverse.js");
+  } else if (request.message == "listPlugins") {
+    executeInScript("LIST_PLUGINS", "dataverse.js");
   }
 });
 
@@ -102,6 +104,11 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_FLOW_DEPENDENCIES") {
     chrome.runtime.sendMessage({
       action: "showFlowDependencies",
+      data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_PLUGINS") {
+    chrome.runtime.sendMessage({
+      action: "showPlugins",
       data: event.data,
     });
   }
