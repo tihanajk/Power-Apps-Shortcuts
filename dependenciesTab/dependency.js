@@ -77,10 +77,8 @@ function getDependencies() {
       url = response.url;
       envId = response.envId;
 
-      var openTab = response.openTab;
-      if (!openTab) {
-        renderDependencies(processes);
-      }
+      if (processes) renderDependencies(processes);
+      else getDependencies();
     }
   );
 }
@@ -175,8 +173,8 @@ function renderDependencies(processes) {
                     }
                     </td>
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
-                    <td style="color:${e.category == CATEGORIES.PLUGIN ? (e.status == 0 ? "" : "grey") : e.status == 1 ? "" : "grey"}">
-                    ${e.category == CATEGORIES.PLUGIN ? (e.status == 0 ? "🟢" : "🟡") : e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
+                    <td style="color:${e.status == 1 ? "" : "grey"}">
+                    ${e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
                     </td>
                 </tr>`
             )
