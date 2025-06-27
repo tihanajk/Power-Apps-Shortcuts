@@ -1,9 +1,20 @@
 document.addEventListener("DOMContentLoaded", function () {
   getPlugins();
+
+  search = document.querySelector("input[name=filter]");
+  search.addEventListener("input", function () {
+    filterResults();
+  });
+
+  var toggle = document.getElementById("expandCheck");
+  toggle.addEventListener("change", function () {
+    toggleTree();
+  });
 });
 
 var search;
 var plugins = [];
+
 function initialize() {
   document.querySelectorAll(".plugin-title").forEach((title) => {
     title.addEventListener("click", () => {
@@ -14,14 +25,9 @@ function initialize() {
 
   document.querySelectorAll(".step").forEach((step) => {
     step.addEventListener("click", () => {
-      const filters = step.nextElementSibling;
-      filters.classList.toggle("visible");
+      const images = step.nextElementSibling;
+      images.classList.toggle("visible");
     });
-  });
-
-  search = document.querySelector("input[name=filter]");
-  search.addEventListener("input", function () {
-    filterResults();
   });
 }
 
@@ -61,38 +67,66 @@ function filterResults() {
 
   filtered = filtered.filter((p) => p != null);
   renderPlugins(filtered);
+  initialize();
 }
 
 function renderPlugins(plugins) {
   var content = "";
-  content += `<div>count: ${plugins.length}</div>`;
+  content += `<div style="margin-left:10px; margin-bottom:10px">count: ${plugins.length}</div>`;
 
   var tree =
     plugins &&
     plugins
       .map(
         (p) =>
-          `<h2 class="plugin-title">${p?.name}</h2>
-    <ul class="steps">
-    ${
-      p.steps.length > 0
-        ? p.steps
-            .map(
-              (s) =>
-                `<li>
-            <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}                
-            ${s.filter ? `<div style="margin-left:20px">🔍 filters: ${s.filter}</div>` : ""}
-            </h3>        
-        </li>`
-            )
-            .join("")
-        : "no steps found"
-    }    
-    </ul>`
+          `<div class="plugin-block">
+            <h2 class="plugin-title">${p?.name}</h2>
+              <ul class="steps">
+              ${
+                p.steps.length > 0
+                  ? p.steps
+                      .map(
+                        (s) =>
+                          `<li>
+                            <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}                
+                            ${s.filter ? `<div style="margin-left:20px; overflow-wrap: break-word;">🔍 filters: ${s.filter}</div>` : ""}
+                            </h3>
+                            <ul class="images">
+                            ${s.image.name ? `<li><h3>🖼️ image: ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
+                            </ul>
+                          </li>`
+                      )
+                      .join("")
+                  : "no steps found"
+              }    
+              </ul>
+          </div>`
       )
       .join("");
 
   content += tree;
 
   document.getElementById("tree").innerHTML = content;
+}
+
+function toggleTree() {
+  var toggleOn = document.getElementById("expandCheck").checked;
+
+  document.querySelectorAll(".plugin-title").forEach((title) => {
+    const steps = title.nextElementSibling;
+    if (toggleOn) {
+      steps.classList.add("visible");
+    } else {
+      steps.classList.remove("visible");
+    }
+  });
+
+  document.querySelectorAll(".step").forEach((step) => {
+    const images = step.nextElementSibling;
+    if (toggleOn) {
+      images.classList.add("visible");
+    } else {
+      images.classList.remove("visible");
+    }
+  });
 }
