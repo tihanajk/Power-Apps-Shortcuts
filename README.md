@@ -19,3 +19,5 @@ This is my configuration:
 - Alt+Shift+I - all fields
 - Alt+Shift+D - get BR and flow dependencies of field
 - Alt+Shift+H - copy record guid to clipboard
+- Alt+Shift+A - add webresource to solution
+- Alt+Shift+S - list plugin steps
