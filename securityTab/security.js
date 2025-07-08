@@ -8,8 +8,6 @@ function getSecurity() {
       action: "GET_SECURITY",
     },
     function (response) {
-      console.log(response);
-
       var secRolesLink = `https://admin.powerplatform.microsoft.com/settingredirect/${response.orgId}/securityroles`;
       document.getElementById("sec_link").href = secRolesLink;
 

@@ -22,8 +22,6 @@ function getFieldsResults() {
       action: "GET_ALL_FIELDS",
     },
     function (response) {
-      console.log(response);
-
       document.getElementById("entity-name").innerHTML = response.entityName.toUpperCase();
 
       allFields = response.fields;

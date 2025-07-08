@@ -37,7 +37,6 @@ function getPlugins() {
       action: "GET_PLUGINS",
     },
     function (response) {
-      console.log(response);
       var assemblyName = response.assemblyName;
 
       document.getElementById("assembly-name").innerHTML = assemblyName;

@@ -8,7 +8,6 @@ function getFetchResults() {
       action: "GET_FETCH",
     },
     function (response) {
-      console.log(response);
       var content = renderResults(response.fetchData, response.fetchEntityName);
 
       document.getElementById("fetch-content").innerHTML = content;
@@ -32,7 +31,6 @@ function renderResults(fetchData, entityName) {
     if (key == "@odata.etag") continue;
     columns.push(key);
   }
-  console.log(columns);
 
   var table = `
   <div class="table-container">

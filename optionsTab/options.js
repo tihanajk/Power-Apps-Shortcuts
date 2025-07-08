@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
       action: "LOAD_OPTIONS",
     },
     function (response) {
-      console.log(response);
       allOptions = response.options;
 
       renderTable(allOptions);

@@ -1,3 +1,93 @@
+var didGodMode = false;
+
+function god() {
+  if (didGodMode) return;
+
+  if (typeof Xrm !== "undefined" && Xrm.Page) {
+    const selectedTab = Xrm.Page.ui.tabs.get((x) => x.getDisplayState() === "expanded")[0];
+
+    Xrm.Page.data.entity.attributes.forEach((a) => a.setRequiredLevel("none"));
+
+    Xrm.Page.ui.controls.forEach((c) => {
+      c.setVisible(true);
+      if (c.setDisabled) {
+        c.setDisabled(false);
+      }
+      if (c.clearNotification) {
+        c.clearNotification();
+      }
+    });
+
+    Xrm.Page.ui.tabs.forEach((t) => {
+      t.setVisible(true);
+      t.setDisplayState("expanded");
+      t.sections.forEach((s) => s.setVisible(true));
+    });
+
+    if (selectedTab.setFocus) {
+      selectedTab.setDisplayState("expanded");
+      selectedTab.setFocus();
+    }
+
+    didGodMode = true;
+  }
+}
+
+var located = false;
+
+function loc() {
+  if (located) return;
+  if (typeof Xrm !== "undefined" && Xrm.Page) {
+    var field = prompt("Locate field by name");
+
+    if (field == null || field == "") {
+      return;
+    }
+
+    var header = false;
+    Xrm.Page.ui.headerSection.controls.get().forEach((c) => {
+      var attr = c?.getAttribute();
+      var name = attr?.getName();
+
+      if (name == field) header = true;
+    });
+
+    var tabs = [];
+    var sections = [];
+
+    Xrm.Page.ui.tabs.get().forEach((t) =>
+      t.sections.get().forEach((s) =>
+        s.controls.get().forEach((c) => {
+          if (typeof c.getAttribute != "function" || c.getControlType() == "formcomponent") return;
+
+          var attr = c?.getAttribute();
+
+          var name = attr?.getName();
+
+          if (name == field) {
+            tabs.push(`${t?.getLabel()}  (${t?.getName()})`);
+            sections.push(`${s?.getLabel()}  (${s?.getName()})`);
+          }
+        })
+      )
+    );
+
+    var message = header ? "✨ Field found in header ✨" : "";
+    if (tabs && sections) {
+      if (header) message += "\n";
+      tabs.forEach((tab, i) => {
+        var section = sections[i];
+        message += `🚀 Tab: ${tab}\nSection: ${section}\n`;
+      });
+    }
+
+    if (message != "") alert(message);
+    else alert("⚠️ Field not found");
+
+    located = true;
+  }
+}
+
 async function getOptions() {
   var options = [];
   if (typeof Xrm !== "undefined" && Xrm.Page) {
@@ -283,7 +373,6 @@ async function updateField() {
 }
 
 async function retrieveRecords() {
-  console.log("retrieveRecords");
   var entityName = prompt("Enter entity name for fetchXml");
   var fetchXml = prompt("Enter fetchXml (or '*' for all)");
 
@@ -568,7 +657,11 @@ async function listPlugins() {
 }
 
 window.addEventListener("message", function (event) {
-  if (event.source === window && event.data.type === "SHOW_OPTIONS") {
+  if (event.source === window && event.data.type === "YOU_HAVE_THE_SIGHT") {
+    god();
+  } else if (event.source === window && event.data.type === "LOCATE_ME") {
+    loc();
+  } else if (event.source === window && event.data.type === "SHOW_OPTIONS") {
     getOptions();
   } else if (event.source === window && event.data.type === "LIST_SECURITY_ROLES") {
     listSecurityRoles();

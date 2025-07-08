@@ -73,7 +73,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["godMode.js", "locate.js", "dataverse.js"],
+      "resources": ["dataverse.js"],
       "matches": ["<all_urls>"]
     }
   ],

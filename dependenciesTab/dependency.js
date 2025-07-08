@@ -68,7 +68,6 @@ function getDependencies() {
       action: "GET_PROCESS_DEPENDENCIES",
     },
     function (response) {
-      console.log(response);
       var fieldName = response.fieldName;
 
       document.getElementById("field-name").innerHTML = fieldName;

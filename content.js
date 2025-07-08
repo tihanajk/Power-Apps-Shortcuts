@@ -1,7 +1,7 @@
 //add listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.message === "triggerGM") {
-    executeInScript("YOU_HAVE_THE_SIGHT", "godMode.js");
+    executeInScript("YOU_HAVE_THE_SIGHT", "dataverse.js");
   } else if (request.message === "ribbonDebug") {
     //tab url
     var url = location.href;
@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     var url = location.href.split("&pagetype")[0];
     window.open(`${url}&pagetype=advancedfind`, "_blank");
   } else if (request.message === "locateOnForm") {
-    executeInScript("LOCATE_ME", "locate.js");
+    executeInScript("LOCATE_ME", "dataverse.js");
   } else if (request.message === "openList") {
     var entityName = prompt("Entity name for view?");
     if (!entityName) return;
