@@ -1,24 +1,32 @@
-# Power Apps Shortcuts
+# 🔥 Power Apps Shortcuts
 
-## Make your life easier with Power Apps Shortcuts!
+## Supercharge your Power Apps experience with custom keyboard shortcuts!
 
-First thing you have to do is configure which shortcuts you want for each action.
+Power Apps Shortcuts is a productivity booster that helps you streamline common tasks with just a few keystrokes. No more endless clicking — configure your shortcuts once and get things done faster.
 
-This is my configuration:
+### ⚙️ How to Use
 
-- Alt+Shift+F - Open advanced find
-- Alt+Shift+G - Enable god mode
-- Alt+Shift+R - List security roles
-- Alt+Shift+L - Locate field on form
-- Alt+Shift+O - Open entity list
-- Alt+Shift+U - Open record
-- Alt+Shift+M - Quick field update
-- Alt+Shift+C - Toggle ribbon debug
-- Alt+Shift+P - See option sets (multiselect and boolean too)
-- Alt+Shift+X - Execute retrieve with fetchXml
-- Alt+Shift+I - Display all fields
-- Alt+Shift+D - List process dependencies of field (flow, plugin, WF, BR, BPF)
-- Alt+Shift+H - Copy record guid to clipboard
-- Alt+Shift+A - Add webresource to a solution
-- Alt+Shift+S - List plugin steps
-- Alt+Shift+E - List script events on the form
+Start by setting up which keyboard shortcuts trigger which actions. Here's an example configuration to get you started:
+
+| Shortcut      | Action Description                                             |
+| ------------- | -------------------------------------------------------------- |
+| `Alt+Shift+F` | Open Advanced Find                                             |
+| `Alt+Shift+G` | Enable God Mode                                                |
+| `Alt+Shift+R` | List Security Roles                                            |
+| `Alt+Shift+L` | Locate Field on Form                                           |
+| `Alt+Shift+O` | Open Entity List                                               |
+| `Alt+Shift+U` | Open Record                                                    |
+| `Alt+Shift+M` | Quick Field Update                                             |
+| `Alt+Shift+C` | Toggle Ribbon Debug                                            |
+| `Alt+Shift+P` | View Option Sets (including multiselect & boolean)             |
+| `Alt+Shift+X` | Execute Retrieve with FetchXML                                 |
+| `Alt+Shift+I` | Display All Fields                                             |
+| `Alt+Shift+D` | List Field Dependencies (Flows, Plugins, Workflows, BRs, BPFs) |
+| `Alt+Shift+H` | Copy Record GUID to Clipboard                                  |
+| `Alt+Shift+A` | Add Web Resource to a Solution                                 |
+| `Alt+Shift+S` | List Plugin Steps                                              |
+| `Alt+Shift+E` | List Script Events on the Form                                 |
+
+---
+
+Customize it to fit your workflow and make Power Apps work for _you_. 🚀
