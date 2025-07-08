@@ -6,18 +6,19 @@ First thing you have to do is configure which shortcuts you want for each action
 
 This is my configuration:
 
-- Alt+Shift+F - open advanced find
-- Alt+Shift+G - god mode
-- Alt+Shift+R - list security roles
-- Alt+Shift+L - locate on form
-- Alt+Shift+O - open entity list
-- Alt+Shift+U - open record
-- Alt+Shift+M - quick field update
-- Alt+Shift+C - toggle ribbon debug
-- Alt+Shift+P - see option sets (multiselect and boolean too)
-- Alt+Shift+X - execute retrieve with fetchXml
-- Alt+Shift+I - all fields
-- Alt+Shift+D - get BR and flow dependencies of field
-- Alt+Shift+H - copy record guid to clipboard
-- Alt+Shift+A - add webresource to solution
-- Alt+Shift+S - list plugin steps
+- Alt+Shift+F - Open advanced find
+- Alt+Shift+G - Enable god mode
+- Alt+Shift+R - List security roles
+- Alt+Shift+L - Locate field on form
+- Alt+Shift+O - Open entity list
+- Alt+Shift+U - Open record
+- Alt+Shift+M - Quick field update
+- Alt+Shift+C - Toggle ribbon debug
+- Alt+Shift+P - See option sets (multiselect and boolean too)
+- Alt+Shift+X - Execute retrieve with fetchXml
+- Alt+Shift+I - Display all fields
+- Alt+Shift+D - List process dependencies of field (flow, plugin, WF, BR, BPF)
+- Alt+Shift+H - Copy record guid to clipboard
+- Alt+Shift+A - Add webresource to a solution
+- Alt+Shift+S - List plugin steps
+- Alt+Shift+E - List script events on the form
