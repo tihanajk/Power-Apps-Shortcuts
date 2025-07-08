@@ -1,6 +1,70 @@
+var search;
+
+var libraries = [];
+var events = [];
+
 document.addEventListener("DOMContentLoaded", function () {
   getEventsResults();
+  search = document.querySelector("input[name=filter]");
+  search.addEventListener("input", function () {
+    filterData();
+  });
 });
+
+function filterData() {
+  var searchTerm = search.value.toLowerCase();
+
+  var filteredLibraries = [];
+
+  for (var item of libraries) {
+    for (var key in item) {
+      var value = item[key]?.toLowerCase();
+      if (value?.includes(searchTerm)) {
+        filteredLibraries.push(item);
+        break;
+      }
+    }
+  }
+
+  handleLibraries(filteredLibraries);
+
+  var filteredEvents = [];
+
+  for (var item of events) {
+    for (var key in item) {
+      if (key == "handlers") {
+        var handlers = item[key];
+        var found = false;
+
+        var handlerItems = [];
+        for (var handler of handlers) {
+          for (var k in handler) {
+            var value = handler[k]?.toLowerCase();
+            if (value.includes(searchTerm)) {
+              handlerItems.push(handler);
+              if (!found) found = true;
+              break;
+            }
+          }
+        }
+
+        if (found) {
+          item["handlers"] = handlerItems;
+          filteredEvents.push(item);
+          break;
+        }
+      } else {
+        var value = item[key]?.toLowerCase();
+        if (value?.includes(searchTerm)) {
+          filteredEvents.push(item);
+          break;
+        }
+      }
+    }
+  }
+
+  handleEvents(filteredEvents);
+}
 
 function getEventsResults() {
   chrome.runtime.sendMessage(
@@ -14,8 +78,11 @@ function getEventsResults() {
 
       document.getElementById("form-name").innerHTML = data.name;
 
-      handleLibraries(data.libraries);
-      handleEvents(data.events);
+      libraries = data.libraries;
+      events = data.events;
+
+      handleLibraries(libraries);
+      handleEvents(events);
     }
   );
 }
@@ -39,7 +106,7 @@ function handleEvents(events) {
               (e) =>
                 `<tr>
             <td>${e.name}</td>
-            <td>${e.attribute}</td>
+            <td>${e.attribute ?? ""}</td>
             <td> ${makeMiniTable(e.handlers)}</td>
             </tr>`
             )
@@ -82,7 +149,9 @@ function makeMiniTable(handlers) {
 function handleLibraries(libraries) {
   var content = "<h2>Libraries</h2>";
 
-  var table = `
+  if (libraries.length == 0) content += "No data";
+  else {
+    var table = `
     <div class="table-container">
     <div class="table-wrapper">
       <table id="main">                        
@@ -99,7 +168,8 @@ function handleLibraries(libraries) {
     </div>
   </div>`;
 
-  content += table;
+    content += table;
+  }
 
   document.getElementById("libraries-content").innerHTML = content;
 }

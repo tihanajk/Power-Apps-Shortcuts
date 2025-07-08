@@ -684,7 +684,7 @@ async function listEvents() {
     handlers: Array.from(ev.querySelectorAll("Handler")).map((handler) => ({
       functionName: handler.getAttribute("functionName"),
       libraryName: handler.getAttribute("libraryName"),
-      enabled: handler.getAttribute("enabled") === "true",
+      enabled: handler.getAttribute("enabled"),
     })),
   }));
 
