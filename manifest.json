@@ -17,61 +17,61 @@
   },
   "commands": {
     "god_mode": {
-      "description": "god mode"
+      "description": "Enable god mode"
     },
     "ribbon_debug": {
       "suggested_key": {
         "default": "Shift+Alt+C"
       },
-      "description": "ribbon debug"
+      "description": "Toggle ribbon debug"
     },
     "advanced_find": {
       "suggested_key": {
         "default": "Shift+Alt+F"
       },
-      "description": "advanced find"
+      "description": "Open advanced find"
     },
     "locate_on_form": {
       "suggested_key": {
         "default": "Shift+Alt+L"
       },
-      "description": "locate on form"
+      "description": "Locate field on the form"
     },
     "open_list": {
-      "description": "open entity list"
+      "description": "Open entity list"
     },
     "open_record": {
-      "description": "open record"
+      "description": "Open record"
     },
     "see_optionsets": {
-      "description": "see optionsets"
+      "description": "See optionset values"
     },
     "list_securityroles": {
-      "description": "list security roles"
+      "description": "List security roles"
     },
     "quick_field_update": {
-      "description": "quick field update"
+      "description": "Quick field update"
     },
     "execute_fetchxml": {
-      "description": "execute fetchxml"
+      "description": "Execute fetchXML"
     },
     "all_fields": {
-      "description": "all fields"
+      "description": "Display all fields"
     },
     "flow_dependency_check": {
-      "description": "process dependency checker"
+      "description": "List process dependencies"
     },
     "copy_guid": {
-      "description": "copy record guid"
+      "description": "Copy record guid to clipboard"
     },
     "add_wr_to_solution": {
-      "description": "add webresource to solution"
+      "description": "Add webresource to a solution"
     },
     "list_plugins": {
-      "description": "list plugin steps"
+      "description": "List plugin steps"
     },
     "list_script_events": {
-      "description": "list all script events on the form"
+      "description": "List all script events on the form"
     }
   },
   "web_accessible_resources": [
