@@ -89,7 +89,9 @@ function getEventsResults() {
 function handleEvents(events) {
   var content = "<h2>Events</h2>";
 
-  var table = `
+  if (events.length == 0) content += "No data";
+  else {
+    var table = `
     <div class="table-container">
     <div class="table-wrapper">
       <table id="main">                        
@@ -116,8 +118,8 @@ function handleEvents(events) {
     </div>
   </div>`;
 
-  content += table;
-
+    content += table;
+  }
   document.getElementById("events-content").innerHTML = content;
 }
 
