@@ -69,6 +69,9 @@
     },
     "list_plugins": {
       "description": "list plugin steps"
+    },
+    "list_script_events": {
+      "description": "list all script events on the form"
     }
   },
   "web_accessible_resources": [
@@ -89,7 +92,8 @@
         "fetchTab/fetch.js",
         "fieldsTab/fields.js",
         "dependenciesTab/dependency.js",
-        "pluginsTab/plugins.js"
+        "pluginsTab/plugins.js",
+        "eventsTab/events.js"
       ]
     }
   ]

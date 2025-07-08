@@ -539,7 +539,7 @@ async function listFlowDependencies() {
   );
 }
 
-async function addWebresurceToSolution() {
+async function addWebresourceToSolution() {
   var solutionName = prompt("Enter logical name of your solution");
   if (!solutionName) return;
 
@@ -656,26 +656,66 @@ async function listPlugins() {
   );
 }
 
+async function listEvents() {
+  var formId = Xrm.Page.ui.formSelector._formId.guid;
+
+  var result = await Xrm.WebApi.retrieveRecord("systemform", formId, "?$select=formxml,objecttypecode,name");
+
+  var formXml = result["formxml"];
+
+  var entity = result["objecttypecode@OData.Community.Display.V1.FormattedValue"];
+  var formName = result["name"];
+
+  var parser = new DOMParser();
+
+  var xml = parser.parseFromString(formXml, "text/xml");
+
+  var libraryNodes = xml.querySelectorAll("formLibraries > Library");
+  var libraries = Array.from(libraryNodes).map((lib) => ({
+    name: lib.getAttribute("name"),
+    libraryUniqueId: lib.getAttribute("libraryUniqueId"),
+  }));
+
+  // Extract events
+  var eventNodes = xml.querySelectorAll("events > event");
+  var events = Array.from(eventNodes).map((ev) => ({
+    name: ev.getAttribute("name"),
+    attribute: ev.getAttribute("attribute"),
+    handlers: Array.from(ev.querySelectorAll("Handler")).map((handler) => ({
+      functionName: handler.getAttribute("functionName"),
+      libraryName: handler.getAttribute("libraryName"),
+      enabled: handler.getAttribute("enabled") === "true",
+    })),
+  }));
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_EVENTS",
+      libraries: libraries,
+      events: events,
+      name: entity + " - " + formName,
+    },
+    "*"
+  );
+}
+
 window.addEventListener("message", function (event) {
-  if (event.source === window && event.data.type === "YOU_HAVE_THE_SIGHT") {
-    god();
-  } else if (event.source === window && event.data.type === "LOCATE_ME") {
-    loc();
-  } else if (event.source === window && event.data.type === "SHOW_OPTIONS") {
-    getOptions();
-  } else if (event.source === window && event.data.type === "LIST_SECURITY_ROLES") {
-    listSecurityRoles();
-  } else if (event.source === window && event.data.type === "QUICK_FIELD_UPDATE") {
-    updateField();
-  } else if (event.source === window && event.data.type === "EXECUTE_FETCH_XML") {
-    retrieveRecords();
-  } else if (event.source === window && event.data.type === "SHOW_ALL_FIELDS") {
-    getAllFields();
-  } else if (event.source === window && event.data.type === "GET_FLOW_DEPENDENCIES") {
-    listFlowDependencies();
-  } else if (event.source === window && event.data.type === "ADD_WR_TO_SOL") {
-    addWebresurceToSolution();
-  } else if (event.source === window && event.data.type === "LIST_PLUGINS") {
-    listPlugins();
-  }
+  if (event.source !== window || !event.data?.type) return;
+
+  const handlers = {
+    YOU_HAVE_THE_SIGHT: god,
+    LOCATE_ME: loc,
+    SHOW_OPTIONS: getOptions,
+    LIST_SECURITY_ROLES: listSecurityRoles,
+    QUICK_FIELD_UPDATE: updateField,
+    EXECUTE_FETCH_XML: retrieveRecords,
+    SHOW_ALL_FIELDS: getAllFields,
+    GET_FLOW_DEPENDENCIES: listFlowDependencies,
+    ADD_WR_TO_SOL: addWebresourceToSolution,
+    LIST_PLUGINS: listPlugins,
+    LIST_EVENTS: listEvents,
+  };
+
+  const handler = handlers[event.data.type];
+  if (handler) handler();
 });

@@ -1,59 +1,87 @@
 //add listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message === "triggerGM") {
-    executeInScript("YOU_HAVE_THE_SIGHT", "dataverse.js");
-  } else if (request.message === "ribbonDebug") {
-    //tab url
-    var url = location.href;
+  const execute = (cmd) => executeInScript(cmd, "dataverse.js");
+  const baseUrl = () => location.href.split("&pagetype")[0];
 
-    if (url.includes("&ribbondebug=true")) url = url.replace("&ribbondebug=true", "");
-    else url = url + "&ribbondebug=true";
+  switch (request.message) {
+    case "triggerGM":
+      execute("YOU_HAVE_THE_SIGHT");
+      break;
 
-    window.location.href = url;
-  } else if (request.message === "advancedFind") {
-    var url = location.href.split("&pagetype")[0];
-    window.open(`${url}&pagetype=advancedfind`, "_blank");
-  } else if (request.message === "locateOnForm") {
-    executeInScript("LOCATE_ME", "dataverse.js");
-  } else if (request.message === "openList") {
-    var entityName = prompt("Entity name for view?");
-    if (!entityName) return;
+    case "ribbonDebug": {
+      let url = location.href;
+      url = url.includes("&ribbondebug=true") ? url.replace("&ribbondebug=true", "") : url + "&ribbondebug=true";
+      window.location.href = url;
+      break;
+    }
 
-    var url = location.href.split("&pagetype")[0];
+    case "advancedFind":
+      window.open(`${baseUrl()}&pagetype=advancedfind`, "_blank");
+      break;
 
-    window.open(`${url}&pagetype=entitylist&etn=${entityName}`, "_blank");
-  } else if (request.message === "openRecord") {
-    var entityName = prompt("Entity name of record?");
-    if (!entityName) return;
-    var recordId = prompt(`Id of ${entityName}?`);
-    if (!recordId) return;
+    case "locateOnForm":
+      execute("LOCATE_ME");
+      break;
 
-    var url = location.href.split("&pagetype")[0];
+    case "openList": {
+      const entityName = prompt("Entity name for view?");
+      if (!entityName) return;
+      window.open(`${baseUrl()}&pagetype=entitylist&etn=${entityName}`, "_blank");
+      break;
+    }
 
-    window.open(`${url}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`, "_blank");
-  } else if (request.message === "seeOptions") {
-    executeInScript("SHOW_OPTIONS", "dataverse.js");
-  } else if (request.message == "listSecurityRoles") {
-    executeInScript("LIST_SECURITY_ROLES", "dataverse.js");
-  } else if (request.message == "quickFieldUpdate") {
-    executeInScript("QUICK_FIELD_UPDATE", "dataverse.js");
-  } else if (request.message == "executeFetchXml") {
-    executeInScript("EXECUTE_FETCH_XML", "dataverse.js");
-  } else if (request.message == "allFields") {
-    executeInScript("SHOW_ALL_FIELDS", "dataverse.js");
-  } else if (request.message == "flowDependencyCheck") {
-    executeInScript("GET_FLOW_DEPENDENCIES", "dataverse.js");
-  } else if (request.message == "copyGuid") {
-    var url = location.href.split("&id=")[1];
-    var guid = url.split("&")[0];
+    case "openRecord": {
+      const entityName = prompt("Entity name of record?");
+      if (!entityName) return;
+      const recordId = prompt(`Id of ${entityName}?`);
+      if (!recordId) return;
+      window.open(`${baseUrl()}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`, "_blank");
+      break;
+    }
 
-    navigator.clipboard.writeText(guid);
+    case "seeOptions":
+      execute("SHOW_OPTIONS");
+      break;
 
-    alert("copied " + guid + " to clipboard");
-  } else if (request.message == "addWebresourceToSolution") {
-    executeInScript("ADD_WR_TO_SOL", "dataverse.js");
-  } else if (request.message == "listPlugins") {
-    executeInScript("LIST_PLUGINS", "dataverse.js");
+    case "listSecurityRoles":
+      execute("LIST_SECURITY_ROLES");
+      break;
+
+    case "quickFieldUpdate":
+      execute("QUICK_FIELD_UPDATE");
+      break;
+
+    case "executeFetchXml":
+      execute("EXECUTE_FETCH_XML");
+      break;
+
+    case "allFields":
+      execute("SHOW_ALL_FIELDS");
+      break;
+
+    case "flowDependencyCheck":
+      execute("GET_FLOW_DEPENDENCIES");
+      break;
+
+    case "copyGuid": {
+      const url = location.href.split("&id=")[1];
+      const guid = url.split("&")[0];
+      navigator.clipboard.writeText(guid);
+      alert("copied " + guid + " to clipboard");
+      break;
+    }
+
+    case "addWebresourceToSolution":
+      execute("ADD_WR_TO_SOL");
+      break;
+
+    case "listPlugins":
+      execute("LIST_PLUGINS");
+      break;
+
+    case "listEvents":
+      execute("LIST_EVENTS");
+      break;
   }
 });
 
@@ -109,6 +137,11 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_PLUGINS") {
     chrome.runtime.sendMessage({
       action: "showPlugins",
+      data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_EVENTS") {
+    chrome.runtime.sendMessage({
+      action: "showEvents",
       data: event.data,
     });
   }

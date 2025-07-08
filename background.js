@@ -24,6 +24,8 @@ var url = "";
 var plugins = [];
 var assemblyName = "";
 
+var eventData;
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
@@ -68,6 +70,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: chrome.runtime.getURL("pluginsTab/plugins.html") });
   } else if (request.action === "GET_PLUGINS") {
     sendResponse({ plugins: plugins, assemblyName: assemblyName });
+  } else if (request.action == "showEvents") {
+    eventData = request.data;
+    chrome.tabs.create({ url: chrome.runtime.getURL("eventsTab/events.html") });
+  } else if (request.action == "GET_FORM_EVENTS") {
+    sendResponse({ data: eventData });
   }
 });
 
@@ -117,6 +124,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "list_plugins":
       sendMessageToTab("listPlugins");
+      break;
+    case "list_script_events":
+      sendMessageToTab("listEvents");
       break;
     default:
       break;
