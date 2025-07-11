@@ -1,8 +1,4 @@
-var didGodMode = false;
-
 function god() {
-  if (didGodMode) return;
-
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     const selectedTab = Xrm.Page.ui.tabs.get((x) => x.getDisplayState() === "expanded")[0];
 
@@ -28,15 +24,10 @@ function god() {
       selectedTab.setDisplayState("expanded");
       selectedTab.setFocus();
     }
-
-    didGodMode = true;
   }
 }
 
-var located = false;
-
 function loc() {
-  if (located) return;
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = prompt("Locate field by name");
 
@@ -83,8 +74,6 @@ function loc() {
 
     if (message != "") alert(message);
     else alert("⚠️ Field not found");
-
-    located = true;
   }
 }
 
