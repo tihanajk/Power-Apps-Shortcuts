@@ -76,7 +76,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["dataverse.js"],
+      "resources": ["dataverse.js", "xlsx.full.min.js"],
       "matches": ["<all_urls>"]
     }
   ],

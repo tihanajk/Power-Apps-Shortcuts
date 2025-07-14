@@ -8,7 +8,10 @@
 
   <body>
     <div id="header">
-      <h1 id="field-name"></h1>
+      <div style="display: flex; justify-content: space-between">
+        <h1 id="field-name"></h1>
+        <button type="button" style="height: 30px; color: white; background-color: #6a7e9d" id="downloadBtn">Export to excel</button>
+      </div>
       <input id="search" placeholder="Search" name="filter" type="text" style="width: 200px; height: 20px" />
     </div>
     <div id="filters">
@@ -34,6 +37,7 @@
       <h2 style="padding: 10px" id="loading">Loading dependencies...</h2>
     </div>
 
+    <script src="../xlsx.full.min.js"></script>
     <script src="dependency.js"></script>
   </body>
 </html>

@@ -58,6 +58,17 @@ function initialize() {
   search.addEventListener("input", function () {
     filter();
   });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+}
+
+function downloadData() {
+  var table = document.getElementById("main");
+
+  var field = document.getElementById("field-name").innerHTML;
+
+  const workbook = XLSX.utils.table_to_book(table, { sheet: field });
+  XLSX.writeFile(workbook, `dependencies.xlsx`);
 }
 
 function getDependencies() {
