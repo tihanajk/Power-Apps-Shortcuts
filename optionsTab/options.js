@@ -29,7 +29,18 @@ document.addEventListener("DOMContentLoaded", function () {
   checkboxBool.addEventListener("change", function () {
     filterTable();
   });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
 });
+
+function downloadData() {
+  var mainTable = document.getElementById("big-table");
+
+  var tempTable = helper.handleComplexTable(mainTable, ["Field"], ["Label", "Value", "State"]);
+
+  const workbook = XLSX.utils.table_to_book(tempTable, { sheet: "sheet1" });
+  XLSX.writeFile(workbook, `optionsetvalues.xlsx`);
+}
 
 function renderTable(options) {
   var content = `${
