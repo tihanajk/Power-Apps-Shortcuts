@@ -9,7 +9,29 @@ document.addEventListener("DOMContentLoaded", function () {
   search.addEventListener("input", function () {
     filterData();
   });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
 });
+
+function downloadData() {
+  // libraries
+  var table = document.getElementById("main");
+  var ws1 = XLSX.utils.table_to_sheet(table);
+
+  // events
+  var mainTable = document.getElementById("main-events");
+
+  var columns = ["Event Name", "Attribute", "Library Name", "Function Name", "Enabled"];
+
+  var tempTable = helper.handleComplexTable(mainTable, columns);
+
+  var ws2 = XLSX.utils.table_to_sheet(tempTable);
+
+  var workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, ws1, "Libraries");
+  XLSX.utils.book_append_sheet(workbook, ws2, "Events");
+  XLSX.writeFile(workbook, `events.xlsx`);
+}
 
 function filterData() {
   var searchTerm = search.value.toLowerCase();
@@ -94,7 +116,7 @@ function handleEvents(events) {
     var table = `
     <div class="table-container">
     <div class="table-wrapper">
-      <table id="main">                        
+      <table id="main-events">                        
         <thead>
           <tr>
             <th>Name</th>
