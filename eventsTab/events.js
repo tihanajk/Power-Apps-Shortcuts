@@ -21,9 +21,7 @@ function downloadData() {
   // events
   var mainTable = document.getElementById("main-events");
 
-  var columns = ["Event Name", "Attribute", "Library Name", "Function Name", "Enabled"];
-
-  var tempTable = helper.handleComplexTable(mainTable, columns);
+  var tempTable = helper.handleComplexTable(mainTable, ["Event Name", "Attribute"], ["Library Name", "Function Name", "Enabled"]);
 
   var ws2 = XLSX.utils.table_to_sheet(tempTable);
 
