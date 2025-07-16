@@ -4,4 +4,4 @@
 - [x] add webresource to current solution
 - [x] dependency check -> add plugin triggers
 - [x] list plugin steps?
-- [ ] list all script events on form
+- [x] list all script events on form
