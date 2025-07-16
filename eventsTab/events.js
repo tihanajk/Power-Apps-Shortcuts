@@ -21,7 +21,7 @@ function downloadData() {
   // events
   var mainTable = document.getElementById("main-events");
 
-  var tempTable = helper.handleComplexTable(mainTable, ["Event Name", "Attribute"], ["Library Name", "Function Name", "Enabled"]);
+  var tempTable = helper.handleComplexTable(mainTable, ["Event Name", "Attribute/Control"], ["Library Name", "Function Name", "Enabled"]);
 
   var ws2 = XLSX.utils.table_to_sheet(tempTable);
 
@@ -109,9 +109,9 @@ function getEventsResults() {
 function handleEvents(events) {
   var content = "<h2>Events</h2>";
 
-  if (events.length == 0) content += "No data";
-  else {
-    var table = `
+  // if (events.length == 0) content += "No data";
+  // else {
+  var table = `
     <div class="table-container">
     <div class="table-wrapper">
       <table id="main-events">                        
@@ -123,23 +123,26 @@ function handleEvents(events) {
           </tr>
         </thead>
         <tbody>
-          ${events
-            .map(
-              (e) =>
-                `<tr>
+          ${
+            events &&
+            events
+              .map(
+                (e) =>
+                  `<tr>
             <td>${e.name}</td>
             <td>${e.attribute ?? ""}</td>
             <td> ${makeMiniTable(e.handlers)}</td>
             </tr>`
-            )
-            .join("")}
+              )
+              .join("")
+          }
         </tbody>
       </table>
     </div>
   </div>`;
 
-    content += table;
-  }
+  content += table;
+  // }
   document.getElementById("events-content").innerHTML = content;
 }
 
@@ -171,9 +174,9 @@ function makeMiniTable(handlers) {
 function handleLibraries(libraries) {
   var content = "<h2>Libraries</h2>";
 
-  if (libraries.length == 0) content += "No data";
-  else {
-    var table = `
+  // if (libraries.length == 0) content += "No data";
+  // else {
+  var table = `
     <div class="table-container">
     <div class="table-wrapper">
       <table id="main">                        
@@ -190,8 +193,8 @@ function handleLibraries(libraries) {
     </div>
   </div>`;
 
-    content += table;
-  }
+  content += table;
+  // }
 
   document.getElementById("libraries-content").innerHTML = content;
 }
