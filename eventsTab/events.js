@@ -118,7 +118,7 @@ function handleEvents(events) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Attribute</th>
+            <th>Attribute/Control</th>
             <th>Handlers</th>
           </tr>
         </thead>

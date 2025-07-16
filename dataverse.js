@@ -669,7 +669,7 @@ async function listEvents() {
   var eventNodes = xml.querySelectorAll("events > event");
   var events = Array.from(eventNodes).map((ev) => ({
     name: ev.getAttribute("name"),
-    attribute: ev.getAttribute("attribute"),
+    attribute: ev.getAttribute("attribute") || ev.getAttribute("control"),
     handlers: Array.from(ev.querySelectorAll("Handler")).map((handler) => ({
       functionName: handler.getAttribute("functionName"),
       libraryName: handler.getAttribute("libraryName"),
