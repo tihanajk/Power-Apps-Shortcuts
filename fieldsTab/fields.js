@@ -14,7 +14,18 @@ document.addEventListener("DOMContentLoaded", function () {
   checkboxForm.addEventListener("change", function () {
     filterFields();
   });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
 });
+
+function downloadData() {
+  var table = document.getElementById("main");
+
+  var sheetName = document.getElementById("entity-name").innerHTML;
+
+  const workbook = XLSX.utils.table_to_book(table, { sheet: sheetName });
+  XLSX.writeFile(workbook, `allfields.xlsx`);
+}
 
 function getFieldsResults() {
   chrome.runtime.sendMessage(

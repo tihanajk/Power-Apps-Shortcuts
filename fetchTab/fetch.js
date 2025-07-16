@@ -13,10 +13,22 @@ function getFetchResults() {
       document.getElementById("fetch-content").innerHTML = content;
     }
   );
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+}
+
+function downloadData() {
+  var table = document.getElementById("main");
+
+  var sheetName = document.getElementById("title").innerHTML;
+  const workbook = XLSX.utils.table_to_book(table, { sheet: sheetName });
+  XLSX.writeFile(workbook, `fetchresults.xlsx`);
 }
 
 function renderResults(fetchData, entityName) {
-  var content = `<h1>Fetched data for entity ${entityName.toUpperCase()}</h1>`;
+  var content = "";
+
+  document.getElementById("title").innerHTML = `Fetched data for entity ${entityName.toUpperCase()}`;
 
   if (fetchData.entities.length == 0) {
     content += "<div>No data</div>";
