@@ -67,7 +67,14 @@ function renderResults(data) {
           </tr>
         </thead>
         <tbody>
-          ${data.map((d) => `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}</td><td>${d.value == null ? "" : d.value}</td></tr>`).join("")}
+          ${data
+            .map(
+              (d) =>
+                `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}${d?.behavior == 1 ? " ©️" : d?.behavior == 2 ? " ®️" : ""}</td><td>${
+                  d.value == null ? "" : d.value
+                }</td></tr>`
+            )
+            .join("")}
         </tbody>
       </table>
     </div>

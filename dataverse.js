@@ -391,18 +391,31 @@ async function getAllFields() {
 
   var fields = [];
 
+  var url = Xrm.Page.context.getClientUrl();
+  var attributeMetadata = await fetch(
+    url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes?$select=LogicalName,SourceType`,
+    {
+      method: "GET",
+      headers: header,
+    }
+  );
+  var resp = await attributeMetadata.json();
+
   Object.entries(result).forEach(([key, value]) => {
     var onForm = Xrm.Page.getAttribute(key) != null;
 
+    var fieldName = key;
+    var parts = key.split("_value");
+    if (parts.length > 1) {
+      fieldName = key.split("_")[1];
+    }
     if (!onForm) {
-      var parts = key.split("_value");
-      if (parts.length > 1) {
-        var fieldName = key.split("_")[1];
-        onForm = Xrm.Page.getAttribute(fieldName) != null;
-      }
+      onForm = Xrm.Page.getAttribute(fieldName) != null;
     }
 
-    fields.push({ name: key, value: value, onForm: onForm });
+    var behavior = resp.value.find((a) => a.LogicalName == fieldName)?.SourceType;
+
+    fields.push({ name: key, value: value, onForm: onForm, behavior: behavior });
   });
   window.postMessage(
     {
