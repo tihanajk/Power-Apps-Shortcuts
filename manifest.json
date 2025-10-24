@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.13",
+  "version": "2.0.0.14",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -83,7 +83,7 @@
   "permissions": ["tabs", "activeTab", "scripting", "clipboardWrite"],
   "content_scripts": [
     {
-      "matches": ["*://*.crm4.dynamics.com/*", "*://*.crm4.dynamics.com.mcas.ms/*", "*://*.crm.dynamics.com/*"],
+      "matches": ["*://*.dynamics.com/*"],
       "js": [
         "content.js",
         "popup/info.js",
