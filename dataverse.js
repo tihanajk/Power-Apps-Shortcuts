@@ -429,7 +429,7 @@ async function getAllFields() {
 }
 
 async function listFlowDependencies() {
-  var field = prompt("Field name");
+  var field = prompt("Keyword to search for in processes");
   if (field == null) return;
 
   window.postMessage(
@@ -456,6 +456,7 @@ async function listFlowDependencies() {
        <condition attribute="clientdata" operator="like" value="%${field}%" />
         <condition attribute='triggeronupdateattributelist' operator='like' value='%${field}%' />
         <condition attribute='xaml' operator='like' value='%Attribute=&quot;${field}&quot;%' />
+        <condition attribute='xaml' operator='like' value='%${field}%' /> // in case of custom workflows
       </filter>
     </filter>
     <order attribute="name"/>
