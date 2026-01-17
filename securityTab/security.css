@@ -36,3 +36,21 @@ tbody tr {
   display: grid;
   justify-content: center;
 }
+
+#search {
+  margin-bottom: 10px;
+}
+
+#users,
+#teams {
+  text-decoration-line: underline;
+  margin-bottom: 0px;
+}
+
+/* make sticky #header {
+  position: sticky;
+  top: 0;
+  padding: 10px 0;
+  background-color: white;
+  z-index: 1;
+} */

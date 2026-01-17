@@ -59,8 +59,8 @@ function loc() {
             tabs.push(`${t?.getLabel()}  (${t?.getName()})`);
             sections.push(`${s?.getLabel()}  (${s?.getName()})`);
           }
-        })
-      )
+        }),
+      ),
     );
 
     var message = header ? "✨ Field found in header ✨" : "";
@@ -89,7 +89,7 @@ async function getOptions() {
         type: "GIVE_ME_OPTIONS",
         options: options,
       },
-      "*"
+      "*",
     );
   }
 }
@@ -109,7 +109,7 @@ async function getOptionSetsMetadata(url, entityName) {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp = await result.json();
 
@@ -119,7 +119,7 @@ async function getOptionSetsMetadata(url, entityName) {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp2 = await result2.json();
 
@@ -129,7 +129,7 @@ async function getOptionSetsMetadata(url, entityName) {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp3 = await result3.json();
 
@@ -139,7 +139,7 @@ async function getOptionSetsMetadata(url, entityName) {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp4 = await result4.json();
 
@@ -150,7 +150,7 @@ async function getOptionSetsMetadata(url, entityName) {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp5 = await result5.json();
   resp5.value = resp5.value.map((r) => {
@@ -239,27 +239,50 @@ async function getTeamSecurityRoles(userId) {
 
 async function listSecurityRoles() {
   var currentUser = Xrm.Utility.getGlobalContext().userSettings.userName;
-  var userName = prompt("Enter the user's full name (enter '*' to get info for all users)", currentUser);
-  if (userName == null) return;
+  var name = prompt("Enter the full name (enter '*' if you want to info for all)\nexample: 'U:{user_name}', 'T:{team_name}'", "U:" + currentUser);
+  if (name == null) return;
+
+  var entityName = name.trim().toLowerCase().startsWith("t:") ? "team" : "systemuser";
+
+  var teams = [];
   var users = [];
 
-  if (userName == "*") {
+  if (name == "*") {
     var url = Xrm.Page.context.getClientUrl();
     var res = await fetch(
-      `${url}/api/data/v9.0/systemusers?$select=systemuserid,fullname,domainname&$filter=fullname ne 'INTEGRATION' and domainname ne 'crmoln2@microsoft.com' and domainname ne 'crmoln2@microsoft.com' and fullname ne 'SYSTEM' and applicationid eq null and issyncwithdirectory eq true&$orderby=fullname asc`
+      `${url}/api/data/v9.0/systemusers?$select=systemuserid,fullname,domainname&$filter=fullname ne 'INTEGRATION' and domainname ne 'crmoln2@microsoft.com' and domainname ne 'crmoln2@microsoft.com' and fullname ne 'SYSTEM' and applicationid eq null and issyncwithdirectory eq true&$orderby=fullname asc`,
     );
     var u = await res.json();
     u.value.forEach((u) => {
       users.push({ id: u["systemuserid"], name: u.fullname });
     });
+
+    var res2 = await fetch(`${url}/api/data/v9.0/teams?$select=teamid,name&$filter=teamtype eq 0&$orderby=name asc`);
+    var t = await res2.json();
+    t.value.forEach((t) => {
+      teams.push({ id: t["teamid"], name: t.name });
+    });
   } else {
-    var user = await Xrm.WebApi.retrieveMultipleRecords("systemuser", `?$filter=fullname eq '${userName}'`);
-    if (user.entities.length == 0) {
-      alert("User not found");
-      return;
+    if (entityName == "systemuser") {
+      var userName = name.toLowerCase().split("u:")[1].trim();
+      var user = await Xrm.WebApi.retrieveMultipleRecords("systemuser", `?$filter=fullname eq '${userName}'&$select=systemuserid,fullname`);
+      if (user.entities.length == 0) {
+        alert("User not found");
+        return;
+      }
+      users.push({ id: user.entities[0].systemuserid, name: user.entities[0].fullname });
+    } else {
+      var teamName = name.toLowerCase().split("t:")[1].trim();
+      var team = await Xrm.WebApi.retrieveMultipleRecords("team", `?$filter=name eq '${teamName}'&$select=teamid,name`);
+      if (team.entities.length == 0) {
+        alert("Team not found");
+        return;
+      }
+      teams.push({ id: team.entities[0].teamid, name: team.entities[0].name });
     }
-    users.push({ id: user.entities[0].systemuserid, name: userName });
   }
+
+  var orgSettings = Xrm.Utility.getGlobalContext().organizationSettings;
 
   var allRoles = [];
 
@@ -301,17 +324,59 @@ async function listSecurityRoles() {
     var teamRoles = await getTeamSecurityRoles(userId);
     allRoles.push({ user: userName, roles: roles.concat(teamRoles) });
 
-    var orgSettings = Xrm.Utility.getGlobalContext().organizationSettings;
     window.postMessage(
       {
         type: "GIVE_ME_SECURITY",
         roles: allRoles,
         first: i == 0,
-        last: i == users.length - 1,
+        last: i == users.length - 1 && teams.length == 0,
         orgId: orgSettings.organizationId,
         envId: orgSettings.bapEnvironmentId,
       },
-      "*"
+      "*",
+    );
+  }
+  for (let i = 0; i < teams.length; i++) {
+    const teamName = teams[i].name;
+    const teamId = teams[i].id;
+    var originalFetchXML = `<fetch>
+                              <entity name='role'>
+                                <attribute name='name' />
+                                <link-entity name='teamroles' from='roleid' to='roleid' intersect='true'>
+                                  <filter>
+                                    <condition attribute='teamid' operator='eq' value='${teamId}' />
+                                  </filter>
+                                </link-entity>
+                              </entity>
+                            </fetch>`;
+    var escapedFetchXML = encodeURIComponent(originalFetchXML);
+
+    var url = Xrm.Page.context.getClientUrl();
+    var result = await fetch(url + "/api/data/v9.2/roles?fetchXml=" + escapedFetchXML, {
+      method: "GET",
+      headers: header,
+    });
+    var resp = await result.json();
+    if (resp.error) {
+      alert("Error: " + resp.error.message);
+      return;
+    }
+    var values = resp.value;
+    var roles = values.map((r) => {
+      return { name: r.name, id: r.roleid };
+    });
+    allRoles.push({ team: teamName, roles: roles });
+
+    window.postMessage(
+      {
+        type: "GIVE_ME_SECURITY",
+        roles: allRoles,
+        first: i == 0 && users.length == 0,
+        last: i == teams.length - 1,
+        orgId: orgSettings.organizationId,
+        envId: orgSettings.bapEnvironmentId,
+      },
+      "*",
     );
   }
 }
@@ -379,7 +444,7 @@ async function retrieveRecords() {
       result: result,
       entityName: entityName,
     },
-    "*"
+    "*",
   );
 }
 
@@ -397,7 +462,7 @@ async function getAllFields() {
     {
       method: "GET",
       headers: header,
-    }
+    },
   );
   var resp = await attributeMetadata.json();
 
@@ -424,23 +489,23 @@ async function getAllFields() {
       fields: fields,
       entityName: entityName,
     },
-    "*"
+    "*",
   );
 }
 
 async function listFlowDependencies() {
-  var field = prompt("Keyword to search for in processes");
-  if (field == null) return;
+  var term = prompt("Keyword to search for in processes");
+  if (term == null) return;
 
   window.postMessage(
     {
       type: "GIVE_ME_FLOW_DEPENDENCIES",
       start: true,
-      fieldName: field,
+      fieldName: term,
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
-    "*"
+    "*",
   );
 
   var fetchXml = `<fetch>
@@ -450,13 +515,14 @@ async function listFlowDependencies() {
     <attribute name="statecode" />
     <attribute name="statuscode" />
     <attribute name="workflowid" />
+    <attribute name="primaryentity" />
     <filter>       
       <condition attribute="type" operator="eq" value="1" />
       <filter type="or">
-       <condition attribute="clientdata" operator="like" value="%${field}%" />
-        <condition attribute='triggeronupdateattributelist' operator='like' value='%${field}%' />
-        <condition attribute='xaml' operator='like' value='%Attribute=&quot;${field}&quot;%' />
-        <condition attribute='xaml' operator='like' value='%${field}%' /> // in case of custom workflows
+       <condition attribute="clientdata" operator="like" value="%${term}%" />
+        <condition attribute='triggeronupdateattributelist' operator='like' value='%${term}%' />
+        <condition attribute='xaml' operator='like' value='%Attribute=&quot;${term}&quot;%' />
+        <condition attribute='xaml' operator='like' value='%${term}%' /> // in case of custom workflows
       </filter>
     </filter>
     <order attribute="name"/>
@@ -476,6 +542,7 @@ async function listFlowDependencies() {
       status: e["statecode"],
       category_display: e["category@OData.Community.Display.V1.FormattedValue"],
       category: e["category"],
+      primary_entity: e["primaryentity"],
     });
   });
 
@@ -491,14 +558,17 @@ async function listFlowDependencies() {
     <link-entity name='sdkmessage' from='sdkmessageid' to='sdkmessageid' alias='m'>
       <attribute name='name' />
     </link-entity>
+    <link-entity name='sdkmessagefilter' from='sdkmessagefilterid' to='sdkmessagefilterid' alias='f' link-type='outer'>
+      <attribute name='primaryobjecttypecode' />
+    </link-entity>
     <filter type='or'>
       <link-entity name='sdkmessageprocessingstepimage' from='sdkmessageprocessingstepid' to='sdkmessageprocessingstepid' link-type='any' alias='i'>
         <filter>
-          <condition attribute='attributes' operator='like' value='%${field}%' />
+          <condition attribute='attributes' operator='like' value='%${term}%' />
         </filter>
       </link-entity>
       <filter>
-        <condition attribute='filteringattributes' operator='like' value='%${field}%' />
+        <condition attribute='filteringattributes' operator='like' value='%${term}%' />
       </filter>
     </filter>
   </entity>
@@ -517,8 +587,8 @@ async function listFlowDependencies() {
       category_display: "Plugin",
       category: -1,
       message: e["m.name"],
-
-      pl_image: !e["filteringattributes"]?.includes(field),
+      primary_entity: e["f.primaryobjecttypecode"],
+      pl_image: !e["filteringattributes"]?.includes(term),
     });
   });
 
@@ -534,11 +604,11 @@ async function listFlowDependencies() {
     {
       type: "GIVE_ME_FLOW_DEPENDENCIES",
       processes: processes,
-      fieldName: field,
+      fieldName: term,
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
-    "*"
+    "*",
   );
 }
 
@@ -655,7 +725,7 @@ async function listPlugins() {
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
-    "*"
+    "*",
   );
 }
 
@@ -698,7 +768,7 @@ async function listEvents() {
       events: events,
       name: entity + " - " + formName,
     },
-    "*"
+    "*",
   );
 }
 

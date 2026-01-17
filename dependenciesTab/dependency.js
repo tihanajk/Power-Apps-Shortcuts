@@ -7,11 +7,12 @@ var envId;
 var processes = [];
 
 const CATEGORIES = {
-  FLOW: 5,
-  BPF: 4,
-  BR: 2,
-  WF: 0,
   PLUGIN: -1,
+  WF: 0,
+  BR: 2,
+  ACTION: 3,
+  BPF: 4,
+  FLOW: 5,
 };
 
 var checkboxActive;
@@ -20,6 +21,7 @@ var checkboxFlow;
 var checkboxBPF;
 var checkboxWF;
 var checkboxPL;
+var checkboxAction;
 
 var search;
 
@@ -51,6 +53,11 @@ function initialize() {
 
   checkboxPL = document.querySelector("input[name=pl]");
   checkboxPL.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxAction = document.querySelector("input[name=action]");
+  checkboxAction.addEventListener("change", function () {
     filter();
   });
 
@@ -104,6 +111,7 @@ function filter() {
   var checkedBPF = checkboxBPF.checked;
   var checkedWF = checkboxWF.checked;
   var checkedPL = checkboxPL.checked;
+  var checkedAction = checkboxAction.checked;
 
   var searchFilter = search.value.toLowerCase();
 
@@ -115,7 +123,8 @@ function filter() {
         (checkedFlow && p.category == CATEGORIES.FLOW) ||
         (checkedBR && p.category == CATEGORIES.BR) ||
         (checkedWF && p.category == CATEGORIES.WF) ||
-        (checkedPL && p.category == CATEGORIES.PLUGIN))
+        (checkedPL && p.category == CATEGORIES.PLUGIN) ||
+        (checkedAction && p.category == CATEGORIES.ACTION))
   );
 
   renderDependencies(filtered);
@@ -133,6 +142,7 @@ function handleLink(category, id) {
     case CATEGORIES.FLOW:
       return `${flowLink}${id}?v3=false`;
     case CATEGORIES.WF:
+    case CATEGORIES.ACTION:
       return `${wfLink}${id}`;
     case CATEGORIES.BPF:
       return `${bpfLink}${id}`;
@@ -149,6 +159,8 @@ function handleColor(category) {
       return "#72bdfd";
     case CATEGORIES.WF:
       return "#dc6edc";
+    case CATEGORIES.ACTION:
+      return "#ff6347";
     case CATEGORIES.BPF:
       return "#406fda";
     case CATEGORIES.PLUGIN:
@@ -170,6 +182,7 @@ function renderDependencies(processes) {
             <th></th>
             <th>Name</th>
             <th>Category</th>
+            <th>Primary entity</th>
             <th>Status</th>
             </tr>
           </thead>
@@ -187,6 +200,7 @@ function renderDependencies(processes) {
                     }
                     </td>
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
+                    <td id="primary-entity" style="color:#5d699a">${e.primary_entity != "none" ? e.primary_entity : ""}</td>
                     <td style="color:${e.status == 1 ? "" : "grey"}">
                     ${e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
                     </td>
