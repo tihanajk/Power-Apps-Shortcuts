@@ -46,7 +46,7 @@ function getPlugins() {
       renderPlugins(plugins);
 
       initialize();
-    }
+    },
   );
 }
 
@@ -58,7 +58,7 @@ function filterResults() {
     if (pluginMatch) return p;
 
     var stepsMatch = p.steps.filter(
-      (s) => (s?.name && s.name.toLowerCase().includes(searchFilter)) || (s?.filter && s.filter.toLowerCase().includes(searchFilter))
+      (s) => (s?.name && s.name.toLowerCase().includes(searchFilter)) || (s?.filter && s.filter.toLowerCase().includes(searchFilter)),
     );
 
     if (stepsMatch.length > 0) return { ...p, steps: stepsMatch };
@@ -87,19 +87,20 @@ function renderPlugins(plugins) {
                       .map(
                         (s) =>
                           `<li>
-                            <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}                
-                            ${s.filter ? `<div style="margin-left:20px; overflow-wrap: break-word;">🔍 filters: ${s.filter}</div>` : ""}
+                            <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}
+                            ${s.mode == 0 ? '<div style="margin-left:10px; overflow-wrap: break-word;" >🔀 Synchronous</div>' : s.mode == 1 ? '<div style="margin-left:10px; overflow-wrap: break-word;">⏱️ Asynchronous</div>' : s.mode}            
+                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;">🔍 filters: ${s.filter}</div>` : ""}
                             </h3>
                             <ul class="images">
                             ${s.image.name ? `<li><h3>🖼️ image: ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
                             </ul>
-                          </li>`
+                          </li>`,
                       )
                       .join("")
                   : "no steps found"
               }    
               </ul>
-          </div>`
+          </div>`,
       )
       .join("");
 

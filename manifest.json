@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.17",
+  "version": "2.0.0.18",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",

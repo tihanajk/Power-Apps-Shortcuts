@@ -676,6 +676,8 @@ async function listPlugins() {
       <attribute name='name' />
       <attribute name='filteringattributes' />
       <attribute name='statuscode' />
+      <attribute name='mode' />
+      <attribute name='sdkmessageprocessingstepid' />
       <link-entity name='sdkmessageprocessingstepimage' from='sdkmessageprocessingstepid' to='sdkmessageprocessingstepid' link-type='outer' alias='i'>
         <attribute name='attributes' />
         <attribute name='componentstate' />
@@ -700,14 +702,20 @@ async function listPlugins() {
 
       var image = { name: p["i.name"], attributes: p["i.attributes"] };
 
-      steps.push({ name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], image: image });
+      var id = p["s.sdkmessageprocessingstepid"];
+
+      if (steps.find((s) => s.id == id)) return;
+
+      steps.push({ id: id, name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], mode: p["s.mode"], image: image });
       plugins.find((o) => o.id == p.plugintypeid).steps = steps;
     } else {
       var steps = [];
       if (p["s.name"]) {
         var image = { name: p["i.name"], attributes: p["i.attributes"] };
 
-        steps.push({ name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], image: image });
+        var id = p["s.sdkmessageprocessingstepid"];
+
+        steps.push({ id: id, name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], mode: p["s.mode"], image: image });
       }
       plugins.push({
         name: p.name,
