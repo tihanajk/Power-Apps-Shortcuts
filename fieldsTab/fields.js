@@ -37,7 +37,7 @@ function getFieldsResults() {
 
       allFields = response.fields;
       renderResults(allFields);
-    }
+    },
   );
 }
 
@@ -47,7 +47,8 @@ function filterFields() {
 
   var filtered = allFields.filter(
     (f) =>
-      (!formOnly || (formOnly && f.onForm)) && (f.name.includes(searchFilter) || (f.value && f.value.toString().toLowerCase().includes(searchFilter)))
+      (!formOnly || (formOnly && f.onForm)) &&
+      (f.name.includes(searchFilter) || (f.value && f.value.toString().toLowerCase().includes(searchFilter))),
   );
 
   renderResults(filtered);
@@ -70,9 +71,9 @@ function renderResults(data) {
           ${data
             .map(
               (d) =>
-                `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}${d?.behavior == 1 ? " ©️" : d?.behavior == 2 ? " ®️" : ""}</td><td>${
+                `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}${d?.behavior == 1 ? " ©️" : d?.behavior == 2 ? " ®️" : d?.behavior == 3 ? " 🌀" : ""}</td><td>${
                   d.value == null ? "" : d.value
-                }</td></tr>`
+                }</td></tr>`,
             )
             .join("")}
         </tbody>
