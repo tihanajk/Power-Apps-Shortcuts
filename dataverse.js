@@ -751,10 +751,13 @@ async function listEvents() {
 
   var xml = parser.parseFromString(formXml, "text/xml");
 
+  var url = location.href.split("/main")[0];
+
   var libraryNodes = xml.querySelectorAll("formLibraries > Library");
   var libraries = Array.from(libraryNodes).map((lib) => ({
     name: lib.getAttribute("name"),
     libraryUniqueId: lib.getAttribute("libraryUniqueId"),
+    link: url + "/WebResources/" + lib.getAttribute("name"),
   }));
 
   // Extract events

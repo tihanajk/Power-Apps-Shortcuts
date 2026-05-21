@@ -129,7 +129,7 @@ function handleEvents(events) {
               .map(
                 (e) =>
                   `<tr>
-            <td>${e.name}</td>
+            <td><${e.name}</td>
             <td>${e.attribute ?? ""}</td>
             <td> ${makeMiniTable(e.handlers)}</td>
             </tr>`,
@@ -189,7 +189,15 @@ function handleLibraries(libraries) {
           </tr>
         </thead>
         <tbody>
-          ${libraries.map((l) => `<tr><td>${l.name}</td><td>${l.libraryUniqueId}</td></tr>`).join("")}
+          ${libraries
+            .map(
+              (l) => `<tr>
+            <td>
+              <a target='_blank' href='${l.link}'>${l.name}</a>
+            </td>            
+            <td>${l.libraryUniqueId}</td></tr>`,
+            )
+            .join("")}
         </tbody>
       </table>
     </div>
