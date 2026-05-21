@@ -103,7 +103,7 @@ function getEventsResults() {
 
       handleLibraries(libraries);
       handleEvents(events);
-    }
+    },
   );
 }
 function handleEvents(events) {
@@ -132,7 +132,7 @@ function handleEvents(events) {
             <td>${e.name}</td>
             <td>${e.attribute ?? ""}</td>
             <td> ${makeMiniTable(e.handlers)}</td>
-            </tr>`
+            </tr>`,
               )
               .join("")
           }
@@ -153,6 +153,7 @@ function makeMiniTable(handlers) {
                   <th>Library Name</th>
                   <th>Function Name</th>
                   <th>Enabled</th>
+                  <th>Parameters</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,8 +164,9 @@ function makeMiniTable(handlers) {
                       <td>${v?.libraryName}</td>
                       <td>${v?.functionName}</td>
                       <td>${v?.enabled}</td>
+                      <td>${v?.parameters || "-"}</td>
                   </tr>
-                </tbody>`
+                </tbody>`,
                 )
                 .join("")}
             </table>`;

@@ -766,6 +766,7 @@ async function listEvents() {
       functionName: handler.getAttribute("functionName"),
       libraryName: handler.getAttribute("libraryName"),
       enabled: handler.getAttribute("enabled"),
+      parameters: handler.getAttribute("parameters"),
     })),
   }));
 
