@@ -26,6 +26,9 @@ var assemblyName = "";
 
 var eventData;
 
+var variablesData = [];
+var envVarSourceTabId = null;
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
@@ -75,6 +78,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: chrome.runtime.getURL("eventsTab/events.html") });
   } else if (request.action == "GET_FORM_EVENTS") {
     sendResponse({ data: eventData });
+  } else if (request.action == "showEnvironmentVariables") {
+    variablesData = request.data;
+    envVarSourceTabId = sender.tab?.id;
+    chrome.tabs.create({ url: chrome.runtime.getURL("variablesTab/variables.html") });
+  } else if (request.action == "GET_ENVIRONMENT_VARIABLES") {
+    sendResponse({ data: variablesData });
+  } else if (request.action === "SAVE_ENV_VAR") {
+    if (envVarSourceTabId) {
+      chrome.tabs.sendMessage(envVarSourceTabId, {
+        message: "updateEnvVar",
+        definitionId: request.definitionId,
+        valueId: request.valueId,
+        value: request.value,
+        defaultValue: request.defaultValue,
+      });
+    }
+  } else if (request.action === "envVarSaved") {
+    chrome.runtime.sendMessage({ action: "ENV_VAR_SAVED" });
+  } else if (request.action === "envVarSaveError") {
+    chrome.runtime.sendMessage({ action: "ENV_VAR_SAVE_ERROR", error: request.error });
   }
 });
 
@@ -127,6 +150,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "list_script_events":
       sendMessageToTab("listEvents");
+      break;
+    case "list_environment_variables":
+      sendMessageToTab("listEnvironmentVariables");
       break;
     default:
       break;

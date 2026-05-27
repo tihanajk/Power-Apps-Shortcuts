@@ -26,6 +26,7 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+A` | Add Web Resource to a Solution                                 |
 | `Alt+Shift+S` | List Plugin Steps                                              |
 | `Alt+Shift+E` | List Script Events on the Form                                 |
+| `Alt+Shift+V` | List Environment Variables (view & edit values)                |
 
 ---
 

@@ -1,6 +1,6 @@
 //add listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  const execute = (cmd) => executeInScript(cmd, "dataverse.js");
+  const execute = (cmd, data) => executeInScript(cmd, "dataverse.js", data);
   const baseUrl = () => location.href.split("&pagetype")[0];
 
   switch (request.message) {
@@ -82,6 +82,28 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     case "listEvents":
       execute("LIST_EVENTS");
       break;
+
+    case "listEnvironmentVariables":
+      execute("LIST_ENV_VARIABLES");
+      break;
+
+    case "updateEnvVar": {
+      // window._envVarUpdate = {
+      //   definitionId: request.definitionId,
+      //   valueId: request.valueId,
+      //   value: request.value,
+      //   defaultValue: request.defaultValue,
+      // };
+
+      var data = {
+        definitionId: request.definitionId,
+        valueId: request.valueId,
+        value: request.value,
+        defaultValue: request.defaultValue,
+      };
+      execute("UPDATE_ENV_VARIABLE", data);
+      break;
+    }
   }
 });
 
@@ -93,7 +115,7 @@ function executeInScript(message, scriptName, dataForScript) {
   document.head.appendChild(script);
 
   script.onload = function () {
-    window.postMessage({ type: message }, "*");
+    window.postMessage({ type: message, dataForScript: dataForScript }, "*");
   };
 
   script.remove();
@@ -144,5 +166,14 @@ window.addEventListener("message", (event) => {
       action: "showEvents",
       data: event.data,
     });
+  } else if (event.source === window && event.data.type === "GIVE_ME_ENV_VARIABLES") {
+    chrome.runtime.sendMessage({
+      action: "showEnvironmentVariables",
+      data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "ENV_VAR_SAVED") {
+    chrome.runtime.sendMessage({ action: "envVarSaved" });
+  } else if (event.source === window && event.data.type === "ENV_VAR_SAVE_ERROR") {
+    chrome.runtime.sendMessage({ action: "envVarSaveError", error: event.data.error });
   }
 });

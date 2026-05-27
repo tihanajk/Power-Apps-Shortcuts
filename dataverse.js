@@ -784,7 +784,67 @@ async function listEvents() {
   );
 }
 
-window.addEventListener("message", function (event) {
+async function listEnvironmentVariables() {
+  var result = await Xrm.WebApi.retrieveMultipleRecords(
+    "environmentvariabledefinition",
+    "?$select=environmentvariabledefinitionid,defaultvalue,schemaname&$expand=environmentvariabledefinition_environmentvariablevalue($select=environmentvariablevalueid,value)",
+  );
+
+  var variables = [];
+  result.entities.forEach((v) => {
+    variables.push({
+      id: v.environmentvariabledefinitionid,
+      name: v.schemaname,
+      value: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.value,
+      defaultValue: v.defaultvalue,
+      valueId: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.environmentvariablevalueid,
+    });
+  });
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_ENV_VARIABLES",
+      variables: variables,
+      url: location.href.split("/main")[0],
+      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+    },
+    "*",
+  );
+}
+
+async function updateEnvironmentVariable(data) {
+  var definitionId = data.definitionId;
+  var valueId = data.valueId;
+  var newValue = data.value;
+  var newDefaultValue = data.defaultValue;
+
+  try {
+    // Update default value on the definition
+    await Xrm.WebApi.updateRecord("environmentvariabledefinition", definitionId, { defaultvalue: newDefaultValue });
+
+    // Update or create the current value override
+    if (newValue) {
+      if (valueId) {
+        await Xrm.WebApi.updateRecord("environmentvariablevalue", valueId, { value: newValue });
+      } else {
+        await Xrm.WebApi.createRecord("environmentvariablevalue", {
+          value: newValue,
+          "EnvironmentVariableDefinitionId@odata.bind": `/environmentvariabledefinitions(${definitionId})`,
+        });
+      }
+    }
+
+    window.postMessage({ type: "ENV_VAR_SAVED" }, "*");
+  } catch (e) {
+    window.postMessage({ type: "ENV_VAR_SAVE_ERROR", error: e.message }, "*");
+  }
+}
+
+function refreshVariables() {
+  listEnvironmentVariables();
+}
+
+window.addEventListener("message", function (event, info) {
   if (event.source !== window || !event.data?.type) return;
 
   const handlers = {
@@ -799,8 +859,11 @@ window.addEventListener("message", function (event) {
     ADD_WR_TO_SOL: addWebresourceToSolution,
     LIST_PLUGINS: listPlugins,
     LIST_EVENTS: listEvents,
+    LIST_ENV_VARIABLES: listEnvironmentVariables,
+    UPDATE_ENV_VARIABLE: updateEnvironmentVariable,
+    ENV_VAR_SAVED: refreshVariables,
   };
 
   const handler = handlers[event.data.type];
-  if (handler) handler();
+  if (handler) handler(event?.data?.dataForScript);
 });

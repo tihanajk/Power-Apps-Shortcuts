@@ -119,7 +119,7 @@ function handleEvents(events) {
           <tr>
             <th>Name</th>
             <th>Attribute/Control</th>
-            <th>Handlers</th>
+            <th style="width: 60%">Handlers</th>
           </tr>
         </thead>
         <tbody>
@@ -129,7 +129,7 @@ function handleEvents(events) {
               .map(
                 (e) =>
                   `<tr>
-            <td><${e.name}</td>
+            <td>${e.name}</td>
             <td>${e.attribute ?? ""}</td>
             <td> ${makeMiniTable(e.handlers)}</td>
             </tr>`,

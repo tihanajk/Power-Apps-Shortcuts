@@ -1,0 +1,268 @@
+table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #9ca3af;
+  border: solid 1px #6a7e9d;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+tbody td {
+  padding: 12px 16px;
+  font-weight: 500;
+  color: #242b35;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+thead th {
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #ffffff;
+  background-color: #6a7e9d;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+th,
+td {
+  text-align: left;
+}
+
+/* Column widths */
+th:nth-child(1),
+td:nth-child(1) {
+  width: 25%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 35%;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 35%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 5%;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  color: #242b35;
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background-color: #f0f4f8;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+tbody tr:nth-child(even):hover {
+  background-color: #f0f4f8;
+}
+
+#search {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  width: 300px;
+  font-size: 0.875rem;
+}
+
+#search:focus {
+  outline: none;
+  border-color: #6a7e9d;
+  box-shadow: 0 0 0 2px rgba(106, 126, 157, 0.2);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 16px;
+  color: #242b35;
+}
+
+h1 {
+  font-size: 1.4rem;
+  color: #242b35;
+  margin: 0;
+}
+
+#header {
+  margin-bottom: 16px;
+}
+
+.table-container {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.edit-btn {
+  padding: 5px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6a7e9d;
+  background-color: transparent;
+  border: 1.5px solid #6a7e9d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  color: #ffffff;
+  background-color: #6a7e9d;
+}
+
+.edit-btn:active {
+  transform: scale(0.95);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 480px;
+  max-width: 90%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #242b35;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+
+.modal-readonly {
+  padding: 8px 12px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #242b35;
+  resize: vertical;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #6a7e9d;
+  box-shadow: 0 0 0 3px rgba(106, 126, 157, 0.15);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.modal-btn {
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.96);
+}
+
+.modal-btn-cancel {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+}
+
+.modal-btn-cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.modal-btn-save {
+  color: #ffffff;
+  background-color: #6a7e9d;
+}
+
+.modal-btn-save:hover {
+  background-color: #5a6e8d;
+}
+
+.modal-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
