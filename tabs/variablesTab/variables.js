@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
     filterResults();
   });
 
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+
   document.addEventListener("click", function (e) {
     if (e.target.classList.contains("edit-btn")) {
       var id = e.target.dataset.id;
@@ -21,8 +23,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-var search;
+function downloadData() {
+  var table = document.getElementById("main");
 
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "variables" });
+  XLSX.writeFile(workbook, "environment_variables.xlsx");
+}
+
+var search;
 var allVariables = [];
 
 function getVariables() {
@@ -53,7 +61,7 @@ function renderResults(data) {
 
   var content = `<div style="margin-bottom: 8px; color: #6b7280; font-size: 0.875rem;">count: ${variables.length}</div>`;
   content += `<div class="table-container">
-                <table>
+                <table id="main">
                     <thead>
                         <tr>
                             <th>Schema Name</th>
@@ -68,7 +76,9 @@ function renderResults(data) {
     var defaultVal = d.defaultValue != null ? d.defaultValue : "";
     var val = d.value != null ? d.value : "<span style='color:#9ca3af;font-style:italic'>-</span>";
     content += `<tr>
-        <td>${d.name}</td>
+        <td>
+        <a href="${d.link}" target="_blank">${d.name}</a>
+        </td>
         <td>${defaultVal}</td>
         <td>${val}</td>
         <td><button class="edit-btn" data-id="${d.id}">Edit</button></td>
@@ -121,6 +131,9 @@ function saveVariable() {
   var newValue = document.getElementById("modal-value-input").value;
   var newDefaultValue = document.getElementById("modal-default-input").value;
 
+  var updateDefault = newDefaultValue !== allVariables.find((v) => v.id === definitionId).defaultValue;
+  var updateValue = newValue !== (allVariables.find((v) => v.id === definitionId).value || "");
+
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving...";
 
@@ -130,6 +143,8 @@ function saveVariable() {
     valueId: valueId,
     value: newValue,
     defaultValue: newDefaultValue,
+    updateDefault: updateDefault,
+    updateValue: updateValue,
   });
 }
 
@@ -145,5 +160,8 @@ chrome.runtime.onMessage.addListener((request) => {
       saveBtn.textContent = "Save";
     }
     alert("Error saving: " + request.error);
+  } else if (request.action === "ENV_VAR_REFRESHED") {
+    allVariables = request.data.variables;
+    renderResults(request.data);
   }
 });

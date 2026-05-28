@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
   } else if (request.action === "showOptions") {
     optionsetsData = request.options;
-    chrome.tabs.create({ url: chrome.runtime.getURL("optionsTab/options.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/optionsTab/options.html") });
   } else if (request.action === "LOAD_OPTIONS") {
     sendResponse({ options: optionsetsData });
   } else if (request.action == "showSecurity") {
@@ -42,20 +42,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     doneFetchingSecurity = request.last;
     orgId = request.orgId;
     envId = request.envId;
-    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("securityTab/security.html") });
+    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/securityTab/security.html") });
   } else if (request.action === "GET_SECURITY") {
     sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId });
   } else if (request.action === "showRetrieveResult") {
     fetchData = request.result;
     entityName = request.entityName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("fetchTab/fetch.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fetchTab/fetch.html") });
   } else if (request.action === "GET_FETCH") {
     sendResponse({ fetchData: fetchData, fetchEntityName: entityName });
   } else if (request.action === "showAllFields") {
     allFields = request.result;
     fields = request.fields;
     entityName = request.entityName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("fieldsTab/fields.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fieldsTab/fields.html") });
   } else if (request.action === "GET_ALL_FIELDS") {
     sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
   } else if (request.action === "showFlowDependencies") {
@@ -64,24 +64,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     url = request.data.url;
     envId = request.data.envId;
 
-    if (request.data?.start) chrome.tabs.create({ url: chrome.runtime.getURL("dependenciesTab/dependency.html") });
+    if (request.data?.start) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/dependenciesTab/dependency.html") });
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
     sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
   } else if (request.action === "showPlugins") {
     plugins = request.data.plugins;
     assemblyName = request.data.assemblyName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("pluginsTab/plugins.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/pluginsTab/plugins.html") });
   } else if (request.action === "GET_PLUGINS") {
     sendResponse({ plugins: plugins, assemblyName: assemblyName });
   } else if (request.action == "showEvents") {
     eventData = request.data;
-    chrome.tabs.create({ url: chrome.runtime.getURL("eventsTab/events.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/eventsTab/events.html") });
   } else if (request.action == "GET_FORM_EVENTS") {
     sendResponse({ data: eventData });
   } else if (request.action == "showEnvironmentVariables") {
     variablesData = request.data;
     envVarSourceTabId = sender.tab?.id;
-    chrome.tabs.create({ url: chrome.runtime.getURL("variablesTab/variables.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/variablesTab/variables.html") });
   } else if (request.action == "GET_ENVIRONMENT_VARIABLES") {
     sendResponse({ data: variablesData });
   } else if (request.action === "SAVE_ENV_VAR") {
@@ -92,8 +92,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         valueId: request.valueId,
         value: request.value,
         defaultValue: request.defaultValue,
+        updateDefault: request.updateDefault,
+        updateValue: request.updateValue,
       });
     }
+  } else if (request.action === "REFRESH_ENV_VARS") {
+    if (envVarSourceTabId) {
+      chrome.tabs.sendMessage(envVarSourceTabId, { message: "refreshEnvVars" });
+    }
+  } else if (request.action === "refreshedEnvironmentVariables") {
+    variablesData = request.data;
+    chrome.runtime.sendMessage({ action: "ENV_VAR_REFRESHED", data: request.data });
   } else if (request.action === "envVarSaved") {
     chrome.runtime.sendMessage({ action: "ENV_VAR_SAVED" });
   } else if (request.action === "envVarSaveError") {

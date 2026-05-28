@@ -62,6 +62,22 @@ tbody tr:nth-child(even):hover {
   background-color: #f0f4f8;
 }
 
+#downloadBtn {
+  height: 30px;
+  padding: 0 16px;
+  color: #ffffff;
+  background-color: #6a7e9d;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#downloadBtn:hover {
+  background-color: #576a82;
+}
+
 h1 {
   font-size: 1.4rem;
   color: #242b35;

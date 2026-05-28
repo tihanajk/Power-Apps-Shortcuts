@@ -784,7 +784,8 @@ async function listEvents() {
   );
 }
 
-async function listEnvironmentVariables() {
+async function listEnvironmentVariables(data) {
+  var isRefresh = data?.refresh === true;
   var result = await Xrm.WebApi.retrieveMultipleRecords(
     "environmentvariabledefinition",
     "?$select=environmentvariabledefinitionid,defaultvalue,schemaname&$expand=environmentvariabledefinition_environmentvariablevalue($select=environmentvariablevalueid,value)",
@@ -798,6 +799,10 @@ async function listEnvironmentVariables() {
       value: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.value,
       defaultValue: v.defaultvalue,
       valueId: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.environmentvariablevalueid,
+      link:
+        location.href.split("/main")[0] +
+        "/main.aspx?pagetype=entityrecord&etn=environmentvariabledefinition&id=" +
+        v.environmentvariabledefinitionid,
     });
   });
 
@@ -805,6 +810,7 @@ async function listEnvironmentVariables() {
     {
       type: "GIVE_ME_ENV_VARIABLES",
       variables: variables,
+      refresh: isRefresh,
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
@@ -819,11 +825,11 @@ async function updateEnvironmentVariable(data) {
   var newDefaultValue = data.defaultValue;
 
   try {
-    // Update default value on the definition
-    await Xrm.WebApi.updateRecord("environmentvariabledefinition", definitionId, { defaultvalue: newDefaultValue });
+    if (data.updateDefault) {
+      await Xrm.WebApi.updateRecord("environmentvariabledefinition", definitionId, { defaultvalue: newDefaultValue });
+    }
 
-    // Update or create the current value override
-    if (newValue) {
+    if (data.updateValue) {
       if (valueId) {
         await Xrm.WebApi.updateRecord("environmentvariablevalue", valueId, { value: newValue });
       } else {
@@ -841,7 +847,7 @@ async function updateEnvironmentVariable(data) {
 }
 
 function refreshVariables() {
-  listEnvironmentVariables();
+  listEnvironmentVariables({ refresh: true });
 }
 
 window.addEventListener("message", function (event, info) {

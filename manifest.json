@@ -90,14 +90,14 @@
       "js": [
         "content.js",
         "popup/info.js",
-        "optionsTab/options.js",
-        "securityTab/security.js",
-        "fetchTab/fetch.js",
-        "fieldsTab/fields.js",
-        "dependenciesTab/dependency.js",
-        "pluginsTab/plugins.js",
-        "eventsTab/events.js",
-        "variablesTab/variables.js"
+        "tabs/optionsTab/options.js",
+        "tabs/securityTab/security.js",
+        "tabs/fetchTab/fetch.js",
+        "tabs/fieldsTab/fields.js",
+        "tabs/dependenciesTab/dependency.js",
+        "tabs/pluginsTab/plugins.js",
+        "tabs/eventsTab/events.js",
+        "tabs/variablesTab/variables.js"
       ]
     }
   ]

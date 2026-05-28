@@ -87,6 +87,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_ENV_VARIABLES");
       break;
 
+    case "refreshEnvVars":
+      execute("LIST_ENV_VARIABLES", { refresh: true });
+      break;
+
     case "updateEnvVar": {
       // window._envVarUpdate = {
       //   definitionId: request.definitionId,
@@ -100,6 +104,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         valueId: request.valueId,
         value: request.value,
         defaultValue: request.defaultValue,
+        updateDefault: request.updateDefault,
+        updateValue: request.updateValue,
       };
       execute("UPDATE_ENV_VARIABLE", data);
       break;
@@ -167,10 +173,17 @@ window.addEventListener("message", (event) => {
       data: event.data,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_ENV_VARIABLES") {
-    chrome.runtime.sendMessage({
-      action: "showEnvironmentVariables",
-      data: event.data,
-    });
+    if (event.data.refresh) {
+      chrome.runtime.sendMessage({
+        action: "refreshedEnvironmentVariables",
+        data: event.data,
+      });
+    } else {
+      chrome.runtime.sendMessage({
+        action: "showEnvironmentVariables",
+        data: event.data,
+      });
+    }
   } else if (event.source === window && event.data.type === "ENV_VAR_SAVED") {
     chrome.runtime.sendMessage({ action: "envVarSaved" });
   } else if (event.source === window && event.data.type === "ENV_VAR_SAVE_ERROR") {

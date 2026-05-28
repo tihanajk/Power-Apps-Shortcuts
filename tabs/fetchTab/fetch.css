@@ -80,3 +80,19 @@ h1 {
 #header {
   margin-bottom: 16px;
 }
+
+#downloadBtn {
+  height: 30px;
+  padding: 0 16px;
+  color: #ffffff;
+  background-color: #6a7e9d;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#downloadBtn:hover {
+  background-color: #576a82;
+}
