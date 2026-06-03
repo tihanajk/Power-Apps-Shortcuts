@@ -93,15 +93,15 @@
       "js": [
         "content.js",
         "popup/info.js",
-        "tabs/optionsTab/options.js",
-        "tabs/securityTab/security.js",
-        "tabs/fetchTab/fetch.js",
-        "tabs/fieldsTab/fields.js",
-        "tabs/dependenciesTab/dependency.js",
-        "tabs/pluginsTab/plugins.js",
-        "tabs/eventsTab/events.js",
-        "tabs/variablesTab/variables.js",
-        "tabs/formLayoutTab/formLayout.js"
+        "tabs/options/options.js",
+        "tabs/security/security.js",
+        "tabs/fetch/fetch.js",
+        "tabs/fields/fields.js",
+        "tabs/dependencies/dependency.js",
+        "tabs/plugins/plugins.js",
+        "tabs/events/events.js",
+        "tabs/variables/variables.js",
+        "tabs/formLayout/formLayout.js"
       ]
     }
   ]

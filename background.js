@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
   } else if (request.action === "showOptions") {
     optionsetsData = request.options;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/optionsTab/options.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/options/options.html") });
   } else if (request.action === "LOAD_OPTIONS") {
     sendResponse({ options: optionsetsData });
   } else if (request.action == "showSecurity") {
@@ -44,20 +44,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     doneFetchingSecurity = request.last;
     orgId = request.orgId;
     envId = request.envId;
-    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/securityTab/security.html") });
+    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/security/security.html") });
   } else if (request.action === "GET_SECURITY") {
     sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId });
   } else if (request.action === "showRetrieveResult") {
     fetchData = request.result;
     entityName = request.entityName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fetchTab/fetch.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fetch/fetch.html") });
   } else if (request.action === "GET_FETCH") {
     sendResponse({ fetchData: fetchData, fetchEntityName: entityName });
   } else if (request.action === "showAllFields") {
     allFields = request.result;
     fields = request.fields;
     entityName = request.entityName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fieldsTab/fields.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fields/fields.html") });
   } else if (request.action === "GET_ALL_FIELDS") {
     sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
   } else if (request.action === "showFlowDependencies") {
@@ -66,24 +66,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     url = request.data.url;
     envId = request.data.envId;
 
-    if (request.data?.start) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/dependenciesTab/dependency.html") });
+    if (request.data?.start) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/dependencies/dependency.html") });
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
     sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
   } else if (request.action === "showPlugins") {
     plugins = request.data.plugins;
     assemblyName = request.data.assemblyName;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/pluginsTab/plugins.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/plugins/plugins.html") });
   } else if (request.action === "GET_PLUGINS") {
     sendResponse({ plugins: plugins, assemblyName: assemblyName });
   } else if (request.action == "showEvents") {
     eventData = request.data;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/eventsTab/events.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/events/events.html") });
   } else if (request.action == "GET_FORM_EVENTS") {
     sendResponse({ data: eventData });
   } else if (request.action == "showEnvironmentVariables") {
     variablesData = request.data;
     envVarSourceTabId = sender.tab?.id;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/variablesTab/variables.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/variables/variables.html") });
   } else if (request.action == "GET_ENVIRONMENT_VARIABLES") {
     sendResponse({ data: variablesData });
   } else if (request.action === "SAVE_ENV_VAR") {
@@ -111,7 +111,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.runtime.sendMessage({ action: "ENV_VAR_SAVE_ERROR", error: request.error });
   } else if (request.action == "showFormLayout") {
     formLayoutData = request.data;
-    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/formLayoutTab/formLayout.html") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/formLayout/formLayout.html") });
   } else if (request.action == "GET_FORM_LAYOUT") {
     sendResponse({ data: formLayoutData });
   }
