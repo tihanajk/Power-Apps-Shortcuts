@@ -850,6 +850,63 @@ function refreshVariables() {
   listEnvironmentVariables({ refresh: true });
 }
 
+function listFormLayout() {
+  var formId = Xrm.Page.ui.formSelector._formId.guid;
+  var formName = Xrm.Page.ui.formSelector.getCurrentItem()?.getLabel() || "";
+  var entityName = Xrm.Page.data.entity.getEntityName();
+
+  var tabs = [];
+
+  Xrm.Page.ui.tabs.forEach(function (tab) {
+    var tabInfo = {
+      label: tab.getLabel(),
+      name: tab.getName(),
+      visible: tab.getVisible(),
+      sections: [],
+    };
+
+    tab.sections.forEach(function (section) {
+      var sectionInfo = {
+        label: section.getLabel(),
+        name: section.getName(),
+        visible: section.getVisible(),
+        controls: [],
+      };
+
+      section.controls.forEach(function (control) {
+        var controlInfo = {
+          name: control.getName(),
+          type: control.getControlType(),
+          visible: control.getVisible(),
+          disabled: typeof control.getDisabled === "function" ? control.getDisabled() : null,
+          attribute: null,
+        };
+
+        if (typeof control.getAttribute === "function" && control.getAttribute()) {
+          var attr = control.getAttribute();
+          controlInfo.attribute = attr.getName();
+        }
+
+        sectionInfo.controls.push(controlInfo);
+      });
+
+      tabInfo.sections.push(sectionInfo);
+    });
+
+    tabs.push(tabInfo);
+  });
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_FORM_LAYOUT",
+      tabs: tabs,
+      formName: formName,
+      entityName: entityName,
+    },
+    "*",
+  );
+}
+
 window.addEventListener("message", function (event, info) {
   if (event.source !== window || !event.data?.type) return;
 
@@ -868,6 +925,7 @@ window.addEventListener("message", function (event, info) {
     LIST_ENV_VARIABLES: listEnvironmentVariables,
     UPDATE_ENV_VARIABLE: updateEnvironmentVariable,
     ENV_VAR_SAVED: refreshVariables,
+    LIST_FORM_LAYOUT: listFormLayout,
   };
 
   const handler = handlers[event.data.type];

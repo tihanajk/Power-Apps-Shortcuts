@@ -87,6 +87,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_ENV_VARIABLES");
       break;
 
+    case "listFormLayout":
+      execute("LIST_FORM_LAYOUT");
+      break;
+
     case "refreshEnvVars":
       execute("LIST_ENV_VARIABLES", { refresh: true });
       break;
@@ -170,6 +174,11 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_EVENTS") {
     chrome.runtime.sendMessage({
       action: "showEvents",
+      data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_FORM_LAYOUT") {
+    chrome.runtime.sendMessage({
+      action: "showFormLayout",
       data: event.data,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_ENV_VARIABLES") {

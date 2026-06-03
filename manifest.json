@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.22",
+  "version": "2.0.0.23",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -75,6 +75,9 @@
     },
     "list_environment_variables": {
       "description": "List and edit all environment variables"
+    },
+    "list_form_layout": {
+      "description": "List form tabs, sections and controls"
     }
   },
   "web_accessible_resources": [
@@ -97,7 +100,8 @@
         "tabs/dependenciesTab/dependency.js",
         "tabs/pluginsTab/plugins.js",
         "tabs/eventsTab/events.js",
-        "tabs/variablesTab/variables.js"
+        "tabs/variablesTab/variables.js",
+        "tabs/formLayoutTab/formLayout.js"
       ]
     }
   ]

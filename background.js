@@ -29,6 +29,8 @@ var eventData;
 var variablesData = [];
 var envVarSourceTabId = null;
 
+var formLayoutData = [];
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
@@ -107,6 +109,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.runtime.sendMessage({ action: "ENV_VAR_SAVED" });
   } else if (request.action === "envVarSaveError") {
     chrome.runtime.sendMessage({ action: "ENV_VAR_SAVE_ERROR", error: request.error });
+  } else if (request.action == "showFormLayout") {
+    formLayoutData = request.data;
+    chrome.tabs.create({ url: chrome.runtime.getURL("tabs/formLayoutTab/formLayout.html") });
+  } else if (request.action == "GET_FORM_LAYOUT") {
+    sendResponse({ data: formLayoutData });
   }
 });
 
@@ -162,6 +169,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "list_environment_variables":
       sendMessageToTab("listEnvironmentVariables");
+      break;
+    case "list_form_layout":
+      sendMessageToTab("listFormLayout");
       break;
     default:
       break;
