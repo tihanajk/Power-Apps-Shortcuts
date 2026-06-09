@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Audit History</title>
+    <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="auditHistory.css" />
   </head>
 
@@ -15,9 +16,15 @@
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
     <div id="filters">
-      <label><input type="checkbox" name="eventFilter" value="Create" checked style="accent-color: #6a7e9d" /> Create</label>
-      <label><input type="checkbox" name="eventFilter" value="Update" checked style="accent-color: #6a7e9d" /> Update</label>
-      <label><input type="checkbox" name="eventFilter" value="Delete" checked style="accent-color: #6a7e9d" /> Delete</label>
+      <label class="filter-pill"
+        ><input type="checkbox" name="eventFilter" value="Create" checked /> <span class="pill pill-create">Create</span></label
+      >
+      <label class="filter-pill"
+        ><input type="checkbox" name="eventFilter" value="Update" checked /> <span class="pill pill-update">Update</span></label
+      >
+      <label class="filter-pill"
+        ><input type="checkbox" name="eventFilter" value="Delete" checked /> <span class="pill pill-delete">Delete</span></label
+      >
     </div>
     <div id="audit-content">Results</div>
     <script src="../../xlsx.full.min.js"></script>

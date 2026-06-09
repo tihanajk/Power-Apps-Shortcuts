@@ -71,7 +71,7 @@ function filterResults() {
 
 function renderPlugins(plugins) {
   var content = "";
-  content += `<div style="margin-left:10px; margin-bottom:10px">count: ${plugins.length}</div>`;
+  content += `<div class="count" style="margin-left:10px">count: ${plugins.length}</div>`;
 
   var tree =
     plugins &&

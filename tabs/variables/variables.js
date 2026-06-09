@@ -59,7 +59,7 @@ function filterResults() {
 function renderResults(data) {
   var variables = data.variables;
 
-  var content = `<div style="margin-bottom: 8px; color: #6b7280; font-size: 0.875rem;">count: ${variables.length}</div>`;
+  var content = `<div class="count">count: ${variables.length}</div>`;
   content += `<div class="table-container">
                 <table id="main">
                     <thead>

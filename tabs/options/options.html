@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Option set values</title>
+    <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
@@ -12,31 +13,40 @@
         <h1>OPTIONSET VALUES</h1>
         <button type="button" id="downloadBtn">Export to excel</button>
       </div>
-      <div id="filters">        
-        <input type="checkbox" id="formOnlyCheckbox" name="formOnly" style="accent-color: #6a7e9d"/>
-        <label for="horns">Show only those on form</label>
-      
-        <input type="checkbox" id="multiOnlyCheckbox" name="multiOnly" style="accent-color: #6a7e9d"/>
-        <label for="horns">Show only multiselect</label>   
-        
-        <input type="checkbox" id="boolOnlyCheckbox" name="boolOnly" style="accent-color: #6a7e9d"/>
-        <label for="horns">Show only boolean</label> 
+      <div id="filters">
+        <label class="toggle"
+          ><input type="checkbox" id="formOnlyCheckbox" name="formOnly" /><span class="toggle-switch"></span
+          ><span class="toggle-label">Show only those on form</span></label
+        >
+
+        <label class="toggle"
+          ><input type="checkbox" id="multiOnlyCheckbox" name="multiOnly" /><span class="toggle-switch"></span
+          ><span class="toggle-label">Show only multiselect</span></label
+        >
+
+        <label class="toggle"
+          ><input type="checkbox" id="boolOnlyCheckbox" name="boolOnly" /><span class="toggle-switch"></span
+          ><span class="toggle-label">Show only boolean</span></label
+        >
       </div>
       <p>* fields that are on the form have 🟢 next to them</p>
       <p>* fields that are multiselect optionsets have Ⓜ️ next to them</p>
       <p>* fields that are boolean have 🅱️ next to them</p>
     </div>
     <div id="options">
-    <div id="options-count"></div>
-    <table id="big-table">
-      <thead>
-        <tr>
-          <th>Field</th>
-          <th>Options</th>
-        </tr>
-      </thead>
-      <tbody id="dynamic-content"></tbody>
-    </table>
+      <div id="options-count" class="count"></div>
+      <div class="table-container">
+        <table id="big-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Options</th>
+            </tr>
+          </thead>
+          <tbody id="dynamic-content"></tbody>
+        </table>
+      </div>
+    </div>
     <script src="../../xlsx.full.min.js"></script>
     <script src="../../excelHelper.js"></script>
     <script src="options.js"></script>

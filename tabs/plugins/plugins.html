@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Plugins view</title>
+    <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="plugins.css" />
   </head>
   <body>
@@ -13,8 +14,10 @@
     </div>
 
     <div id="toggle">
-      <input type="checkbox" id="expandCheck" name="expand" style="accent-color: #6a7e9d" />
-      <label for="horns">Expand all</label>
+      <label class="toggle"
+        ><input type="checkbox" id="expandCheck" name="expand" /><span class="toggle-switch"></span
+        ><span class="toggle-label">Expand all</span></label
+      >
     </div>
     <div id="tree"></div>
 

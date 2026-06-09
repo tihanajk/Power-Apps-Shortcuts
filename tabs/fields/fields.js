@@ -55,7 +55,7 @@ function filterFields() {
 }
 
 function renderResults(data) {
-  var content = `<div>count: ${data.length}</div`;
+  var content = `<div class="count">count: ${data.length}</div>`;
 
   var table = `
   <div class="table-container">

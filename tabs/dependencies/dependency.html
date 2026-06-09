@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Process dependencies</title>
+    <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="dependency.css" />
   </head>
 
@@ -16,22 +17,35 @@
     </div>
     <div id="filters">
       <div>
-        <input type="checkbox" id="activeOnlyCheckbox" name="activeOnly" style="accent-color: #6a7e9d" />
-        <label for="horns">Only active</label>
+        <label class="toggle"
+          ><input type="checkbox" id="activeOnlyCheckbox" name="activeOnly" /><span class="toggle-switch"></span
+          ><span class="toggle-label">Only active</span></label
+        >
       </div>
       <div>
-        <input type="checkbox" id="brCheckbox" name="br" style="accent-color: #6a7e9d" checked />
-        <label for="horns">Business rules</label>
-        <input type="checkbox" id="flowCheckbox" name="flow" style="accent-color: #6a7e9d" checked />
-        <label for="horns">Flows</label>
-        <input type="checkbox" id="bpfCheckbox" name="bpf" style="accent-color: #6a7e9d" checked />
-        <label for="horns">BPF</label>
-        <input type="checkbox" id="wfCheckbox" name="wf" style="accent-color: #6a7e9d" checked />
-        <label for="horns">WF</label>
-        <input type="checkbox" id="actionCheckbox" name="action" style="accent-color: #6a7e9d" checked />
-        <label for="horns">Actions</label>
-        <input type="checkbox" id="plCheckbox" name="pl" style="accent-color: #6a7e9d" checked />
-        <label for="horns">Plugins</label>
+        <label class="toggle"
+          ><input type="checkbox" id="brCheckbox" name="br" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Business rules</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="flowCheckbox" name="flow" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Flows</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="bpfCheckbox" name="bpf" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">BPF</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="wfCheckbox" name="wf" checked /><span class="toggle-switch"></span><span class="toggle-label">WF</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="actionCheckbox" name="action" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Actions</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="plCheckbox" name="pl" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Plugins</span></label
+        >
       </div>
     </div>
 

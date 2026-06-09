@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
       allOptions = response.options;
 
       renderTable(allOptions);
-    }
+    },
   );
 
   checkboxForm = document.querySelector("input[name=formOnly]");
@@ -51,13 +51,13 @@ function renderTable(options) {
           `<tr id="main">
             <td>${o?.Multi ? "Ⓜ️ " : ""}${o?.Bool ? "🅱️ " : ""}${o?.LogicalName}${o?.OnForm ? " 🟢" : ""}</td>
             <td> ${makeMiniTable(o.Options)}</td>
-          </tr>`
+          </tr>`,
       )
       .join("")
   }`;
 
   document.getElementById("dynamic-content").innerHTML = content;
-  document.getElementById("options-count").innerHTML = "count:" + options.length;
+  document.getElementById("options-count").innerHTML = "count: " + options.length;
 }
 
 function filterTable() {
@@ -88,7 +88,7 @@ function makeMiniTable(options) {
                       <td>${v?.Value}</td>
                       <td>${v?.State == undefined ? "-" : v?.State}</td>
                   </tr>
-                </tbody>`
+                </tbody>`,
                 )
                 .join("")}
             </table>`;

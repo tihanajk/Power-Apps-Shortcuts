@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>All Fields</title>
+    <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="fields.css" />
   </head>
 
@@ -15,8 +16,10 @@
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
     <div id="filters">
-      <input type="checkbox" id="formOnlyCheckbox" name="formOnly" style="accent-color: #6a7e9d" />
-      <label for="horns">Show only those on form</label>
+      <label class="toggle"
+        ><input type="checkbox" id="formOnlyCheckbox" name="formOnly" /><span class="toggle-switch"></span
+        ><span class="toggle-label">Show only those on form</span></label
+      >
     </div>
     <p>* fields that are on the form have 🟢 next to them</p>
     <p>* fields that are calculated have ©️, rollup have ®️ and pfx have 🌀 next to them</p>

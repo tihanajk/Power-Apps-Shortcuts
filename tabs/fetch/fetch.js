@@ -11,7 +11,7 @@ function getFetchResults() {
       var content = renderResults(response.fetchData, response.fetchEntityName);
 
       document.getElementById("fetch-content").innerHTML = content;
-    }
+    },
   );
 
   document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
@@ -35,7 +35,7 @@ function renderResults(fetchData, entityName) {
     return content;
   }
 
-  content += `<div>count: ${fetchData.entities.length}</div>`;
+  content += `<div class="count">count: ${fetchData.entities.length}</div>`;
 
   var first = fetchData.entities[0];
   var columns = ["_"];
@@ -59,7 +59,7 @@ function renderResults(fetchData, entityName) {
               (r) =>
                 `<tr id="main-row">${columns
                   .map((c) => (c == "_" ? `<td>${fetchData.entities.indexOf(r) + 1}</td>` : `<td>${r[c]}</td>`))
-                  .join("")}</tr>`
+                  .join("")}</tr>`,
             )
             .join("")}
           </tbody>
