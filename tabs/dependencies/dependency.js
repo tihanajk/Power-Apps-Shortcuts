@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+  initialize();
   getDependencies();
 });
 
@@ -79,8 +80,6 @@ function downloadData() {
 }
 
 function getDependencies() {
-  initialize();
-
   chrome.runtime.sendMessage(
     {
       action: "GET_PROCESS_DEPENDENCIES",
@@ -88,20 +87,31 @@ function getDependencies() {
     function (response) {
       var fieldName = response.fieldName;
 
-      document.getElementById("field-name").innerHTML = fieldName;
+      if (fieldName) document.getElementById("field-name").innerHTML = fieldName;
 
-      processes = response?.processes;
       url = response.url;
       envId = response.envId;
 
-      if (processes) renderDependencies(processes);
-      else {
+      if (response?.processes) {
+        processes = response.processes;
+        renderDependencies(processes);
+      } else {
+        showLoading();
         setTimeout(() => {
           getDependencies();
         }, "1000");
       }
-    }
+    },
   );
+}
+
+function showLoading() {
+  var content = document.getElementById("dependency-content");
+  if (content.querySelector("#loading")) return;
+  content.innerHTML = `<div id="loading" class="loading">
+      <span class="spinner"></span>
+      <span>Loading dependencies...</span>
+    </div>`;
 }
 
 function filter() {
@@ -124,7 +134,7 @@ function filter() {
         (checkedBR && p.category == CATEGORIES.BR) ||
         (checkedWF && p.category == CATEGORIES.WF) ||
         (checkedPL && p.category == CATEGORIES.PLUGIN) ||
-        (checkedAction && p.category == CATEGORIES.ACTION))
+        (checkedAction && p.category == CATEGORIES.ACTION)),
   );
 
   renderDependencies(filtered);
@@ -204,7 +214,7 @@ function renderDependencies(processes) {
                     <td style="color:${e.status == 1 ? "" : "grey"}">
                     ${e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
                     </td>
-                </tr>`
+                </tr>`,
             )
             .join("")}
           </tbody>
