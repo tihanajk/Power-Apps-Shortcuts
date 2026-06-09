@@ -71,7 +71,7 @@ function renderResults(data) {
           ${data
             .map(
               (d) =>
-                `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}${d?.behavior == 1 ? " ©️" : d?.behavior == 2 ? " ®️" : d?.behavior == 3 ? " 🌀" : ""}</td><td>${
+                `<tr><td>${d.name}${d.onForm ? " 🟢" : ""}${d.isAltKey ? " 🔑" : ""}${d?.behavior == 1 ? " ©️" : d?.behavior == 2 ? " ®️" : d?.behavior == 3 ? " 🌀" : ""}</td><td>${
                   d.value == null ? "" : d.value
                 }</td></tr>`,
             )

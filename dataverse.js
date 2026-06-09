@@ -500,6 +500,17 @@ async function getAllFields() {
   );
   var resp = await attributeMetadata.json();
 
+  var altKeyMetadata = await fetch(
+    url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=SchemaName&$expand=Keys($select=KeyAttributes)`,
+    {
+      method: "GET",
+      headers: header,
+    },
+  );
+  var altKeyResp = await altKeyMetadata.json();
+
+  var altKeys = altKeyResp.Keys.map((k) => k.KeyAttributes).flat();
+
   Object.entries(result).forEach(([key, value]) => {
     var onForm = Xrm.Page.getAttribute(key) != null;
 
@@ -514,7 +525,8 @@ async function getAllFields() {
 
     var behavior = resp.value.find((a) => a.LogicalName == fieldName)?.SourceType;
 
-    fields.push({ name: key, value: value, onForm: onForm, behavior: behavior });
+    var isAltKey = altKeys.includes(fieldName);
+    fields.push({ name: key, value: value, onForm: onForm, behavior: behavior, isAltKey: isAltKey });
   });
   window.postMessage(
     {
