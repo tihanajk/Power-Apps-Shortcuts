@@ -27,6 +27,40 @@ function god() {
   }
 }
 
+function showDirtyFields() {
+  if (typeof Xrm === "undefined" || !Xrm.Page) return;
+
+  var dirty = Xrm.Page.data.entity.attributes.get(function (a) {
+    return a.getIsDirty();
+  });
+
+  if (!dirty || dirty.length === 0) {
+    alert("✨  No unsaved changes on this record");
+    return;
+  }
+
+  var lines = dirty.map(function (a) {
+    var value = a.getValue();
+
+    // Lookups return arrays of { id, name, entityType }
+    if (Array.isArray(value)) {
+      value = value.map((v) => (v && v.name != null ? v.name : v && v.id != null ? v.id : v)).join(", ");
+    } else if (value && typeof value === "object") {
+      value = value.name != null ? value.name : JSON.stringify(value);
+    }
+
+    var display = value === null || value === "" ? "(empty)" : value;
+    return { name: a.getName(), value: String(display) };
+  });
+
+  var divider = "─".repeat(38);
+  var title = `📝  ${dirty.length} UNSAVED FIELD${dirty.length > 1 ? "S" : ""}`;
+
+  var body = lines.map((l) => `  • ${l.name}  →  ${l.value}`).join("\n");
+
+  alert(`${title}\n${divider}\n${body}`);
+}
+
 function loc() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = prompt("Locate field by name");
@@ -1055,6 +1089,7 @@ window.addEventListener("message", function (event, info) {
   const handlers = {
     YOU_HAVE_THE_SIGHT: god,
     LOCATE_ME: loc,
+    SHOW_DIRTY_FIELDS: showDirtyFields,
     SHOW_OPTIONS: getOptions,
     LIST_SECURITY_ROLES: listSecurityRoles,
     QUICK_FIELD_UPDATE: updateField,

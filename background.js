@@ -140,6 +140,9 @@ chrome.commands.onCommand.addListener(function (command) {
     case "locate_on_form":
       sendMessageToTab("locateOnForm");
       break;
+    case "show_dirty_fields":
+      sendMessageToTab("showDirtyFields");
+      break;
     case "open_list":
       sendMessageToTab("openList");
       break;

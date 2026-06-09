@@ -23,6 +23,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LOCATE_ME");
       break;
 
+    case "showDirtyFields":
+      execute("SHOW_DIRTY_FIELDS");
+      break;
+
     case "openList": {
       const entityName = prompt("Entity name for view?");
       if (!entityName) return;

@@ -37,6 +37,9 @@
       },
       "description": "Locate field on the form"
     },
+    "show_dirty_fields": {
+      "description": "Show unsaved (dirty) fields"
+    },
     "open_list": {
       "description": "Open entity list"
     },
