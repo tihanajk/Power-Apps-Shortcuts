@@ -84,6 +84,21 @@ h1 {
   background-color: #576a82;
 }
 
+#search {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  width: 300px;
+  font-size: 0.875rem;
+}
+
+#search:focus {
+  outline: none;
+  border-color: #6a7e9d;
+  box-shadow: 0 0 0 2px rgba(106, 126, 157, 0.2);
+}
+
 #option {
   padding: 10px;
 }
