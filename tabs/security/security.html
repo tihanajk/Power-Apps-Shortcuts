@@ -1,18 +1,22 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Security</title>
     <link rel="stylesheet" href="../common.css" />
     <link rel="stylesheet" href="security.css" />
   </head>
 
   <body>
-    <div id="header" style="text-align: center">
-      <a id="sec_link" target="_blank" style="display: flex; justify-content: end">Go to security roles</a>
-      <h1>Security roles info</h1>
+    <div id="header">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <h1>Security roles info</h1>
+        <a id="sec_link" target="_blank">Go to security roles</a>
+      </div>
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
-    <div id="security-content">User: Test user</div>
+    <div id="security-content"></div>
     <script src="security.js"></script>
   </body>
 </html>

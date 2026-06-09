@@ -1,8 +1,16 @@
 /* Security tab — base styles inherited from ../common.css */
 
-#security-content {
-  display: grid;
-  justify-content: center;
+#sec_link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#sec_link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
 }
 
 #users,
