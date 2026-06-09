@@ -31,6 +31,9 @@ var envVarSourceTabId = null;
 
 var formLayoutData = [];
 
+var auditHistoryData = [];
+var doneFetchingAudit = false;
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
@@ -114,6 +117,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.tabs.create({ url: chrome.runtime.getURL("tabs/formLayout/formLayout.html") });
   } else if (request.action == "GET_FORM_LAYOUT") {
     sendResponse({ data: formLayoutData });
+  } else if (request.action == "showAuditHistory") {
+    auditHistoryData = request.data;
+    doneFetchingAudit = request.last;
+    if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/auditHistory/auditHistory.html") });
+  } else if (request.action == "GET_AUDIT_HISTORY") {
+    sendResponse({ data: auditHistoryData, last: doneFetchingAudit });
   }
 });
 
@@ -172,6 +181,9 @@ chrome.commands.onCommand.addListener(function (command) {
       break;
     case "list_form_layout":
       sendMessageToTab("listFormLayout");
+      break;
+    case "show_audit_history":
+      sendMessageToTab("showAuditHistory");
       break;
     default:
       break;

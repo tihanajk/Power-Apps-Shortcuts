@@ -78,6 +78,9 @@
     },
     "list_form_layout": {
       "description": "List form tabs, sections and controls"
+    },
+    "show_audit_history": {
+      "description": "Display audit history for the record"
     }
   },
   "web_accessible_resources": [
@@ -101,7 +104,8 @@
         "tabs/plugins/plugins.js",
         "tabs/events/events.js",
         "tabs/variables/variables.js",
-        "tabs/formLayout/formLayout.js"
+        "tabs/formLayout/formLayout.js",
+        "tabs/auditHistory/auditHistory.js"
       ]
     }
   ]

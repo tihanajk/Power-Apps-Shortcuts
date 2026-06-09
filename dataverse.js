@@ -907,6 +907,148 @@ function listFormLayout() {
   );
 }
 
+async function listAuditHistory() {
+  var entityName = Xrm.Page.data.entity.getEntityName();
+  var entityId = Xrm.Page.data.entity.getId().replace("{", "").replace("}", "");
+  var url = Xrm.Page.context.getClientUrl();
+
+  var objectTypeCode;
+  try {
+    var metaResult = await fetch(url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=ObjectTypeCode`, {
+      method: "GET",
+      headers: header,
+    });
+    var metaResp = await metaResult.json();
+    objectTypeCode = metaResp.ObjectTypeCode;
+  } catch (e) {
+    alert("Error fetching entity metadata: " + e.message);
+    return;
+  }
+
+  var fetchXml = `<fetch>
+    <entity name="audit">
+      <attribute name="auditid" />
+      <attribute name="createdon" />
+      <attribute name="operation" />
+      <attribute name="action" />
+      <attribute name="userid" />
+      <attribute name="changedata" />
+      <filter>
+        <condition attribute="objectid" operator="eq" value="${entityId}" />
+        <condition attribute="objecttypecode" operator="eq" value="${objectTypeCode}" />
+      </filter>
+      <order attribute="createdon" descending="true" />
+    </entity>
+  </fetch>`;
+
+  var escapedFetchXML = encodeURIComponent(fetchXml);
+
+  var result;
+  try {
+    result = await fetch(url + "/api/data/v9.2/audits?fetchXml=" + escapedFetchXML, {
+      method: "GET",
+      headers: header,
+    });
+    result = await result.json();
+  } catch (e) {
+    alert("Error fetching audit records: " + e.message);
+    return;
+  }
+
+  if (result.error) {
+    alert("Error: " + result.error.message);
+    return;
+  }
+
+  var auditRecords = [];
+
+  // Open tab immediately before fetching details
+  window.postMessage(
+    {
+      type: "GIVE_ME_AUDIT_HISTORY",
+      records: auditRecords,
+      entityName: entityName,
+      entityId: entityId,
+      url: url,
+      first: true,
+      last: result.value.length === 0,
+    },
+    "*",
+  );
+
+  for (var i = 0; i < result.value.length; i++) {
+    var entity = result.value[i];
+    var auditId = entity["auditid"];
+    var operation = entity["operation@OData.Community.Display.V1.FormattedValue"] || entity["operation"];
+
+    var detailResult;
+    try {
+      detailResult = await fetch(url + `/api/data/v9.2/audits(${auditId})/Microsoft.Dynamics.CRM.RetrieveAuditDetails()`, {
+        method: "GET",
+        headers: header,
+      });
+      detailResult = await detailResult.json();
+    } catch (e) {
+      continue;
+    }
+
+    var auditDetail = detailResult?.AuditDetail;
+    var oldValues = auditDetail?.OldValue || {};
+    var newValues = auditDetail?.NewValue || {};
+
+    var allKeys = new Set([...Object.keys(newValues).filter((k) => !k.includes("@")), ...Object.keys(oldValues).filter((k) => !k.includes("@"))]);
+
+    var changedFields = [];
+    allKeys.forEach(function (key) {
+      var newVal = newValues[key];
+      var oldVal = oldValues[key];
+
+      if (newVal === oldVal) return;
+
+      var displayKey = key;
+      if (displayKey.startsWith("_") && displayKey.endsWith("_value")) {
+        displayKey = displayKey.slice(1, -6);
+      }
+
+      changedFields.push({
+        field: displayKey,
+        newValue: newVal != null ? String(newVal) : "",
+        oldValue: oldVal != null ? String(oldVal) : "",
+      });
+    });
+
+    if (changedFields.length === 0) {
+      changedFields.push({ field: "-", newValue: "-", oldValue: "-" });
+    }
+
+    changedFields.forEach(function (cf) {
+      auditRecords.push({
+        auditId: auditId,
+        operation: operation,
+        field: cf.field,
+        newValue: cf.newValue,
+        oldValue: cf.oldValue,
+        createdOn: entity["createdon@OData.Community.Display.V1.FormattedValue"] || entity["createdon"],
+        user: entity["_userid_value@OData.Community.Display.V1.FormattedValue"] || "",
+      });
+    });
+
+    // Send progressive update
+    window.postMessage(
+      {
+        type: "GIVE_ME_AUDIT_HISTORY",
+        records: auditRecords,
+        entityName: entityName,
+        entityId: entityId,
+        url: url,
+        first: false,
+        last: i === result.value.length - 1,
+      },
+      "*",
+    );
+  }
+}
+
 window.addEventListener("message", function (event, info) {
   if (event.source !== window || !event.data?.type) return;
 
@@ -926,6 +1068,7 @@ window.addEventListener("message", function (event, info) {
     UPDATE_ENV_VARIABLE: updateEnvironmentVariable,
     ENV_VAR_SAVED: refreshVariables,
     LIST_FORM_LAYOUT: listFormLayout,
+    SHOW_AUDIT_HISTORY: listAuditHistory,
   };
 
   const handler = handlers[event.data.type];

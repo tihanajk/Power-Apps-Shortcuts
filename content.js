@@ -91,6 +91,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_FORM_LAYOUT");
       break;
 
+    case "showAuditHistory":
+      execute("SHOW_AUDIT_HISTORY");
+      break;
+
     case "refreshEnvVars":
       execute("LIST_ENV_VARIABLES", { refresh: true });
       break;
@@ -180,6 +184,13 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showFormLayout",
       data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_AUDIT_HISTORY") {
+    chrome.runtime.sendMessage({
+      action: "showAuditHistory",
+      data: event.data,
+      first: event.data.first,
+      last: event.data.last,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_ENV_VARIABLES") {
     if (event.data.refresh) {
