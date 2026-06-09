@@ -29,6 +29,7 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+V` | List Environment Variables (view & edit values)                |
 | `Alt+Shift+T` | List Form Layout (tabs, sections & controls)                   |
 | `Alt+Shift+Y` | Display Audit History for the Record                           |
+| `Alt+Shift+W` | Show Unsaved (Dirty) Fields                                    |
 
 ---
 
