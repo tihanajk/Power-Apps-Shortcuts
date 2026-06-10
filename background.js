@@ -37,6 +37,8 @@ var doneFetchingAudit = false;
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openShortcuts") {
     chrome.tabs.create({ url: "edge://extensions/shortcuts" });
+  } else if (request.action === "triggerCommand") {
+    handleCommand(request.command);
   } else if (request.action === "showOptions") {
     optionsetsData = request.options;
     chrome.tabs.create({ url: chrome.runtime.getURL("tabs/options/options.html") });
@@ -127,6 +129,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.commands.onCommand.addListener(function (command) {
+  handleCommand(command);
+});
+
+function handleCommand(command) {
   switch (command) {
     case "god_mode":
       sendMessageToTab("triggerGM");
@@ -191,7 +197,7 @@ chrome.commands.onCommand.addListener(function (command) {
     default:
       break;
   }
-});
+}
 
 function sendMessageToTab(mess) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
