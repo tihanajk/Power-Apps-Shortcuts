@@ -1075,6 +1075,7 @@ async function listAuditHistory() {
         newValue: cf.newValue,
         oldValue: cf.oldValue,
         createdOn: entity["createdon@OData.Community.Display.V1.FormattedValue"] || entity["createdon"],
+        createdOnRaw: entity["createdon"],
         user: entity["_userid_value@OData.Community.Display.V1.FormattedValue"] || "",
       });
     });

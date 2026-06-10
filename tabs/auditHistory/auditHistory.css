@@ -6,6 +6,31 @@
   color: var(--color-muted);
 }
 
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.loading-indicator .spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-border, #cbd5e1);
+  border-top-color: var(--color-accent, #2563eb);
+  border-radius: 50%;
+  animation: audit-spin 0.7s linear infinite;
+}
+
+@keyframes audit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 /* Event filter pills */
 .filter-pill {
   cursor: pointer;
@@ -50,26 +75,73 @@
 }
 
 /* Column widths */
-table th:nth-child(1),
-table td:nth-child(1) {
+table th:nth-child(1) {
   width: 120px;
 } /* Changed Date */
-table th:nth-child(2),
-table td:nth-child(2) {
+table th:nth-child(2) {
   width: 130px;
 } /* Changed By */
-table th:nth-child(3),
-table td:nth-child(3) {
+table th:nth-child(3) {
   width: 80px;
 } /* Event */
-table th:nth-child(4),
-table td:nth-child(4) {
+table th:nth-child(4) {
   width: 140px;
 } /* Changed Field */
-table th:nth-child(7),
-table td:nth-child(7) {
+table th:nth-child(7) {
   width: 50px;
 } /* Open */
+
+/* Sortable header */
+th.sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+th.sortable .sort-arrow {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+/* Resizable columns */
+table#main {
+  table-layout: fixed;
+}
+
+table#main th {
+  position: relative;
+}
+
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Always-visible divider so column boundaries are easy to see */
+.col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 20%;
+  right: 2px;
+  width: 2px;
+  height: 60%;
+  background-color: var(--color-border, #cbd5e1);
+  border-radius: 1px;
+}
+
+.col-resizer:hover::before,
+.col-resizer.resizing::before {
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: var(--color-accent, #2563eb);
+}
 
 /* Truncate most cells; let old/new value columns wrap */
 tbody td {
@@ -78,12 +150,29 @@ tbody td {
   text-overflow: ellipsis;
 }
 
-tbody td:nth-child(5),
-tbody td:nth-child(6) {
+tbody td.wrap-cell {
   white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
   overflow: visible;
+}
+
+/* Transaction grouping (shared date/by/event merged via rowspan) */
+tbody td[rowspan] {
+  vertical-align: top;
+}
+
+.tx-group-even td {
+  background-color: #ffffff;
+}
+
+.tx-group-odd td {
+  background-color: var(--color-row-alt);
+}
+
+.tx-group-even:hover td,
+.tx-group-odd:hover td {
+  background-color: var(--color-row-hover);
 }
 
 /* Event badges */
