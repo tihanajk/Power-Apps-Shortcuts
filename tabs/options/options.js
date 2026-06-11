@@ -2,6 +2,7 @@ var allOptions = [];
 var checkboxForm;
 var checkboxMulti;
 var checkboxBool;
+var search;
 
 document.addEventListener("DOMContentLoaded", function () {
   chrome.runtime.sendMessage(
@@ -27,6 +28,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   checkboxBool = document.querySelector("input[name=boolOnly]");
   checkboxBool.addEventListener("change", function () {
+    filterTable();
+  });
+
+  search = document.querySelector("input[name=filter]");
+  search.addEventListener("input", function () {
     filterTable();
   });
 
@@ -64,8 +70,23 @@ function filterTable() {
   var formOnly = checkboxForm.checked;
   var multiOnly = checkboxMulti.checked;
   var boolOnly = checkboxBool.checked;
+  var searchTerm = (search.value || "").toLowerCase();
 
-  var filtered = allOptions.filter((o) => (!formOnly || o.OnForm) && (!multiOnly || o.Multi) && (!boolOnly || o.Bool));
+  var filtered = allOptions.filter(
+    (o) =>
+      (!formOnly || o.OnForm) &&
+      (!multiOnly || o.Multi) &&
+      (!boolOnly || o.Bool) &&
+      (!searchTerm ||
+        o.LogicalName?.toLowerCase().includes(searchTerm) ||
+        o.Options?.some(
+          (v) =>
+            v?.Label?.toLowerCase().includes(searchTerm) ||
+            String(v?.Value ?? "")
+              .toLowerCase()
+              .includes(searchTerm),
+        )),
+  );
 
   renderTable(filtered);
 }
