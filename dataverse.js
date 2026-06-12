@@ -953,6 +953,17 @@ function listFormLayout() {
   );
 }
 
+function formatAuditValue(rawVal, formattedVal) {
+  if (rawVal == null) return "";
+
+  var raw = String(rawVal);
+  if (formattedVal != null && String(formattedVal) !== "" && String(formattedVal) !== raw) {
+    return String(formattedVal) + " (" + raw + ")";
+  }
+
+  return raw;
+}
+
 async function listAuditHistory() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().replace("{", "").replace("}", "");
@@ -1056,10 +1067,14 @@ async function listAuditHistory() {
         displayKey = displayKey.slice(1, -6);
       }
 
+      var formattedKey = key + "@OData.Community.Display.V1.FormattedValue";
+      var newFormatted = newValues[formattedKey];
+      var oldFormatted = oldValues[formattedKey];
+
       changedFields.push({
         field: displayKey,
-        newValue: newVal != null ? String(newVal) : "",
-        oldValue: oldVal != null ? String(oldVal) : "",
+        newValue: formatAuditValue(newVal, newFormatted),
+        oldValue: formatAuditValue(oldVal, oldFormatted),
       });
     });
 
