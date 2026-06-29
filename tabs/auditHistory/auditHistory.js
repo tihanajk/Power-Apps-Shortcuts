@@ -71,6 +71,7 @@ function filterData() {
 
     return (
       op.includes(term) ||
+      (r.event || "").toLowerCase().includes(term) ||
       (r.field || "").toLowerCase().includes(term) ||
       (r.newValue || "").toLowerCase().includes(term) ||
       (r.oldValue || "").toLowerCase().includes(term) ||
@@ -115,7 +116,8 @@ function renderResults(records) {
             ri === 0
               ? `<td rowspan="${rowspan}">${r.createdOn}</td>
               <td rowspan="${rowspan}">${r.user}</td>
-              <td rowspan="${rowspan}"><span class="event-badge event-${(r.operation || "").toLowerCase().replace(/\s/g, "")}">${r.operation}</span></td>`
+              <td rowspan="${rowspan}"><span class="event-badge event-${(r.operation || "").toLowerCase().replace(/\s/g, "")}">${r.operation}</span></td>
+              <td rowspan="${rowspan}">${r.event}</td>`
               : "";
           var openCell =
             ri === 0
@@ -141,6 +143,7 @@ function renderResults(records) {
           <tr>
             <th id="sortDateHeader" class="sortable">Changed Date <span class="sort-arrow">${sortDir === "asc" ? "▲" : "▼"}</span></th>
             <th>Changed By</th>
+            <th>Operation</th>
             <th>Event</th>
             <th>Changed Field</th>
             <th>Old Value</th>

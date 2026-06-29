@@ -1037,6 +1037,7 @@ async function listAuditHistory() {
     var entity = result.value[i];
     var auditId = entity["auditid"];
     var operation = entity["operation@OData.Community.Display.V1.FormattedValue"] || entity["operation"];
+    var event = entity["action@OData.Community.Display.V1.FormattedValue"] || entity["action"];
 
     var detailResult;
     try {
@@ -1086,6 +1087,7 @@ async function listAuditHistory() {
       auditRecords.push({
         auditId: auditId,
         operation: operation,
+        event: event,
         field: cf.field,
         newValue: cf.newValue,
         oldValue: cf.oldValue,

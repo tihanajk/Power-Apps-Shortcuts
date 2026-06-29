@@ -83,11 +83,14 @@ table th:nth-child(2) {
 } /* Changed By */
 table th:nth-child(3) {
   width: 80px;
-} /* Event */
+} /* Operation */
 table th:nth-child(4) {
+  width: 100px;
+} /* Event */
+table th:nth-child(5) {
   width: 140px;
 } /* Changed Field */
-table th:nth-child(7) {
+table th:nth-child(8) {
   width: 50px;
 } /* Open */
 
