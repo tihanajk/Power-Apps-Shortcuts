@@ -50,6 +50,10 @@
   border: 2px solid transparent;
   transition: all 0.15s ease;
   opacity: 0.4;
+  /* Default (unknown operation) colors */
+  background-color: #e2e8f0;
+  color: #334155;
+  border-color: #334155;
 }
 
 .filter-pill input:checked + .pill {
@@ -72,6 +76,48 @@
   background-color: #fee2e2;
   color: #991b1b;
   border-color: #991b1b;
+}
+
+.pill-access {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border-color: #6b21a8;
+}
+
+.pill-upsert {
+  background-color: #ccfbf1;
+  color: #115e59;
+  border-color: #115e59;
+}
+
+.pill-archive {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #92400e;
+}
+
+.pill-retain {
+  background-color: #ffedd5;
+  color: #9a3412;
+  border-color: #9a3412;
+}
+
+.pill-rollbackretain {
+  background-color: #fee2e2;
+  color: #9f1239;
+  border-color: #9f1239;
+}
+
+.pill-restore {
+  background-color: #e0f2fe;
+  color: #075985;
+  border-color: #075985;
+}
+
+.pill-customoperation {
+  background-color: #ede9fe;
+  color: #5b21b6;
+  border-color: #5b21b6;
 }
 
 /* Column widths */
@@ -186,6 +232,9 @@ tbody td[rowspan] {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  /* Default (unknown operation) colors */
+  background-color: #e2e8f0;
+  color: #334155;
 }
 
 .event-create {
@@ -201,6 +250,41 @@ tbody td[rowspan] {
 .event-delete {
   background-color: #fee2e2;
   color: #991b1b;
+}
+
+.event-access {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.event-upsert {
+  background-color: #ccfbf1;
+  color: #115e59;
+}
+
+.event-archive {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.event-retain {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.event-rollbackretain {
+  background-color: #fee2e2;
+  color: #9f1239;
+}
+
+.event-restore {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-customoperation {
+  background-color: #ede9fe;
+  color: #5b21b6;
 }
 
 .open-link {

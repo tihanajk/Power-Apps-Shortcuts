@@ -4,6 +4,25 @@ var baseUrl = "";
 var sortDir = "desc";
 var lastRecords = [];
 
+// Maps Dataverse operation numeric value -> CSS class suffix.
+// Using the number keeps colors working regardless of the UI language.
+var OPERATION_CLASSES = {
+  1: "create",
+  2: "update",
+  3: "delete",
+  4: "access",
+  5: "upsert",
+  115: "archive",
+  116: "retain",
+  117: "rollbackretain",
+  118: "restore",
+  200: "customoperation",
+};
+
+function operationClass(operationValue) {
+  return OPERATION_CLASSES[operationValue] || "unknown";
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   getAuditResults();
   search = document.querySelector("input[name=filter]");
@@ -12,13 +31,57 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+});
 
-  document.querySelectorAll("input[name=eventFilter]").forEach(function (cb) {
+function buildEventFilters() {
+  var container = document.getElementById("filters");
+  if (!container) return;
+
+  // Distinct operations keyed by numeric value (language-independent)
+  var operations = [];
+  var seen = {};
+  allRecords.forEach(function (r) {
+    var val = r.operationValue;
+    if (val === undefined || val === null) return;
+    if (seen[val]) return;
+    seen[val] = true;
+    operations.push({ value: val, label: (r.operation || "").trim() || String(val) });
+  });
+  operations.sort(function (a, b) {
+    return a.value - b.value;
+  });
+
+  // Preserve current checkbox states across incremental rebuilds
+  var checkedState = {};
+  container.querySelectorAll("input[name=eventFilter]").forEach(function (cb) {
+    checkedState[cb.value] = cb.checked;
+  });
+
+  // No change in the set of operations — keep existing UI
+  var existing = Array.prototype.map.call(
+    container.querySelectorAll("input[name=eventFilter]"),
+    function (cb) {
+      return cb.value;
+    },
+  );
+  if (existing.length === operations.length && operations.every((op) => existing.includes(String(op.value)))) {
+    return;
+  }
+
+  container.innerHTML = operations
+    .map(function (op) {
+      var cls = operationClass(op.value);
+      var checked = checkedState[op.value] === false ? "" : "checked";
+      return `<label class="filter-pill"><input type="checkbox" name="eventFilter" value="${op.value}" ${checked} /> <span class="pill pill-${cls}">${op.label}</span></label>`;
+    })
+    .join("");
+
+  container.querySelectorAll("input[name=eventFilter]").forEach(function (cb) {
     cb.addEventListener("change", function () {
       filterData();
     });
   });
-});
+}
 
 function downloadData() {
   var table = document.getElementById("main");
@@ -38,6 +101,7 @@ function getAuditResults() {
       baseUrl = data.url;
       document.getElementById("record-name").innerHTML = data.entityName + " - Audit History";
       allRecords = data.records;
+      buildEventFilters();
       renderResults(allRecords);
 
       if (response.last) {
@@ -60,12 +124,12 @@ function filterData() {
 
   var checkedEvents = [];
   document.querySelectorAll("input[name=eventFilter]:checked").forEach(function (cb) {
-    checkedEvents.push(cb.value.toLowerCase());
+    checkedEvents.push(cb.value);
   });
 
   var filtered = allRecords.filter(function (r) {
     var op = (r.operation || "").toLowerCase();
-    if (checkedEvents.length > 0 && !checkedEvents.includes(op)) return false;
+    if (checkedEvents.length > 0 && !checkedEvents.includes(String(r.operationValue))) return false;
 
     if (!term) return true;
 
@@ -116,7 +180,7 @@ function renderResults(records) {
             ri === 0
               ? `<td rowspan="${rowspan}">${r.createdOn}</td>
               <td rowspan="${rowspan}">${r.user}</td>
-              <td rowspan="${rowspan}"><span class="event-badge event-${(r.operation || "").toLowerCase().replace(/\s/g, "")}">${r.operation}</span></td>
+              <td rowspan="${rowspan}"><span class="event-badge event-${operationClass(r.operationValue)}">${r.operation}</span></td>
               <td rowspan="${rowspan}">${r.event}</td>`
               : "";
           var openCell =
