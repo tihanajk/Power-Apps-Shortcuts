@@ -58,12 +58,9 @@ function buildEventFilters() {
   });
 
   // No change in the set of operations — keep existing UI
-  var existing = Array.prototype.map.call(
-    container.querySelectorAll("input[name=eventFilter]"),
-    function (cb) {
-      return cb.value;
-    },
-  );
+  var existing = Array.prototype.map.call(container.querySelectorAll("input[name=eventFilter]"), function (cb) {
+    return cb.value;
+  });
   if (existing.length === operations.length && operations.every((op) => existing.includes(String(op.value)))) {
     return;
   }
