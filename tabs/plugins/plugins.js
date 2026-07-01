@@ -10,10 +10,34 @@ document.addEventListener("DOMContentLoaded", function () {
   toggle.addEventListener("change", function () {
     toggleTree();
   });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
 });
 
 var search;
 var plugins = [];
+
+function downloadData() {
+  var rows = [["Plugin", "Step", "Mode", "Status", "Filters", "Image", "Image Attributes"]];
+
+  (plugins || []).forEach((p) => {
+    if (!p.steps || p.steps.length === 0) {
+      rows.push([p.name, "(no steps)", "", "", "", "", ""]);
+      return;
+    }
+
+    p.steps.forEach((s) => {
+      var mode = s.mode == 0 ? "Synchronous" : s.mode == 1 ? "Asynchronous" : s.mode;
+      var status = s.status == 1 ? "Enabled" : "Disabled";
+      rows.push([p.name, s.name, mode, status, s.filter || "", s.image?.name || "", s.image?.attributes || ""]);
+    });
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Plugin Steps");
+  XLSX.writeFile(wb, "plugin_steps.xlsx");
+}
 
 function initialize() {
   document.querySelectorAll(".plugin-title").forEach((title) => {

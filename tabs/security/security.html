@@ -12,11 +12,16 @@
     <div id="header">
       <div style="display: flex; justify-content: space-between; align-items: center">
         <h1>Security roles info</h1>
-        <a id="sec_link" target="_blank">Go to security roles</a>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <a id="sec_link" target="_blank">Go to security roles</a>
+          <button type="button" id="downloadBtn">Export to excel</button>
+        </div>
       </div>
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
     <div id="security-content"></div>
+    <script src="../../xlsx.full.min.js"></script>
+    <script src="../../excelHelper.js"></script>
     <script src="security.js"></script>
   </body>
 </html>

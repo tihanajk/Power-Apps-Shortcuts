@@ -1,6 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
   getFetchResults();
+
+  var search = document.querySelector("input[name=filter]");
+  if (search) {
+    search.addEventListener("input", function () {
+      filterResults(search.value.toLowerCase());
+    });
+  }
 });
+
+function filterResults(term) {
+  var table = document.getElementById("main");
+  if (!table) return;
+
+  var rows = table.querySelectorAll("tbody tr");
+  rows.forEach(function (row) {
+    var text = row.innerText.toLowerCase();
+    row.style.display = !term || text.includes(term) ? "" : "none";
+  });
+}
 
 function getFetchResults() {
   chrome.runtime.sendMessage(

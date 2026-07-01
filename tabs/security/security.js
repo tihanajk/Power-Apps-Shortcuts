@@ -4,10 +4,13 @@ document.addEventListener("DOMContentLoaded", function () {
     filterResults();
   });
 
+  document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+
   getSecurity();
 });
 
 var search;
+var allRoles = [];
 
 function getSecurity() {
   chrome.runtime.sendMessage(
@@ -18,6 +21,8 @@ function getSecurity() {
       var secRolesLink = `https://admin.powerplatform.microsoft.com/settingredirect/${response.orgId}/securityroles`;
       document.getElementById("sec_link").href = secRolesLink;
 
+      allRoles = response.roles;
+
       var content = handleContent(response.roles, secRolesLink);
 
       document.getElementById("security-content").innerHTML = content;
@@ -27,6 +32,29 @@ function getSecurity() {
       getSecurity();
     },
   );
+}
+
+function downloadData() {
+  var rows = [["Scope Type", "Scope", "Role Name", "Role Id", "Team Name", "Team Id"]];
+
+  allRoles.forEach((a) => {
+    var scopeType = a.user ? "User" : "Team";
+    var scope = a.user || a.team || "";
+
+    if (!a.roles || a.roles.length === 0) {
+      rows.push([scopeType, scope, "(no roles)", "", "", ""]);
+      return;
+    }
+
+    a.roles.forEach((r) => {
+      rows.push([scopeType, scope, r.name, r.id, r.teamName || "", r.teamId || ""]);
+    });
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Security Roles");
+  XLSX.writeFile(wb, "security_roles.xlsx");
 }
 
 function filterResults() {

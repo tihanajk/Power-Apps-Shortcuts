@@ -9,7 +9,10 @@
   </head>
   <body>
     <div id="header">
-      <h1 id="assembly-name">Plugins view</h1>
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <h1 id="assembly-name">Plugins view</h1>
+        <button type="button" id="downloadBtn">Export to excel</button>
+      </div>
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
 
@@ -21,6 +24,8 @@
     </div>
     <div id="tree"></div>
 
+    <script src="../../xlsx.full.min.js"></script>
+    <script src="../../excelHelper.js"></script>
     <script src="plugins.js"></script>
   </body>
 </html>
