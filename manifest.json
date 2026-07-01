@@ -67,6 +67,9 @@
     "copy_guid": {
       "description": "Copy record guid to clipboard"
     },
+    "open_maker": {
+      "description": "Open Maker Portal for this environment"
+    },
     "add_wr_to_solution": {
       "description": "Add webresource to a solution"
     },

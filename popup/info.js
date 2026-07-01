@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     { command: "all_fields", label: "Display all fields" },
     { command: "flow_dependency_check", label: "List process dependencies" },
     { command: "copy_guid", label: "Copy record guid to clipboard" },
+    { command: "open_maker", label: "Open Maker Portal for this environment" },
     { command: "add_wr_to_solution", label: "Add webresource to a solution" },
     { command: "list_plugins", label: "List plugin steps" },
     { command: "list_script_events", label: "List all script events on the form" },

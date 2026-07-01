@@ -61,6 +61,38 @@ function showDirtyFields() {
   alert(`${title}\n${divider}\n${body}`);
 }
 
+function copyGuid() {
+  if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+    alert("⚠️ No record found to copy the GUID from");
+    return;
+  }
+
+  var id = Xrm.Page.data.entity.getId();
+  if (!id) {
+    alert("⚠️ No record found to copy the GUID from");
+    return;
+  }
+
+  var guid = id.replace(/[{}]/g, "");
+  navigator.clipboard.writeText(guid);
+  alert("copied " + guid + " to clipboard");
+}
+
+function openMaker() {
+  if (typeof Xrm === "undefined") {
+    alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  var envId = Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId;
+  if (!envId) {
+    alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  window.open(`https://make.powerapps.com/environments/${envId}/home`, "_blank");
+}
+
 function loc() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = prompt("Locate field by name");
@@ -137,56 +169,21 @@ const header = {
 };
 
 async function getOptionSetsMetadata(url, entityName) {
-  var result = await fetch(
-    url +
-      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)`,
-    {
-      method: "GET",
-      headers: header,
-    },
-  );
-  var resp = await result.json();
+  var base = url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/`;
 
-  var result2 = await fetch(
-    url +
-      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
-    {
-      method: "GET",
-      headers: header,
-    },
-  );
-  var resp2 = await result2.json();
+  var endpoints = [
+    `Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)`,
+    `Microsoft.Dynamics.CRM.StatusAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
+    `Microsoft.Dynamics.CRM.StateAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
+    `Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)`,
+    //BOOLEAN
+    `Microsoft.Dynamics.CRM.BooleanAttributeMetadata?$select=LogicalName,DefaultValue&$expand=OptionSet($select=TrueOption,FalseOption)`,
+  ];
 
-  var result3 = await fetch(
-    url +
-      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.StateAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options)`,
-    {
-      method: "GET",
-      headers: header,
-    },
+  var [resp, resp2, resp3, resp4, resp5] = await Promise.all(
+    endpoints.map((e) => fetch(base + e, { method: "GET", headers: header }).then((r) => r.json())),
   );
-  var resp3 = await result3.json();
 
-  var result4 = await fetch(
-    url +
-      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata?$select=LogicalName,DefaultFormValue&$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)`,
-    {
-      method: "GET",
-      headers: header,
-    },
-  );
-  var resp4 = await result4.json();
-
-  //BOOLEAN
-  var result5 = await fetch(
-    url +
-      `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata?$select=LogicalName,DefaultValue&$expand=OptionSet($select=TrueOption,FalseOption)`,
-    {
-      method: "GET",
-      headers: header,
-    },
-  );
-  var resp5 = await result5.json();
   resp5.value = resp5.value.map((r) => {
     return { ...r, Bool: true };
   });
@@ -1121,6 +1118,8 @@ window.addEventListener("message", function (event, info) {
   const handlers = {
     YOU_HAVE_THE_SIGHT: god,
     LOCATE_ME: loc,
+    COPY_GUID: copyGuid,
+    OPEN_MAKER: openMaker,
     SHOW_DIRTY_FIELDS: showDirtyFields,
     SHOW_OPTIONS: getOptions,
     LIST_SECURITY_ROLES: listSecurityRoles,

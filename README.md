@@ -30,6 +30,7 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+T` | List Form Layout (tabs, sections & controls)                   |
 | `Alt+Shift+Y` | Display Audit History for the Record                           |
 | `Alt+Shift+W` | Show Unsaved (Dirty) Fields                                    |
+| _unassigned_  | Open Maker Portal for the Current Environment                  |
 
 ---
 

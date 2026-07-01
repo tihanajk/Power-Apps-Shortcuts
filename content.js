@@ -68,15 +68,35 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       break;
 
     case "copyGuid": {
-      const url = location.href.split("&id=")[1];
-      const guid = url.split("&")[0];
-      navigator.clipboard.writeText(guid);
-      alert("copied " + guid + " to clipboard");
+      let guid = null;
+      try {
+        // Records open with ?...&id=<guid> (sometimes URL-encoded with %7b..%7d braces)
+        const match = location.href.match(/[?&]id=([^&]+)/i);
+        if (match) {
+          guid = decodeURIComponent(match[1]).replace(/[{}]/g, "").trim();
+        }
+      } catch (e) {
+        guid = null;
+      }
+
+      const isGuid = (g) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(g || "");
+
+      if (isGuid(guid)) {
+        navigator.clipboard.writeText(guid);
+        alert("copied " + guid + " to clipboard");
+      } else {
+        // No id in the URL (e.g. a list/grid page) - ask the form via Xrm
+        execute("COPY_GUID");
+      }
       break;
     }
 
     case "addWebresourceToSolution":
       execute("ADD_WR_TO_SOL");
+      break;
+
+    case "openMaker":
+      execute("OPEN_MAKER");
       break;
 
     case "listPlugins":

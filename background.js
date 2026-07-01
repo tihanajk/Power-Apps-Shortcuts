@@ -176,6 +176,9 @@ function handleCommand(command) {
     case "copy_guid":
       sendMessageToTab("copyGuid");
       break;
+    case "open_maker":
+      sendMessageToTab("openMaker");
+      break;
     case "add_wr_to_solution":
       sendMessageToTab("addWebresourceToSolution");
       break;
