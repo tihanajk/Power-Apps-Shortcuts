@@ -35,7 +35,7 @@ function showDirtyFields() {
   });
 
   if (!dirty || dirty.length === 0) {
-    alert("✨  No unsaved changes on this record");
+    paModal.alert("✨  No unsaved changes on this record");
     return;
   }
 
@@ -58,44 +58,59 @@ function showDirtyFields() {
 
   var body = lines.map((l) => `  • ${l.name}  →  ${l.value}`).join("\n");
 
-  alert(`${title}\n${divider}\n${body}`);
+  paModal.alert(`${title}\n${divider}\n${body}`);
 }
 
 function copyGuid() {
   if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
-    alert("⚠️ No record found to copy the GUID from");
+    paModal.alert("⚠️ No record found to copy the GUID from");
     return;
   }
 
   var id = Xrm.Page.data.entity.getId();
   if (!id) {
-    alert("⚠️ No record found to copy the GUID from");
+    paModal.alert("⚠️ No record found to copy the GUID from");
     return;
   }
 
   var guid = id.replace(/[{}]/g, "");
   navigator.clipboard.writeText(guid);
-  alert("copied " + guid + " to clipboard");
+  paModal.alert("copied " + guid + " to clipboard");
 }
 
 function openMaker() {
   if (typeof Xrm === "undefined") {
-    alert("⚠️ Could not determine the current environment");
+    paModal.alert("⚠️ Could not determine the current environment");
     return;
   }
 
   var envId = Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId;
   if (!envId) {
-    alert("⚠️ Could not determine the current environment");
+    paModal.alert("⚠️ Could not determine the current environment");
     return;
   }
 
   window.open(`https://make.powerapps.com/environments/${envId}/home`, "_blank");
 }
 
-function loc() {
+function openAdminCenter() {
+  if (typeof Xrm === "undefined") {
+    paModal.alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  var envId = Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId;
+  if (!envId) {
+    paModal.alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  window.open(`https://admin.powerplatform.microsoft.com/environments/${envId}/hub`, "_blank");
+}
+
+async function loc() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
-    var field = prompt("Locate field by name");
+    var field = await paModal.prompt("Locate field by name");
 
     if (field == null || field == "") {
       return;
@@ -138,8 +153,8 @@ function loc() {
       });
     }
 
-    if (message != "") alert(message);
-    else alert("⚠️ Field not found");
+    if (message != "") paModal.alert(message);
+    else paModal.alert("⚠️ Field not found");
   }
 }
 
@@ -270,46 +285,82 @@ async function getTeamSecurityRoles(userId) {
 
 async function listSecurityRoles() {
   var currentUser = Xrm.Utility.getGlobalContext().userSettings.userName;
-  var name = prompt("Enter the full name (enter '*' if you want to info for all)\nexample: 'U:{user_name}', 'T:{team_name}'", "U:" + currentUser);
-  if (name == null) return;
+  var url = Xrm.Page.context.getClientUrl();
 
-  var entityName = name.trim().toLowerCase().startsWith("t:") ? "team" : "systemuser";
+  var allUsers = [];
+  var allTeams = [];
+  try {
+    var uRes = await fetch(
+      `${url}/api/data/v9.0/systemusers?$select=systemuserid,fullname,domainname&$filter=fullname ne 'INTEGRATION' and domainname ne 'crmoln2@microsoft.com' and domainname ne 'crmoln2@microsoft.com' and fullname ne 'SYSTEM' and applicationid eq null and issyncwithdirectory eq true&$orderby=fullname asc`,
+    );
+    var uJson = await uRes.json();
+    uJson.value.forEach((u) => {
+      allUsers.push({ id: u["systemuserid"], name: u.fullname });
+    });
+
+    var tRes = await fetch(`${url}/api/data/v9.0/teams?$select=teamid,name&$filter=teamtype eq 0&$orderby=name asc`);
+    var tJson = await tRes.json();
+    tJson.value.forEach((t) => {
+      allTeams.push({ id: t["teamid"], name: t.name });
+    });
+  } catch (e) {
+    paModal.alert("Error loading users and teams: " + e.message);
+    return;
+  }
+
+  var userOptions = allUsers.map((u) => ({ value: "U:" + u.id, label: u.name, group: "user" }));
+  var teamOptions = allTeams.map((t) => ({ value: "T:" + t.id, label: t.name, group: "team" }));
+  var nameOptions = userOptions.concat(teamOptions);
+
+  if (nameOptions.length == 0) {
+    paModal.alert("No users or teams found");
+    return;
+  }
+
+  var defaultUser = allUsers.find((u) => u.name === currentUser);
+  var defaultValue = defaultUser ? "U:" + defaultUser.id : nameOptions[0].value;
+
+  var res = await paModal.form("List security roles", [
+    { name: "all", label: "All users & teams", type: "checkbox", defaultValue: false, disables: ["scope", "name"] },
+    {
+      name: "scope",
+      label: "Look up roles for",
+      type: "select",
+      options: [
+        { value: "user", label: "User" },
+        { value: "team", label: "Team" },
+      ],
+      defaultValue: "user",
+    },
+    {
+      name: "name",
+      label: "Name",
+      type: "combobox",
+      options: nameOptions,
+      defaultValue: defaultValue,
+      filterBy: "scope",
+      placeholder: "Type to search...",
+    },
+  ]);
+  if (res == null) return;
 
   var teams = [];
   var users = [];
 
-  if (name == "*") {
-    var url = Xrm.Page.context.getClientUrl();
-    var res = await fetch(
-      `${url}/api/data/v9.0/systemusers?$select=systemuserid,fullname,domainname&$filter=fullname ne 'INTEGRATION' and domainname ne 'crmoln2@microsoft.com' and domainname ne 'crmoln2@microsoft.com' and fullname ne 'SYSTEM' and applicationid eq null and issyncwithdirectory eq true&$orderby=fullname asc`,
-    );
-    var u = await res.json();
-    u.value.forEach((u) => {
-      users.push({ id: u["systemuserid"], name: u.fullname });
-    });
-
-    var res2 = await fetch(`${url}/api/data/v9.0/teams?$select=teamid,name&$filter=teamtype eq 0&$orderby=name asc`);
-    var t = await res2.json();
-    t.value.forEach((t) => {
-      teams.push({ id: t["teamid"], name: t.name });
-    });
+  if (res.all) {
+    users = allUsers.slice();
+    teams = allTeams.slice();
   } else {
-    if (entityName == "systemuser") {
-      var userName = name.toLowerCase().split("u:")[1].trim();
-      var user = await Xrm.WebApi.retrieveMultipleRecords("systemuser", `?$filter=fullname eq '${userName}'&$select=systemuserid,fullname`);
-      if (user.entities.length == 0) {
-        alert("User not found");
-        return;
-      }
-      users.push({ id: user.entities[0].systemuserid, name: user.entities[0].fullname });
-    } else {
-      var teamName = name.toLowerCase().split("t:")[1].trim();
-      var team = await Xrm.WebApi.retrieveMultipleRecords("team", `?$filter=name eq '${teamName}'&$select=teamid,name`);
-      if (team.entities.length == 0) {
-        alert("Team not found");
-        return;
-      }
-      teams.push({ id: team.entities[0].teamid, name: team.entities[0].name });
+    var sel = res.name || "";
+    if (sel === "") return;
+    if (sel.startsWith("U:")) {
+      var uid = sel.substring(2);
+      var selectedUser = allUsers.find((x) => x.id === uid);
+      if (selectedUser) users.push(selectedUser);
+    } else if (sel.startsWith("T:")) {
+      var tid = sel.substring(2);
+      var selectedTeam = allTeams.find((x) => x.id === tid);
+      if (selectedTeam) teams.push(selectedTeam);
     }
   }
 
@@ -342,7 +393,7 @@ async function listSecurityRoles() {
     var resp = await result.json();
 
     if (resp.error) {
-      alert("Error: " + resp.error.message);
+      paModal.alert("Error: " + resp.error.message);
       return;
     }
 
@@ -353,7 +404,7 @@ async function listSecurityRoles() {
     });
 
     var teamRoles = await getTeamSecurityRoles(userId);
-    allRoles.push({ user: userName, roles: roles.concat(teamRoles) });
+    allRoles.push({ user: userName, userId: userId, roles: roles.concat(teamRoles) });
 
     window.postMessage(
       {
@@ -363,6 +414,7 @@ async function listSecurityRoles() {
         last: i == users.length - 1 && teams.length == 0,
         orgId: orgSettings.organizationId,
         envId: orgSettings.bapEnvironmentId,
+        url: url,
       },
       "*",
     );
@@ -389,14 +441,14 @@ async function listSecurityRoles() {
     });
     var resp = await result.json();
     if (resp.error) {
-      alert("Error: " + resp.error.message);
+      paModal.alert("Error: " + resp.error.message);
       return;
     }
     var values = resp.value;
     var roles = values.map((r) => {
       return { name: r.name, id: r.roleid };
     });
-    allRoles.push({ team: teamName, roles: roles });
+    allRoles.push({ team: teamName, teamId: teamId, roles: roles });
 
     window.postMessage(
       {
@@ -406,6 +458,7 @@ async function listSecurityRoles() {
         last: i == teams.length - 1,
         orgId: orgSettings.organizationId,
         envId: orgSettings.bapEnvironmentId,
+        url: url,
       },
       "*",
     );
@@ -428,9 +481,9 @@ function checkInput(input) {
 async function updateField() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
-  var field = prompt("Enter the logical name of the field to update", "fieldname");
+  var field = await paModal.prompt("Enter the logical name of the field to update", "fieldname");
   if (field == null) return;
-  var value = prompt("Enter the value to set", "value");
+  var value = await paModal.prompt("Enter the value to set", "value");
   if (value == null) return;
 
   value = checkInput(value);
@@ -441,7 +494,7 @@ async function updateField() {
       Xrm.Page.getAttribute(field).setValue(value);
       return;
     } catch (e) {
-      alert("Error: " + e.message);
+      paModal.alert("Error: " + e.message);
       return;
     }
   }
@@ -451,19 +504,29 @@ async function updateField() {
 
   try {
     await Xrm.WebApi.updateRecord(entityName, entityId, entity);
-    alert("Field updated successfully!");
+    paModal.alert("Field updated successfully!");
   } catch (e) {
-    alert("Error: " + e.message);
+    paModal.alert("Error: " + e.message);
   }
 }
 
 async function retrieveRecords() {
-  var entityName = prompt("Enter entity name for fetchXml");
-  var fetchXml = prompt("Enter fetchXml (or '*' for all)");
+  var fetchXml = await paModal.prompt(
+    "Enter fetchXml",
+    '<fetch top="50">\n  <entity name="account">\n    <attribute name="name" />\n  </entity>\n</fetch>',
+    {
+      multiline: true,
+      rows: 14,
+    },
+  );
+  if (fetchXml == null || fetchXml.trim() === "") return;
 
-  if (fetchXml == "*") {
-    fetchXml = `<fetch><entity name="${entityName}" /></fetch>`;
+  var match = fetchXml.match(/<entity\s+name\s*=\s*["']([^"']+)["']/i);
+  if (!match) {
+    paModal.alert('⚠️ Could not find an <entity name="..."> in the provided fetchXml');
+    return;
   }
+  var entityName = match[1];
 
   var escapedFetchXML = encodeURIComponent(fetchXml);
 
@@ -474,6 +537,7 @@ async function retrieveRecords() {
       type: "GIVE_ME_FETCH_RESULTS",
       result: result,
       entityName: entityName,
+      url: Xrm.Page.context.getClientUrl(),
     },
     "*",
   );
@@ -537,8 +601,27 @@ async function getAllFields() {
 }
 
 async function listFlowDependencies() {
-  var term = prompt("Keyword to search for in processes");
-  if (term == null) return;
+  var typeOptions = [
+    { value: 5, label: "Modern Flows", checked: true },
+    { value: 2, label: "Business Rules", checked: true },
+    { value: 0, label: "Workflows", checked: true },
+    { value: 3, label: "Actions", checked: true },
+    { value: 4, label: "Business Process Flows", checked: true },
+    { value: -1, label: "Plugin Steps", checked: true },
+  ];
+
+  var selection = await paModal.select("Which dependencies do you want to check?", typeOptions, {
+    okText: "Check",
+    input: { label: "Keyword to search for in processes", placeholder: "e.g. field logical name" },
+  });
+  if (selection == null) return;
+
+  var selectedTypes = selection.selected;
+  var term = selection.value;
+  if (selectedTypes.length === 0 || term == null || term === "") return;
+
+  var wantsPlugins = selectedTypes.includes(-1);
+  var wantsProcesses = selectedTypes.some((t) => t !== -1);
 
   window.postMessage(
     {
@@ -561,6 +644,12 @@ async function listFlowDependencies() {
     <attribute name="primaryentity" />
     <filter>       
       <condition attribute="type" operator="eq" value="1" />
+      <condition attribute="category" operator="in">
+        ${selectedTypes
+          .filter((t) => t !== -1)
+          .map((c) => `<value>${c}</value>`)
+          .join("")}
+      </condition>
       <filter type="or">
        <condition attribute="clientdata" operator="like" value="%${term}%" />
         <condition attribute='triggeronupdateattributelist' operator='like' value='%${term}%' />
@@ -574,23 +663,29 @@ async function listFlowDependencies() {
 
   var escapedFetchXML = encodeURIComponent(fetchXml);
 
-  var result = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchXML);
-
   var processes = [];
-  result.entities.forEach((e) => {
-    processes.push({
-      id: e["workflowid"],
-      name: e["name"],
-      status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
-      status: e["statecode"],
-      category_display: e["category@OData.Community.Display.V1.FormattedValue"],
-      category: e["category"],
-      primary_entity: e["primaryentity"],
+
+  if (wantsProcesses) {
+    var result = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchXML);
+
+    result.entities.forEach((e) => {
+      if (!selectedTypes.includes(e["category"])) return;
+
+      processes.push({
+        id: e["workflowid"],
+        name: e["name"],
+        status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
+        status: e["statecode"],
+        category_display: e["category@OData.Community.Display.V1.FormattedValue"],
+        category: e["category"],
+        primary_entity: e["primaryentity"],
+      });
     });
-  });
+  }
 
   // PLUGIN STEPS
-  var fetchSteps = `<fetch>
+  if (wantsPlugins) {
+    var fetchSteps = `<fetch>
   <entity name='sdkmessageprocessingstep'>
     <attribute name='filteringattributes' />
     <attribute name='plugintypeid' />
@@ -617,23 +712,24 @@ async function listFlowDependencies() {
   </entity>
 </fetch>`;
 
-  var escapedFetchXML2 = encodeURIComponent(fetchSteps);
+    var escapedFetchXML2 = encodeURIComponent(fetchSteps);
 
-  var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
+    var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
 
-  result2.entities.forEach((e) => {
-    processes.push({
-      id: e["sdkmessageprocessingstepid"],
-      name: e["p.name"],
-      status_display: e["statuscode@OData.Community.Display.V1.FormattedValue"],
-      status: e["statuscode"],
-      category_display: "Plugin",
-      category: -1,
-      message: e["m.name"],
-      primary_entity: e["f.primaryobjecttypecode"],
-      pl_image: !e["filteringattributes"]?.includes(term),
+    result2.entities.forEach((e) => {
+      processes.push({
+        id: e["sdkmessageprocessingstepid"],
+        name: e["p.name"],
+        status_display: e["statuscode@OData.Community.Display.V1.FormattedValue"],
+        status: e["statuscode"],
+        category_display: "Plugin",
+        category: -1,
+        message: e["m.name"],
+        primary_entity: e["f.primaryobjecttypecode"],
+        pl_image: !e["filteringattributes"]?.includes(term),
+      });
     });
-  });
+  }
 
   processes.sort(function (a, b) {
     var nameA = a.name.toLowerCase();
@@ -656,17 +752,17 @@ async function listFlowDependencies() {
 }
 
 async function addWebresourceToSolution() {
-  var solutionName = prompt("Enter logical name of your solution");
+  var solutionName = await paModal.prompt("Enter logical name of your solution");
   if (!solutionName) return;
 
-  var webresourceName = prompt("Enter logical name of your webresource");
+  var webresourceName = await paModal.prompt("Enter logical name of your webresource");
   if (!webresourceName) return;
 
   try {
     var result = await Xrm.WebApi.retrieveMultipleRecords("webresource", `?$select=webresourceid,name&$filter=name eq '${webresourceName}'&$top=1`);
 
     if (result.entities.length == 0) {
-      alert(`⚠️ Couldn't find webresource with name: ${webresourceName}`);
+      paModal.alert(`⚠️ Couldn't find webresource with name: ${webresourceName}`);
       return;
     }
 
@@ -696,15 +792,15 @@ async function addWebresourceToSolution() {
 
     await Xrm.WebApi.execute(execute_AddSolutionComponent_Request);
   } catch (e) {
-    alert(`Error: ${e.message}`);
+    paModal.alert(`Error: ${e.message}`);
     return;
   }
 
-  alert(`✨ Successfully added "${webresourceName}" to "${solutionName}" ✨`);
+  paModal.alert(`✨ Successfully added "${webresourceName}" to "${solutionName}" ✨`);
 }
 
 async function listPlugins() {
-  var assemblyName = prompt("Assembly name", "Customer.CRM.Plugins");
+  var assemblyName = await paModal.prompt("Assembly name", "Customer.CRM.Plugins");
   if (!assemblyName) return;
 
   var originalFetchXML = `<fetch>
@@ -975,7 +1071,7 @@ async function listAuditHistory() {
     var metaResp = await metaResult.json();
     objectTypeCode = metaResp.ObjectTypeCode;
   } catch (e) {
-    alert("Error fetching entity metadata: " + e.message);
+    paModal.alert("Error fetching entity metadata: " + e.message);
     return;
   }
 
@@ -1005,12 +1101,12 @@ async function listAuditHistory() {
     });
     result = await result.json();
   } catch (e) {
-    alert("Error fetching audit records: " + e.message);
+    paModal.alert("Error fetching audit records: " + e.message);
     return;
   }
 
   if (result.error) {
-    alert("Error: " + result.error.message);
+    paModal.alert("Error: " + result.error.message);
     return;
   }
 
@@ -1120,6 +1216,7 @@ window.addEventListener("message", function (event, info) {
     LOCATE_ME: loc,
     COPY_GUID: copyGuid,
     OPEN_MAKER: openMaker,
+    OPEN_ADMIN: openAdminCenter,
     SHOW_DIRTY_FIELDS: showDirtyFields,
     SHOW_OPTIONS: getOptions,
     LIST_SECURITY_ROLES: listSecurityRoles,

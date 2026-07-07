@@ -26,9 +26,17 @@ function getFetchResults() {
       action: "GET_FETCH",
     },
     function (response) {
-      var content = renderResults(response.fetchData, response.fetchEntityName);
+      var content = renderResults(response.fetchData, response.fetchEntityName, response.url);
 
       document.getElementById("fetch-content").innerHTML = content;
+
+      var fetchContent = document.getElementById("fetch-content");
+      fetchContent.addEventListener("click", function (e) {
+        var row = e.target.closest("tr.clickable");
+        if (!row) return;
+        var recordUrl = row.getAttribute("data-url");
+        if (recordUrl) window.open(recordUrl, "_blank");
+      });
     },
   );
 
@@ -43,7 +51,7 @@ function downloadData() {
   XLSX.writeFile(workbook, `fetchresults.xlsx`);
 }
 
-function renderResults(fetchData, entityName) {
+function renderResults(fetchData, entityName, url) {
   var content = "";
 
   document.getElementById("title").innerHTML = `Fetched data for entity ${entityName.toUpperCase()}`;
@@ -62,6 +70,17 @@ function renderResults(fetchData, entityName) {
     columns.push(key);
   }
 
+  var primaryIdField = entityName + "id";
+
+  function getRecordId(r) {
+    if (r[primaryIdField]) return r[primaryIdField];
+    var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    for (const [key, value] of Object.entries(r)) {
+      if (key.endsWith("id") && typeof value === "string" && guidRegex.test(value)) return value;
+    }
+    return null;
+  }
+
   var table = `
   <div class="table-container">
     <div class="table-wrapper">
@@ -73,12 +92,13 @@ function renderResults(fetchData, entityName) {
           </thead>
           <tbody>
           ${fetchData.entities
-            .map(
-              (r) =>
-                `<tr id="main-row">${columns
-                  .map((c) => (c == "_" ? `<td>${fetchData.entities.indexOf(r) + 1}</td>` : `<td>${r[c]}</td>`))
-                  .join("")}</tr>`,
-            )
+            .map((r) => {
+              var recordId = getRecordId(r);
+              var recordUrl = url && recordId ? `${url}/main.aspx?pagetype=entityrecord&etn=${entityName}&id=${recordId}` : "";
+              return `<tr id="main-row"${recordUrl ? ` class="clickable" data-url="${recordUrl}"` : ""}>${columns
+                .map((c) => (c == "_" ? `<td>${fetchData.entities.indexOf(r) + 1}</td>` : `<td>${r[c]}</td>`))
+                .join("")}</tr>`;
+            })
             .join("")}
           </tbody>
       </table>

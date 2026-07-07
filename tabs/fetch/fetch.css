@@ -29,6 +29,14 @@ tbody td {
   white-space: nowrap;
 }
 
+tbody tr.clickable {
+  cursor: pointer;
+}
+
+tbody tr.clickable:hover {
+  background: var(--color-hover, rgba(106, 126, 157, 0.12));
+}
+
 thead th {
   z-index: 2;
 }

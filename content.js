@@ -1,3 +1,12 @@
+// Inject the shared modal helper into the page context so dataverse.js can use it.
+(function injectPageModal() {
+  if (document.getElementById("pa-modal-script")) return;
+  var s = document.createElement("script");
+  s.id = "pa-modal-script";
+  s.src = chrome.runtime.getURL("modal.js");
+  (document.head || document.documentElement).appendChild(s);
+})();
+
 //add listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   const execute = (cmd, data) => executeInScript(cmd, "dataverse.js", data);
@@ -28,18 +37,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       break;
 
     case "openList": {
-      const entityName = prompt("Entity name for view?");
-      if (!entityName) return;
-      window.open(`${baseUrl()}&pagetype=entitylist&etn=${entityName}`, "_blank");
+      (async () => {
+        const entityName = await paModal.prompt("Entity name for view?");
+        if (!entityName) return;
+        window.open(`${baseUrl()}&pagetype=entitylist&etn=${entityName}`, "_blank");
+      })();
       break;
     }
 
     case "openRecord": {
-      const entityName = prompt("Entity name of record?");
-      if (!entityName) return;
-      const recordId = prompt(`Id of ${entityName}?`);
-      if (!recordId) return;
-      window.open(`${baseUrl()}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`, "_blank");
+      (async () => {
+        const res = await paModal.form("Open record", [
+          { name: "entityName", label: "Entity name", placeholder: "e.g. account" },
+          { name: "recordId", label: "Record id (GUID)", placeholder: "e.g. 00000000-0000-0000-0000-000000000000" },
+        ]);
+        if (!res || !res.entityName || !res.recordId) return;
+        window.open(`${baseUrl()}&pagetype=entityrecord&etn=${res.entityName}&id=${res.recordId}`, "_blank");
+      })();
       break;
     }
 
@@ -83,7 +97,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
       if (isGuid(guid)) {
         navigator.clipboard.writeText(guid);
-        alert("copied " + guid + " to clipboard");
+        paModal.alert("copied " + guid + " to clipboard");
       } else {
         // No id in the URL (e.g. a list/grid page) - ask the form via Xrm
         execute("COPY_GUID");
@@ -97,6 +111,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     case "openMaker":
       execute("OPEN_MAKER");
+      break;
+
+    case "openAdmin":
+      execute("OPEN_ADMIN");
       break;
 
     case "listPlugins":
@@ -175,12 +193,14 @@ window.addEventListener("message", (event) => {
       last: event.data.last,
       orgId: event.data.orgId,
       envId: event.data.envId,
+      url: event.data.url,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_FETCH_RESULTS") {
     chrome.runtime.sendMessage({
       action: "showRetrieveResult",
       result: event.data.result,
       entityName: event.data.entityName,
+      url: event.data.url,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_ALL_FIELDS") {
     chrome.runtime.sendMessage({

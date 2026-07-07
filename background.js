@@ -13,8 +13,10 @@ var securityData = [];
 var doneFetchingSecurity = false;
 var fetchData = [];
 var entityName = "";
+var fetchUrl = "";
 var orgId = "";
 var envId = "";
+var securityUrl = "";
 var allFields = [];
 var fields = [];
 var fieldName = "";
@@ -49,15 +51,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     doneFetchingSecurity = request.last;
     orgId = request.orgId;
     envId = request.envId;
+    securityUrl = request.url;
     if (request.first) chrome.tabs.create({ url: chrome.runtime.getURL("tabs/security/security.html") });
   } else if (request.action === "GET_SECURITY") {
-    sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId });
+    sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId, url: securityUrl });
   } else if (request.action === "showRetrieveResult") {
     fetchData = request.result;
     entityName = request.entityName;
+    fetchUrl = request.url;
     chrome.tabs.create({ url: chrome.runtime.getURL("tabs/fetch/fetch.html") });
   } else if (request.action === "GET_FETCH") {
-    sendResponse({ fetchData: fetchData, fetchEntityName: entityName });
+    sendResponse({ fetchData: fetchData, fetchEntityName: entityName, url: fetchUrl });
   } else if (request.action === "showAllFields") {
     allFields = request.result;
     fields = request.fields;
@@ -178,6 +182,9 @@ function handleCommand(command) {
       break;
     case "open_maker":
       sendMessageToTab("openMaker");
+      break;
+    case "open_admin":
+      sendMessageToTab("openAdmin");
       break;
     case "add_wr_to_solution":
       sendMessageToTab("addWebresourceToSolution");

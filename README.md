@@ -30,7 +30,35 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+T` | List Form Layout (tabs, sections & controls)                   |
 | `Alt+Shift+Y` | Display Audit History for the Record                           |
 | `Alt+Shift+W` | Show Unsaved (Dirty) Fields                                    |
-| _unassigned_  | Open Maker Portal for the Current Environment                  |
+| `Alt+Shift+K` | Open Maker Portal for the Current Environment                  |
+| `Alt+Shift+N` | Open Power Platform Admin Center for the Current Environment   |
+
+---
+
+### 📖 What Each Command Does
+
+- **Open Advanced Find** — Opens the classic Advanced Find search window for the current environment.
+- **Enable God Mode** — Unlocks the current form: makes hidden fields visible, read-only fields editable, and optional fields non-mandatory.
+- **List Security Roles** — Lists the security roles in the environment (with first/last user context) so you can review who has what access.
+- **Locate Field on Form** — Highlights and scrolls to a chosen field on the current form so you can find it quickly.
+- **Open Entity List** — Prompts for an entity (table) logical name and opens its list view in a new tab.
+- **Open Record** — Prompts for an entity name and record GUID, then opens that specific record in a new tab.
+- **Quick Field Update** — Lets you update a field value on the current record directly, without opening the full editor.
+- **Toggle Ribbon Debug** — Adds or removes `&ribbondebug=true` from the URL to turn command-bar (ribbon) debugging on or off.
+- **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.
+- **Execute Retrieve with FetchXML** — Runs a FetchXML query against the environment and shows the returned records.
+- **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form.
+- **List Field Dependencies** — Shows processes that depend on the record/table: Flows, Plugins, Workflows, Business Rules, and BPFs.
+- **Copy Record GUID to Clipboard** — Copies the current record's GUID to your clipboard (reads it from the URL or the form).
+- **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
+- **List Plugin Steps** — Lists the registered plugin steps for the current context.
+- **List Script Events on the Form** — Lists the JavaScript event handlers (OnLoad, OnChange, OnSave, etc.) wired up on the current form.
+- **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values.
+- **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls.
+- **Display Audit History for the Record** — Shows the audit history (changes over time) for the current record.
+- **Show Unsaved (Dirty) Fields** — Lists the fields on the current form that have unsaved changes.
+- **Open Maker Portal for the Current Environment** — Opens the Power Apps Maker Portal targeted at the current environment.
+- **Open Power Platform Admin Center for the Current Environment** — Opens the Power Platform Admin Center targeted at the current environment.
 
 ---
 

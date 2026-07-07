@@ -16,13 +16,13 @@
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   margin: 0;
-  padding: 14px;
+  padding: 16px;
   background-color: var(--bg);
   color: var(--text);
-  width: 290px;
+  width: 310px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Header */
@@ -30,29 +30,37 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .title-row h2 {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
+  letter-spacing: 0.2px;
 }
 
 .logo {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
 }
 
 .version {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text-muted);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px 8px;
 }
 
 /* Hint text */
@@ -73,7 +81,7 @@ body {
 
 /* Primary button */
 .primary-btn {
-  padding: 9px 12px;
+  padding: 10px 12px;
   background-color: var(--accent);
   color: white;
   border: none;
@@ -81,11 +89,18 @@ body {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: background-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .primary-btn:hover {
   background-color: var(--accent-hover);
+}
+
+.primary-btn:active {
+  transform: translateY(1px);
 }
 
 /* Search */
@@ -111,32 +126,62 @@ body {
 
 #action-search:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.25);
 }
 
-/* Divider label */
-.actions-divider {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  padding-top: 2px;
-}
-
-/* Action buttons list */
+/* Action list */
 #action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 260px;
+  gap: 2px;
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 2px;
 }
 
+.action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+.action-group.hidden {
+  display: none;
+}
+
+.group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-muted);
+  padding: 8px 2px 4px;
+}
+
+.group-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 .action-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   text-align: left;
   font-size: 13px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   background-color: var(--bg-elev);
   color: var(--text);
   border: 1px solid transparent;
@@ -144,15 +189,66 @@ body {
   cursor: pointer;
   transition:
     background-color 0.12s ease,
-    border-color 0.12s ease;
+    border-color 0.12s ease,
+    transform 0.1s ease;
 }
 
-.action-btn:hover {
+.action-icon {
+  display: none;
+}
+
+.action-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-kbd {
+  flex-shrink: 0;
+  font-family:
+    ui-monospace,
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.action-btn:hover,
+.action-btn.active {
   background-color: var(--bg-hover);
   border-color: var(--accent);
 }
 
+.action-btn.active {
+  transform: translateX(2px);
+}
+
+.action-btn.active .action-kbd,
+.action-btn:hover .action-kbd {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 .action-btn.hidden {
+  display: none;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 16px 0;
+}
+
+.empty-state.hidden {
   display: none;
 }
 

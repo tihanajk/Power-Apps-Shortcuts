@@ -159,7 +159,7 @@ chrome.runtime.onMessage.addListener((request) => {
       saveBtn.disabled = false;
       saveBtn.textContent = "Save";
     }
-    alert("Error saving: " + request.error);
+    paModal.alert("Error saving: " + request.error);
   } else if (request.action === "ENV_VAR_REFRESHED") {
     allVariables = request.data.variables;
     renderResults(request.data);

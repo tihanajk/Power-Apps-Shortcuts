@@ -94,6 +94,7 @@ function getDependencies() {
 
       if (response?.processes) {
         processes = response.processes;
+        updateToggleAvailability();
         renderDependencies(processes);
       } else {
         showLoading();
@@ -112,6 +113,31 @@ function showLoading() {
       <span class="spinner"></span>
       <span>Loading dependencies...</span>
     </div>`;
+}
+
+// Only the process types picked in the popup are returned, so disable the
+// toggles for categories that aren't present in the results.
+function updateToggleAvailability() {
+  var map = [
+    { cb: checkboxBR, cat: CATEGORIES.BR },
+    { cb: checkboxFlow, cat: CATEGORIES.FLOW },
+    { cb: checkboxBPF, cat: CATEGORIES.BPF },
+    { cb: checkboxWF, cat: CATEGORIES.WF },
+    { cb: checkboxAction, cat: CATEGORIES.ACTION },
+    { cb: checkboxPL, cat: CATEGORIES.PLUGIN },
+  ];
+
+  var present = {};
+  processes.forEach(function (p) {
+    present[p.category] = true;
+  });
+
+  map.forEach(function (m) {
+    var available = !!present[m.cat];
+    m.cb.disabled = !available;
+    var label = m.cb.closest(".toggle");
+    if (label) label.classList.toggle("toggle-disabled", !available);
+  });
 }
 
 function filter() {

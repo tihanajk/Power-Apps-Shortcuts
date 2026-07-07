@@ -23,7 +23,7 @@ function getSecurity() {
 
       allRoles = response.roles;
 
-      var content = handleContent(response.roles, secRolesLink);
+      var content = handleContent(response.roles, secRolesLink, response.url);
 
       document.getElementById("security-content").innerHTML = content;
 
@@ -71,7 +71,7 @@ function filterResults() {
   }
 }
 
-function handleContent(allRoles, link) {
+function handleContent(allRoles, link, url) {
   if (allRoles.length == 0) return "";
   var content = "";
 
@@ -80,8 +80,9 @@ function handleContent(allRoles, link) {
 
   if (users.length > 0) content += "<h2 id='users'>User roles:</h2>";
   users.forEach((a) => {
+    var userLink = url && a.userId ? `${url}/main.aspx?pagetype=entityrecord&etn=systemuser&id=${a.userId}` : null;
     content += `<div id="user">
-        <h3>${a.user}</h3>`;
+        <h3>${userLink ? `<a href="${userLink}" target="_blank">${a.user}</a>` : a.user}</h3>`;
     content +=
       a.roles.length > 0
         ? `<table id="main">                        
@@ -100,7 +101,7 @@ function handleContent(allRoles, link) {
                               `<tr id="main-row">
                                 <td><a href="${link}/${r.id}/roleeditor" target="_blank">${r.name}</a></td>
                                 <td>${r.id}</td>
-                                <td>${r?.teamName ? r.teamName : ""}</td>
+                                <td>${r?.teamName ? (url && r?.teamId ? `<a href="${url}/main.aspx?pagetype=entityrecord&etn=team&id=${r.teamId}" target="_blank">${r.teamName}</a>` : r.teamName) : ""}</td>
                                 <td>${r?.teamId ? r.teamId : ""}</td>
                             </tr>`,
                           )
@@ -113,8 +114,9 @@ function handleContent(allRoles, link) {
 
   if (teams.length > 0) content += '<h2 id="teams">Team roles:</h2>';
   teams.forEach((a) => {
+    var teamLink = url && a.teamId ? `${url}/main.aspx?pagetype=entityrecord&etn=team&id=${a.teamId}` : null;
     content += `<div id="team">
-        <h3>Team: ${a.team}</h3>`;
+        <h3>Team: ${teamLink ? `<a href="${teamLink}" target="_blank">${a.team}</a>` : a.team}</h3>`;
     content +=
       a.roles.length > 0
         ? `<table id="main">                        

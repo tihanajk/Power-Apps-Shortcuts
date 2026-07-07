@@ -1,5 +1,33 @@
 /* Dependencies tab — base styles inherited from ../common.css */
 
+/* Keep the "Only active" toggle on its own row above the category toggles */
+#filters > div:first-child {
+  flex-basis: 100%;
+}
+
+/* Category toggles for types not returned by the popup selection.
+   Rendered clearly as "not applicable": flat grey track, knob left,
+   struck-through muted label — distinct from a user-turned-off toggle. */
+.toggle-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.toggle-disabled .toggle-switch {
+  background-color: #e5e7eb !important;
+  box-shadow: inset 0 0 0 1px #cbd5e1;
+}
+
+.toggle-disabled .toggle-switch::after {
+  transform: none !important;
+  background-color: #cbd5e1;
+}
+
+.toggle-disabled .toggle-label {
+  color: #9ca3af;
+}
+
 /* Loading indicator shown while dependencies are fetched */
 .loading {
   display: flex;
