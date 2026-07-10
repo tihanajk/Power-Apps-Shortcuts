@@ -465,33 +465,202 @@ async function listSecurityRoles() {
   }
 }
 
-function checkInput(input) {
-  if (!isNaN(input) && input.trim() !== "") {
-    return Number(input);
+async function getAttributeType(entityName, field) {
+  try {
+    var clientUrl = Xrm.Page.context.getClientUrl();
+    var res = await fetch(
+      `${clientUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes(LogicalName='${field}')?$select=AttributeType`,
+      { headers: { Accept: "application/json", "OData-MaxVersion": "4.0", "OData-Version": "4.0" } },
+    );
+    if (!res.ok) return null;
+    var data = await res.json();
+    return data.AttributeType || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+var METADATA_HEADERS = { Accept: "application/json", "OData-MaxVersion": "4.0", "OData-Version": "4.0" };
+
+async function getLookupInfo(entityName, field) {
+  try {
+    var clientUrl = Xrm.Page.context.getClientUrl();
+    var targetsRes = await fetch(
+      `${clientUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes(LogicalName='${field}')/Microsoft.Dynamics.CRM.LookupAttributeMetadata?$select=Targets`,
+      { headers: METADATA_HEADERS },
+    );
+    if (!targetsRes.ok) return null;
+    var targetsData = await targetsRes.json();
+
+    var relRes = await fetch(
+      `${clientUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=LogicalName&$expand=ManyToOneRelationships($select=ReferencingAttribute,ReferencingEntityNavigationPropertyName,ReferencedEntity)`,
+      { headers: METADATA_HEADERS },
+    );
+    var relData = relRes.ok ? await relRes.json() : { ManyToOneRelationships: [] };
+
+    var navByTarget = {};
+    (relData.ManyToOneRelationships || []).forEach(function (r) {
+      if (r.ReferencingAttribute === field) navByTarget[r.ReferencedEntity] = r.ReferencingEntityNavigationPropertyName;
+    });
+
+    return { targets: targetsData.Targets || [], navByTarget: navByTarget };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function getEntitySetAndName(entityLogicalName) {
+  try {
+    var clientUrl = Xrm.Page.context.getClientUrl();
+    var res = await fetch(
+      `${clientUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')?$select=EntitySetName,PrimaryNameAttribute`,
+      { headers: METADATA_HEADERS },
+    );
+    if (!res.ok) return null;
+    var data = await res.json();
+    return { entitySet: data.EntitySetName, primaryName: data.PrimaryNameAttribute };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function updateLookupField(entityName, entityId, field, rawValue, onForm) {
+  var parts = String(rawValue).split(":");
+  var targetEntity = null;
+  var guid = null;
+  if (parts.length >= 2) {
+    targetEntity = parts[0].trim();
+    guid = parts.slice(1).join(":").trim();
+  } else {
+    guid = String(rawValue).trim();
+  }
+  guid = guid.replace(/[{}]/g, "").trim();
+  if (guid === "") return;
+
+  var info = await getLookupInfo(entityName, field);
+  if (!info) {
+    paModal.alert("Could not read lookup metadata for " + field);
+    return;
   }
 
-  let lowerInput = input.toLowerCase();
+  if (!targetEntity) {
+    if (info.targets.length === 1) {
+      targetEntity = info.targets[0];
+    } else {
+      paModal.alert(`This is a polymorphic lookup. Enter the value as "entitylogicalname:guid".\nTargets: ${info.targets.join(", ")}`);
+      return;
+    }
+  }
+  if (info.targets.indexOf(targetEntity) === -1) {
+    paModal.alert(`"${targetEntity}" is not a valid target for this lookup.\nTargets: ${info.targets.join(", ")}`);
+    return;
+  }
 
-  if (lowerInput === "true") return true;
-  if (lowerInput === "false") return false;
+  var targetMeta = await getEntitySetAndName(targetEntity);
+  if (!targetMeta) {
+    paModal.alert("Could not read metadata for " + targetEntity);
+    return;
+  }
 
-  return input;
+  if (onForm) {
+    var name = "";
+    try {
+      var rec = await Xrm.WebApi.retrieveRecord(targetEntity, guid, `?$select=${targetMeta.primaryName}`);
+      name = rec[targetMeta.primaryName] || "";
+    } catch (e) {
+      // ignore, display name is optional
+    }
+    try {
+      onForm.setValue([{ id: guid, entityType: targetEntity, name: name }]);
+    } catch (e) {
+      paModal.alert("Error: " + e.message);
+    }
+    return;
+  }
+
+  var navProp = info.navByTarget[targetEntity];
+  if (!navProp) {
+    paModal.alert("Could not resolve the navigation property for this lookup.");
+    return;
+  }
+
+  var entity = {};
+  entity[navProp + "@odata.bind"] = `/${targetMeta.entitySet}(${guid})`;
+
+  try {
+    await Xrm.WebApi.updateRecord(entityName, entityId, entity);
+    paModal.alert("Field updated successfully!");
+  } catch (e) {
+    paModal.alert("Error: " + e.message);
+  }
+}
+
+function coerceValue(raw, type, forForm) {
+  if (raw == null) return raw;
+  var t = String(type || "").toLowerCase();
+  var s = String(raw).trim();
+
+  if (t === "boolean") {
+    return s.toLowerCase() === "true" || s === "1" || s.toLowerCase() === "yes";
+  }
+  if (t === "integer" || t === "bigint" || t === "picklist" || t === "optionset" || t === "state" || t === "status") {
+    var n = parseInt(s, 10);
+    return isNaN(n) ? raw : n;
+  }
+  if (t === "decimal" || t === "double" || t === "money") {
+    var f = parseFloat(s);
+    return isNaN(f) ? raw : f;
+  }
+  if (t === "multiselectpicklist" || t === "multiselectoptionset") {
+    return s
+      .split(",")
+      .map(function (v) {
+        return parseInt(v.trim(), 10);
+      })
+      .filter(function (x) {
+        return !isNaN(x);
+      });
+  }
+  if (t === "datetime") {
+    if (forForm) {
+      var d = new Date(s);
+      return isNaN(d.getTime()) ? raw : d;
+    }
+    return s;
+  }
+
+  // string, memo, uniqueidentifier, lookup, unknown -> keep as-is
+  return raw;
 }
 
 async function updateField() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
-  var field = await paModal.prompt("Enter the logical name of the field to update", "fieldname");
-  if (field == null) return;
-  var value = await paModal.prompt("Enter the value to set", "value");
+
+  var res = await paModal.form("Quick field update", [
+    { name: "field", label: "Field logical name", placeholder: "fieldname" },
+    { name: "value", label: "Value", placeholder: "value (lookup: guid or entity:guid)" },
+  ]);
+  if (res == null) return;
+
+  var field = (res.field || "").trim();
+  if (field === "") return;
+  var value = res.value;
   if (value == null) return;
 
-  value = checkInput(value);
-
   var onForm = Xrm.Page.getAttribute(field);
+
+  var type = onForm ? onForm.getAttributeType() : await getAttributeType(entityName, field);
+
+  var typeLower = String(type || "").toLowerCase();
+  if (typeLower === "lookup" || typeLower === "customer" || typeLower === "owner") {
+    await updateLookupField(entityName, entityId, field, value, onForm);
+    return;
+  }
+
   if (onForm) {
     try {
-      Xrm.Page.getAttribute(field).setValue(value);
+      onForm.setValue(coerceValue(value, type, true));
       return;
     } catch (e) {
       paModal.alert("Error: " + e.message);
@@ -500,7 +669,7 @@ async function updateField() {
   }
 
   var entity = {};
-  entity[field] = value;
+  entity[field] = coerceValue(value, type, false);
 
   try {
     await Xrm.WebApi.updateRecord(entityName, entityId, entity);
@@ -752,22 +921,66 @@ async function listFlowDependencies() {
 }
 
 async function addWebresourceToSolution() {
-  var solutionName = await paModal.prompt("Enter logical name of your solution");
-  if (!solutionName) return;
+  var solutions = [];
+  var webresources = [];
+  try {
+    var solRes = await Xrm.WebApi.retrieveMultipleRecords(
+      "solution",
+      "?$select=uniquename,friendlyname&$filter=ismanaged eq false and isvisible eq true&$orderby=friendlyname asc",
+    );
+    solRes.entities.forEach((s) => {
+      if (s.uniquename) solutions.push({ unique: s.uniquename, friendly: s.friendlyname });
+    });
 
-  var webresourceName = await paModal.prompt("Enter logical name of your webresource");
-  if (!webresourceName) return;
+    var wrRes = await Xrm.WebApi.retrieveMultipleRecords("webresource", "?$select=name,webresourceid&$filter=ismanaged eq false&$orderby=name asc");
+    wrRes.entities.forEach((w) => {
+      if (w.name) webresources.push({ id: w.webresourceid, name: w.name });
+    });
+  } catch (e) {
+    paModal.alert("Error loading solutions and web resources: " + e.message);
+    return;
+  }
+
+  if (solutions.length == 0) {
+    paModal.alert("No unmanaged solutions found");
+    return;
+  }
+  if (webresources.length == 0) {
+    paModal.alert("No web resources found");
+    return;
+  }
+
+  var solutionOptions = solutions.map((s) => ({ value: s.unique, label: s.friendly ? `${s.friendly} (${s.unique})` : s.unique }));
+  var wrOptions = webresources.map((w) => ({ value: w.id, label: w.name }));
+
+  var res = await paModal.form("Add web resource to solution", [
+    {
+      name: "solution",
+      label: "Solution",
+      type: "combobox",
+      options: solutionOptions,
+      defaultValue: solutionOptions[0].value,
+      placeholder: "Type to search...",
+    },
+    {
+      name: "webresource",
+      label: "Web resource",
+      type: "combobox",
+      options: wrOptions,
+      defaultValue: wrOptions[0].value,
+      placeholder: "Type to search...",
+    },
+  ]);
+  if (res == null) return;
+
+  var solutionName = res.solution;
+  var wrId = res.webresource;
+  if (!solutionName || !wrId) return;
+
+  var selectedWr = webresources.find((w) => w.id === wrId);
+  var webresourceName = selectedWr ? selectedWr.name : wrId;
 
   try {
-    var result = await Xrm.WebApi.retrieveMultipleRecords("webresource", `?$select=webresourceid,name&$filter=name eq '${webresourceName}'&$top=1`);
-
-    if (result.entities.length == 0) {
-      paModal.alert(`⚠️ Couldn't find webresource with name: ${webresourceName}`);
-      return;
-    }
-
-    var wrId = result.entities[0].webresourceid;
-
     var execute_AddSolutionComponent_Request = {
       // Parameters
       ComponentId: { guid: wrId }, // Edm.Guid
@@ -800,7 +1013,37 @@ async function addWebresourceToSolution() {
 }
 
 async function listPlugins() {
-  var assemblyName = await paModal.prompt("Assembly name", "Customer.CRM.Plugins");
+  var assemblies = [];
+  try {
+    var assemblyResult = await Xrm.WebApi.retrieveMultipleRecords("pluginassembly", "?$select=name&$orderby=name asc");
+    assemblyResult.entities.forEach((a) => {
+      if (a.name) assemblies.push(a.name);
+    });
+  } catch (e) {
+    paModal.alert("Error loading assemblies: " + e.message);
+    return;
+  }
+
+  if (assemblies.length == 0) {
+    paModal.alert("No plugin assemblies found");
+    return;
+  }
+
+  var assemblyOptions = assemblies.map((n) => ({ value: n, label: n }));
+
+  var res = await paModal.form("List plugins", [
+    {
+      name: "assembly",
+      label: "Assembly name",
+      type: "combobox",
+      options: assemblyOptions,
+      defaultValue: assemblyOptions[0].value,
+      placeholder: "Type to search...",
+    },
+  ]);
+  if (res == null) return;
+
+  var assemblyName = (res.assembly || "").trim();
   if (!assemblyName) return;
 
   var originalFetchXML = `<fetch>

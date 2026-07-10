@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.25",
+  "version": "2.0.0.26",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -68,11 +68,9 @@
       "description": "Copy record guid to clipboard"
     },
     "open_maker": {
-
       "description": "Open Maker Portal for this environment"
     },
     "open_admin": {
-
       "description": "Open Power Platform Admin Center for this environment"
     },
     "add_wr_to_solution": {
