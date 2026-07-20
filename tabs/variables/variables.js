@@ -50,6 +50,7 @@ function filterResults() {
   var filtered = allVariables.filter(
     (v) =>
       v.name.toLowerCase().includes(searchFilter) ||
+      (v.displayName != null && v.displayName.toLowerCase().includes(searchFilter)) ||
       (v.value != null && v.value.toString().toLowerCase().includes(searchFilter)) ||
       (v.defaultValue != null && v.defaultValue.toString().toLowerCase().includes(searchFilter)),
   );
@@ -64,6 +65,7 @@ function renderResults(data) {
                 <table id="main">
                     <thead>
                         <tr>
+                            <th>Display Name</th>
                             <th>Schema Name</th>
                             <th>Default Value</th>
                             <th>Value</th>
@@ -75,7 +77,9 @@ function renderResults(data) {
   variables.forEach((d) => {
     var defaultVal = d.defaultValue != null ? d.defaultValue : "";
     var val = d.value != null ? d.value : "<span style='color:#9ca3af;font-style:italic'>-</span>";
+    var displayName = d.displayName != null ? d.displayName : "";
     content += `<tr>
+        <td>${displayName}</td>
         <td>
         <a href="${d.link}" target="_blank">${d.name}</a>
         </td>
@@ -99,7 +103,7 @@ function openEditModal(variable) {
   modal.id = "edit-modal";
   modal.innerHTML = `
     <div class="modal-content">
-      <h2 class="modal-title">${variable.name}</h2>
+      <h2 class="modal-title">${variable.displayName || variable.name}</h2>
       <div class="modal-field">
         <label class="modal-label" for="modal-default-input">Default Value</label>
         <textarea id="modal-default-input" class="modal-input" rows="3">${defaultVal}</textarea>

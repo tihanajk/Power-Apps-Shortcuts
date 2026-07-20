@@ -113,10 +113,10 @@ function renderPlugins(plugins) {
                           `<li>
                             <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}
                             ${s.mode == 0 ? '<div style="margin-left:10px; overflow-wrap: break-word;" >🔀 Synchronous</div>' : s.mode == 1 ? '<div style="margin-left:10px; overflow-wrap: break-word;">⏱️ Asynchronous</div>' : s.mode}            
-                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;">🔍 filters: ${s.filter}</div>` : ""}
+                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;">🔍 ${s.filter}</div>` : ""}
                             </h3>
                             <ul class="images">
-                            ${s.image.name ? `<li><h3>🖼️ image: ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
+                            ${s.image.name ? `<li><h3>🖼️ ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
                             </ul>
                           </li>`,
                       )

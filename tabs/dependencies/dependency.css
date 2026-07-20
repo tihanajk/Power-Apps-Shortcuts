@@ -1,5 +1,102 @@
 /* Dependencies tab — base styles inherited from ../common.css */
 
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background-color: var(--color-row-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.legend-title {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.legend-item {
+  white-space: nowrap;
+}
+
+/* Sortable header */
+th.sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+th.sortable .sort-arrow {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+/* Resizable columns */
+table#main {
+  table-layout: fixed;
+}
+
+table#main th {
+  position: relative;
+}
+
+/* Row-number column is just an index — keep it narrow */
+table#main th:first-child,
+table#main td:first-child {
+  width: 40px;
+  text-align: center;
+}
+
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Always-visible divider so column boundaries are easy to see */
+.col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 20%;
+  right: 2px;
+  width: 2px;
+  height: 60%;
+  background-color: var(--color-border, #cbd5e1);
+  border-radius: 1px;
+}
+
+.col-resizer:hover::before,
+.col-resizer.resizing::before {
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: var(--color-accent, #2563eb);
+}
+
+/* Truncate cell content so it clips instead of overlapping when columns shrink */
+table#main tbody td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table#main tbody td > div,
+table#main tbody td > a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Keep the "Only active" toggle on its own row above the category toggles */
 #filters > div:first-child {
   flex-basis: 100%;
@@ -30,8 +127,10 @@
 
 /* Loading indicator shown while dependencies are fetched */
 .loading {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   padding: 16px 10px;
   font-size: 1rem;
@@ -54,10 +153,38 @@
   }
 }
 
+/* Pin the page to the viewport so there is no page-level vertical scroll;
+   only the table body scrolls when needed (its header stays sticky). */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#header,
+#filters {
+  flex: 0 0 auto;
+}
+
+#dependency-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
 /* Scrollable table area with a sticky header */
 .table-container {
   width: 100%;
-  height: calc(100vh - 170px);
+  height: 100%;
   border: 1px solid var(--color-primary);
   border-radius: 6px;
   overflow: hidden;

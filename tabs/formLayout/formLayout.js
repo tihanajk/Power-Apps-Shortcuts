@@ -28,6 +28,7 @@ function downloadData() {
           "Control Type": "",
           Visible: "",
           Disabled: "",
+          Required: "",
         });
       }
       section.controls.forEach(function (control) {
@@ -43,6 +44,7 @@ function downloadData() {
           "Control Type": control.type,
           Visible: control.visible,
           Disabled: control.disabled,
+          Required: control.required || "",
         });
       });
     });
@@ -118,7 +120,17 @@ function renderLayout(tabs) {
     });
   });
 
-  var html = `<div class="summary">Tabs: ${tabs.length} | Controls: ${totalControls}</div>`;
+  var html = `<div class="summary">Tabs: ${tabs.length} | Controls: ${totalControls}</div>
+    <div class="legend">
+      <span class="legend-title">Legend:</span>
+      <span class="legend-item">✅ Visible</span>
+      <span class="legend-item">❌ Hidden</span>
+      <span class="legend-item">🔒 Disabled</span>
+      <span class="legend-item">✏️ Editable</span>
+      <span class="legend-item">🔴 Required</span>
+      <span class="legend-item">🔵 Recommended</span>
+      <span class="legend-item">- Not applicable</span>
+    </div>`;
 
   tabs.forEach(function (tab) {
     html += `<div class="tab-block">
@@ -146,6 +158,7 @@ function renderLayout(tabs) {
                 <th>Type</th>
                 <th>Visible</th>
                 <th>Disabled</th>
+                <th>Required</th>
               </tr>
             </thead>
             <tbody>`;
@@ -157,6 +170,7 @@ function renderLayout(tabs) {
             <td>${c.type}</td>
             <td>${c.visible ? "✅" : "❌"}</td>
             <td>${c.disabled === null ? "-" : c.disabled ? "🔒" : "✏️"}</td>
+            <td>${c.required === "required" ? "🔴 Required" : c.required === "recommended" ? "🔵 Recommended" : "-"}</td>
           </tr>`;
         });
 

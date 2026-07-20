@@ -21,9 +21,14 @@
         ><span class="toggle-label">Show only those on form</span></label
       >
     </div>
-    <p>* fields that are on the form have 🟢 next to them</p>
-    <p>* fields that are calculated have ©️, rollup have ®️ and pfx have 🌀 next to them</p>
-    <p>* fields that are alternate keys have 🔑 next to them</p>
+    <div class="legend">
+      <span class="legend-title">Legend:</span>
+      <span class="legend-item">🟢 On form</span>
+      <span class="legend-item">©️ Calculated</span>
+      <span class="legend-item">®️ Rollup</span>
+      <span class="legend-item">🌀 Plugin (pfx)</span>
+      <span class="legend-item">🔑 Alternate key</span>
+    </div>
     <div id="fields-content">Results</div>
     <script src="../../xlsx.full.min.js"></script>
     <script src="../../excelHelper.js"></script>

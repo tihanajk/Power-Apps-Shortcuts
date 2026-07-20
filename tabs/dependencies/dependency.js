@@ -7,8 +7,12 @@ var url;
 var envId;
 var processes = [];
 
+var currentRows = [];
+var sortState = { key: null, dir: 1 };
+
 const CATEGORIES = {
   PLUGIN: -1,
+  EV: -2,
   WF: 0,
   BR: 2,
   ACTION: 3,
@@ -23,6 +27,7 @@ var checkboxBPF;
 var checkboxWF;
 var checkboxPL;
 var checkboxAction;
+var checkboxEV;
 
 var search;
 
@@ -59,6 +64,11 @@ function initialize() {
 
   checkboxAction = document.querySelector("input[name=action]");
   checkboxAction.addEventListener("change", function () {
+    filter();
+  });
+
+  checkboxEV = document.querySelector("input[name=ev]");
+  checkboxEV.addEventListener("change", function () {
     filter();
   });
 
@@ -125,6 +135,7 @@ function updateToggleAvailability() {
     { cb: checkboxWF, cat: CATEGORIES.WF },
     { cb: checkboxAction, cat: CATEGORIES.ACTION },
     { cb: checkboxPL, cat: CATEGORIES.PLUGIN },
+    { cb: checkboxEV, cat: CATEGORIES.EV },
   ];
 
   var present = {};
@@ -148,6 +159,7 @@ function filter() {
   var checkedWF = checkboxWF.checked;
   var checkedPL = checkboxPL.checked;
   var checkedAction = checkboxAction.checked;
+  var checkedEV = checkboxEV.checked;
 
   var searchFilter = search.value.toLowerCase();
 
@@ -160,6 +172,7 @@ function filter() {
         (checkedBR && p.category == CATEGORIES.BR) ||
         (checkedWF && p.category == CATEGORIES.WF) ||
         (checkedPL && p.category == CATEGORIES.PLUGIN) ||
+        (checkedEV && p.category == CATEGORIES.EV) ||
         (checkedAction && p.category == CATEGORIES.ACTION)),
   );
 
@@ -182,6 +195,8 @@ function handleLink(category, id) {
       return `${wfLink}${id}`;
     case CATEGORIES.BPF:
       return `${bpfLink}${id}`;
+    case CATEGORIES.EV:
+      return `${url}/main.aspx?pagetype=entityrecord&etn=environmentvariabledefinition&id=${id}`;
     default:
       return "#";
   }
@@ -201,6 +216,8 @@ function handleColor(category) {
       return "#406fda";
     case CATEGORIES.PLUGIN:
       return "#15ae19";
+    case CATEGORIES.EV:
+      return "#e6a817";
     default:
       return "";
   }
@@ -209,6 +226,14 @@ function handleColor(category) {
 function renderDependencies(processes) {
   var content = "";
 
+  currentRows = processes.slice();
+  sortRows(currentRows);
+
+  function arrow(key) {
+    if (sortState.key !== key) return "";
+    return ` <span class="sort-arrow">${sortState.dir === 1 ? "▲" : "▼"}</span>`;
+  }
+
   var table = `
   <div class="table-container">
     <div class="table-wrapper">
@@ -216,18 +241,18 @@ function renderDependencies(processes) {
           <thead>
             <tr>
             <th></th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Primary entity</th>
-            <th>Status</th>
+            <th class="sortable" data-sort="name">Name${arrow("name")}</th>
+            <th class="sortable" data-sort="category_display">Category${arrow("category_display")}</th>
+            <th class="sortable" data-sort="primary_entity">Primary entity${arrow("primary_entity")}</th>
+            <th class="sortable" data-sort="status_display">Status${arrow("status_display")}</th>
             </tr>
           </thead>
           <tbody>
-          ${processes
+          ${currentRows
             .map(
               (e) =>
                 `<tr>
-                    <td style="width:10px">${processes.indexOf(e) + 1}</td>
+                    <td>${currentRows.indexOf(e) + 1}</td>
                     <td>
                     ${
                       e.category == CATEGORIES.PLUGIN
@@ -251,4 +276,82 @@ function renderDependencies(processes) {
   content += table;
 
   document.getElementById("dependency-content").innerHTML = content;
+
+  document.querySelectorAll("th.sortable").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-sort");
+      if (sortState.key === key) {
+        sortState.dir = -sortState.dir;
+      } else {
+        sortState.key = key;
+        sortState.dir = 1;
+      }
+      renderDependencies(currentRows);
+    });
+  });
+
+  makeColumnsResizable();
+}
+
+function makeColumnsResizable() {
+  var table = document.getElementById("main");
+  if (!table) return;
+
+  var headers = table.querySelectorAll("thead th");
+  headers.forEach(function (th) {
+    var handle = document.createElement("span");
+    handle.className = "col-resizer";
+    th.appendChild(handle);
+
+    var startX, startWidth;
+
+    handle.addEventListener("mousedown", function (e) {
+      startX = e.pageX;
+      startWidth = th.offsetWidth;
+      handle.classList.add("resizing");
+      e.preventDefault();
+      e.stopPropagation();
+
+      function onMouseMove(ev) {
+        var newWidth = startWidth + (ev.pageX - startX);
+        if (newWidth < 40) newWidth = 40;
+        th.style.width = newWidth + "px";
+      }
+
+      function onMouseUp() {
+        handle.classList.remove("resizing");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
+
+    // Prevent sort toggle when clicking the resizer
+    handle.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  });
+}
+
+function sortRows(rows) {
+  if (!sortState.key) return;
+
+  rows.sort(function (a, b) {
+    var av = a[sortState.key];
+    var bv = b[sortState.key];
+
+    if (sortState.key === "primary_entity") {
+      av = av === "none" ? "" : av;
+      bv = bv === "none" ? "" : bv;
+    }
+
+    av = (av ?? "").toString().toLowerCase();
+    bv = (bv ?? "").toString().toLowerCase();
+
+    if (av < bv) return -1 * sortState.dir;
+    if (av > bv) return 1 * sortState.dir;
+    return 0;
+  });
 }

@@ -6,6 +6,29 @@
   color: var(--color-muted);
 }
 
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background-color: var(--color-row-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.legend-title {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.legend-item {
+  white-space: nowrap;
+}
+
 .tab-block {
   margin-bottom: 24px;
   border: 1px solid #d1d5db;

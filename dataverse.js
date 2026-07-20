@@ -777,6 +777,7 @@ async function listFlowDependencies() {
     { value: 3, label: "Actions", checked: true },
     { value: 4, label: "Business Process Flows", checked: true },
     { value: -1, label: "Plugin Steps", checked: true },
+    { value: -2, label: "Environment Variables", checked: true },
   ];
 
   var selection = await paModal.select("Which dependencies do you want to check?", typeOptions, {
@@ -790,7 +791,8 @@ async function listFlowDependencies() {
   if (selectedTypes.length === 0 || term == null || term === "") return;
 
   var wantsPlugins = selectedTypes.includes(-1);
-  var wantsProcesses = selectedTypes.some((t) => t !== -1);
+  var wantsEnvVars = selectedTypes.includes(-2);
+  var wantsProcesses = selectedTypes.some((t) => t !== -1 && t !== -2);
 
   window.postMessage(
     {
@@ -896,6 +898,45 @@ async function listFlowDependencies() {
         message: e["m.name"],
         primary_entity: e["f.primaryobjecttypecode"],
         pl_image: !e["filteringattributes"]?.includes(term),
+      });
+    });
+  }
+
+  // ENVIRONMENT VARIABLES
+  if (wantsEnvVars) {
+    var fetchEnvVars = `<fetch>
+  <entity name='environmentvariabledefinition'>
+    <attribute name='schemaname' />
+    <attribute name='displayname' />
+    <attribute name='defaultvalue' />
+    <attribute name='statecode' />
+    <attribute name='environmentvariabledefinitionid' />
+    <link-entity name='environmentvariablevalue' from='environmentvariabledefinitionid' to='environmentvariabledefinitionid' link-type='outer' alias='ev'>
+      <attribute name='value' />
+    </link-entity>
+    <filter type='or'>
+      <condition attribute='schemaname' operator='like' value='%${term}%' />
+      <condition attribute='displayname' operator='like' value='%${term}%' />
+      <condition attribute='defaultvalue' operator='like' value='%${term}%' />
+      <condition entityname='ev' attribute='value' operator='like' value='%${term}%' />
+    </filter>
+    <order attribute='schemaname' />
+  </entity>
+</fetch>`;
+
+    var escapedEnvVars = encodeURIComponent(fetchEnvVars);
+
+    var resultEV = await Xrm.WebApi.retrieveMultipleRecords("environmentvariabledefinition", "?fetchXml=" + escapedEnvVars);
+
+    resultEV.entities.forEach((e) => {
+      processes.push({
+        id: e["environmentvariabledefinitionid"],
+        name: e["displayname"] || e["schemaname"],
+        status_display: "Activated",
+        status: 1,
+        category_display: "Environment Variable",
+        category: -2,
+        primary_entity: e["schemaname"],
       });
     });
   }
@@ -1170,7 +1211,7 @@ async function listEnvironmentVariables(data) {
   var isRefresh = data?.refresh === true;
   var result = await Xrm.WebApi.retrieveMultipleRecords(
     "environmentvariabledefinition",
-    "?$select=environmentvariabledefinitionid,defaultvalue,schemaname&$expand=environmentvariabledefinition_environmentvariablevalue($select=environmentvariablevalueid,value)",
+    "?$select=environmentvariabledefinitionid,defaultvalue,schemaname,displayname&$expand=environmentvariabledefinition_environmentvariablevalue($select=environmentvariablevalueid,value)",
   );
 
   var variables = [];
@@ -1178,6 +1219,7 @@ async function listEnvironmentVariables(data) {
     variables.push({
       id: v.environmentvariabledefinitionid,
       name: v.schemaname,
+      displayName: v.displayname,
       value: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.value,
       defaultValue: v.defaultvalue,
       valueId: v["environmentvariabledefinition_environmentvariablevalue"]?.[0]?.environmentvariablevalueid,
@@ -1262,11 +1304,15 @@ function listFormLayout() {
           visible: control.getVisible(),
           disabled: typeof control.getDisabled === "function" ? control.getDisabled() : null,
           attribute: null,
+          required: null,
         };
 
         if (typeof control.getAttribute === "function" && control.getAttribute()) {
           var attr = control.getAttribute();
           controlInfo.attribute = attr.getName();
+          if (typeof attr.getRequiredLevel === "function") {
+            controlInfo.required = attr.getRequiredLevel();
+          }
         }
 
         sectionInfo.controls.push(controlInfo);
