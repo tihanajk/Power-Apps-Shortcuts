@@ -6,30 +6,31 @@ Power Apps Shortcuts is a productivity booster that helps you streamline common 
 
 ### ⚙️ How to Use
 
-Start by setting up which keyboard shortcuts trigger which actions. Here's an example configuration to get you started:| Shortcut      | Action Description                                             |
+Start by setting up which keyboard shortcuts trigger which actions. Here's an example configuration to get you started:
+| Shortcut | Action Description |
 | ------------- | -------------------------------------------------------------- |
-| `Alt+Shift+F` | Open Advanced Find                                             |
-| `Alt+Shift+G` | Enable God Mode                                                |
-| `Alt+Shift+R` | List Security Roles                                            |
-| `Alt+Shift+L` | Locate Field on Form                                           |
-| `Alt+Shift+O` | Open Entity List                                               |
-| `Alt+Shift+U` | Open Record                                                    |
-| `Alt+Shift+M` | Quick Field Update                                             |
-| `Alt+Shift+C` | Toggle Ribbon Debug                                            |
-| `Alt+Shift+P` | View Option Sets (including multiselect & boolean)             |
-| `Alt+Shift+X` | Execute Retrieve with FetchXML                                 |
-| `Alt+Shift+I` | Display All Fields                                             |
+| `Alt+Shift+F` | Open Advanced Find |
+| `Alt+Shift+G` | Enable God Mode |
+| `Alt+Shift+R` | List Security Roles |
+| `Alt+Shift+L` | Locate Field on Form |
+| `Alt+Shift+O` | Open Entity List |
+| `Alt+Shift+U` | Open Record |
+| `Alt+Shift+M` | Quick Field Update |
+| `Alt+Shift+C` | Toggle Ribbon Debug |
+| `Alt+Shift+P` | View Option Sets (including multiselect & boolean) |
+| `Alt+Shift+X` | Execute Retrieve with FetchXML |
+| `Alt+Shift+I` | Display All Fields |
 | `Alt+Shift+D` | List Field Dependencies (Flows, Plugins, Workflows, BRs, BPFs) |
-| `Alt+Shift+H` | Copy Record GUID to Clipboard                                  |
-| `Alt+Shift+A` | Add Web Resource to a Solution                                 |
-| `Alt+Shift+S` | List Plugin Steps                                              |
-| `Alt+Shift+E` | List Script Events on the Form                                 |
-| `Alt+Shift+V` | List Environment Variables (view & edit values)                |
-| `Alt+Shift+T` | List Form Layout (tabs, sections & controls)                   |
-| `Alt+Shift+Y` | Display Audit History for the Record                           |
-| `Alt+Shift+W` | Show Unsaved (Dirty) Fields                                    |
-| `Alt+Shift+K` | Open Maker Portal for the Current Environment                  |
-| `Alt+Shift+N` | Open Power Platform Admin Center for the Current Environment   |
+| `Alt+Shift+H` | Copy Record GUID to Clipboard |
+| `Alt+Shift+A` | Add Web Resource to a Solution |
+| `Alt+Shift+S` | List Plugin Steps |
+| `Alt+Shift+E` | List Script Events on the Form |
+| `Alt+Shift+V` | List Environment Variables (view & edit values) |
+| `Alt+Shift+T` | List Form Layout (tabs, sections & controls) |
+| `Alt+Shift+Y` | Display Audit History for the Record |
+| `Alt+Shift+W` | Show Unsaved (Dirty) Fields |
+| `Alt+Shift+K` | Open Maker Portal for the Current Environment |
+| `Alt+Shift+N` | Open Power Platform Admin Center for the Current Environment |
 
 ---
 
