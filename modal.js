@@ -35,6 +35,7 @@
       ".pa-modal-hint{margin-top:6px;font-size:11.5px;color:#9ca3af}",
       ".pa-modal-options{display:flex;flex-direction:column;gap:8px;margin-top:12px}",
       ".pa-modal-option{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}",
+      ".pa-modal-option-all{font-weight:600;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid #eef0f3}",
       ".pa-modal-option input{width:16px;height:16px;cursor:pointer;margin:0}",
       ".pa-modal-field-label{display:block;margin-top:14px;font-weight:500;font-size:13px;color:#374151}",
       ".pa-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #eef0f3;background:#fafbfc}",
@@ -99,6 +100,30 @@
       if (config.type === "select") {
         var list = document.createElement("div");
         list.className = "pa-modal-options";
+
+        var selectAllCb = null;
+        if (config.selectAll !== false && (config.options || []).length > 1) {
+          var selectAllLabel = document.createElement("label");
+          selectAllLabel.className = "pa-modal-option pa-modal-option-all";
+          selectAllCb = document.createElement("input");
+          selectAllCb.type = "checkbox";
+          var selectAllSpan = document.createElement("span");
+          selectAllSpan.textContent = "Select all";
+          selectAllLabel.appendChild(selectAllCb);
+          selectAllLabel.appendChild(selectAllSpan);
+          list.appendChild(selectAllLabel);
+        }
+
+        var syncSelectAll = function () {
+          if (!selectAllCb) return;
+          var total = optionInputs.length;
+          var checkedCount = optionInputs.filter(function (o) {
+            return o.input.checked;
+          }).length;
+          selectAllCb.checked = checkedCount === total;
+          selectAllCb.indeterminate = checkedCount > 0 && checkedCount < total;
+        };
+
         (config.options || []).forEach(function (opt) {
           var label = document.createElement("label");
           label.className = "pa-modal-option";
@@ -111,7 +136,18 @@
           label.appendChild(span);
           list.appendChild(label);
           optionInputs.push({ value: opt.value, input: cb });
+          cb.addEventListener("change", syncSelectAll);
         });
+
+        if (selectAllCb) {
+          selectAllCb.addEventListener("change", function () {
+            optionInputs.forEach(function (o) {
+              o.input.checked = selectAllCb.checked;
+            });
+          });
+          syncSelectAll();
+        }
+
         body.appendChild(list);
 
         if (config.input) {

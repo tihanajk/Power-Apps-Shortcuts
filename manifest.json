@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.26",
+  "version": "2.0.0.27",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -96,9 +96,24 @@
     {
       "resources": ["dataverse.js", "modal.js", "xlsx.full.min.js"],
       "matches": ["<all_urls>"]
+    },
+    {
+      "resources": [
+        "tabs/options/options.html",
+        "tabs/security/security.html",
+        "tabs/fetch/fetch.html",
+        "tabs/fields/fields.html",
+        "tabs/dependencies/dependency.html",
+        "tabs/plugins/plugins.html",
+        "tabs/events/events.html",
+        "tabs/variables/variables.html",
+        "tabs/formLayout/formLayout.html",
+        "tabs/auditHistory/auditHistory.html"
+      ],
+      "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"]
     }
   ],
-  "permissions": ["tabs", "activeTab", "scripting", "clipboardWrite"],
+  "permissions": ["tabs", "activeTab", "scripting", "clipboardWrite", "storage"],
   "content_scripts": [
     {
       "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"],

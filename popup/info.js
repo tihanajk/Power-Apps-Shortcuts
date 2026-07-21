@@ -6,6 +6,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  const openModeToggle = document.getElementById("open-mode");
+  if (openModeToggle) {
+    chrome.storage.sync.get({ openMode: "tab" }, function (cfg) {
+      openModeToggle.checked = cfg.openMode === "modal";
+    });
+    openModeToggle.addEventListener("change", function () {
+      chrome.storage.sync.set({ openMode: openModeToggle.checked ? "modal" : "tab" });
+    });
+  }
+
   const groups = [
     {
       title: "Navigate",

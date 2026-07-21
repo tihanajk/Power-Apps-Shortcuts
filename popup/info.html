@@ -13,11 +13,17 @@
         <img class="logo" src="../img/icon.png" alt="" />
         <h2>Power Apps Shortcuts</h2>
       </div>
-      <span class="version">v2.0.0.26</span>
+      <span class="version">v2.0.0.27</span>
     </header>
 
     <p class="hint">Assign keyboard shortcuts in <code>edge://extensions/shortcuts</code>, or trigger an action directly below.</p>
     <button id="open-shortcuts" class="primary-btn">Manage keyboard shortcuts</button>
+
+    <label class="open-mode-toggle">
+      <input type="checkbox" id="open-mode" />
+      <span class="open-mode-switch"></span>
+      <span class="open-mode-label">Show results in a modal on the current tab</span>
+    </label>
 
     <div class="search-wrap">
       <input id="action-search" type="text" placeholder="Search actions…" autocomplete="off" />

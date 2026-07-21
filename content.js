@@ -17,6 +17,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("YOU_HAVE_THE_SIGHT");
       break;
 
+    case "openViewModal":
+      openViewInModal(request.url);
+      break;
+
     case "ribbonDebug": {
       let url = location.href;
       url = url.includes("&ribbondebug=true") ? url.replace("&ribbondebug=true", "") : url + "&ribbondebug=true";
@@ -162,6 +166,58 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
   }
 });
+
+// Opens one of the extension's view pages inside an in-page modal overlay
+// (an iframe) so the results are shown in the current tab instead of a new one.
+function openViewInModal(url) {
+  var existing = document.getElementById("pa-view-modal-overlay");
+  if (existing) existing.remove();
+
+  var overlay = document.createElement("div");
+  overlay.id = "pa-view-modal-overlay";
+  overlay.style.cssText =
+    "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;";
+
+  var container = document.createElement("div");
+  container.style.cssText =
+    "position:relative;width:92vw;height:90vh;background:#fff;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;";
+
+  var closeBtn = document.createElement("button");
+  closeBtn.textContent = "✕";
+  closeBtn.title = "Close (Esc)";
+  closeBtn.style.cssText =
+    "position:absolute;top:8px;right:10px;z-index:1;width:28px;height:28px;border:none;border-radius:6px;background:rgba(0,0,0,.06);color:#333;font-size:15px;cursor:pointer;line-height:1;";
+  closeBtn.addEventListener("mouseenter", function () {
+    closeBtn.style.background = "rgba(0,0,0,.14)";
+  });
+  closeBtn.addEventListener("mouseleave", function () {
+    closeBtn.style.background = "rgba(0,0,0,.06)";
+  });
+
+  var iframe = document.createElement("iframe");
+  iframe.src = url;
+  iframe.style.cssText = "flex:1;width:100%;height:100%;border:none;";
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener("keydown", onKeyDown);
+  }
+
+  function onKeyDown(e) {
+    if (e.key === "Escape") close();
+  }
+
+  closeBtn.addEventListener("click", close);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) close();
+  });
+  document.addEventListener("keydown", onKeyDown);
+
+  container.appendChild(closeBtn);
+  container.appendChild(iframe);
+  overlay.appendChild(container);
+  document.body.appendChild(overlay);
+}
 
 function executeInScript(message, scriptName, dataForScript) {
   var script = document.createElement("script");

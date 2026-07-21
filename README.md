@@ -6,9 +6,7 @@ Power Apps Shortcuts is a productivity booster that helps you streamline common 
 
 ### ⚙️ How to Use
 
-Start by setting up which keyboard shortcuts trigger which actions. Here's an example configuration to get you started:
-
-| Shortcut      | Action Description                                             |
+Start by setting up which keyboard shortcuts trigger which actions. Here's an example configuration to get you started:| Shortcut      | Action Description                                             |
 | ------------- | -------------------------------------------------------------- |
 | `Alt+Shift+F` | Open Advanced Find                                             |
 | `Alt+Shift+G` | Enable God Mode                                                |
@@ -35,7 +33,20 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 
 ---
 
-### 📖 What Each Command Does
+### Popup Launcher
+
+Don't want to memorize shortcuts? Click the extension icon to open the popup, where every action is grouped and searchable — just type to filter and press <kbd>Enter</kbd> to run.
+
+The popup also has a **"Show results in a modal on the current tab"** toggle:
+
+- **Off (default):** views like Environment Variables, Dependencies, and Audit History open in a new browser tab.
+- **On:** the same views open in an in-page modal overlay on the current tab. Close it with the ✕ button, by clicking the backdrop, or by pressing <kbd>Esc</kbd>.
+
+Your choice is remembered across sessions.
+
+---
+
+### What Each Command Does
 
 - **Open Advanced Find** — Opens the classic Advanced Find search window for the current environment.
 - **Enable God Mode** — Unlocks the current form: makes hidden fields visible, read-only fields editable, and optional fields non-mandatory.
