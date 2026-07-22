@@ -105,7 +105,7 @@ function openAdminCenter() {
     return;
   }
 
-  window.open(`https://admin.powerplatform.microsoft.com/environments/${envId}/hub`, "_blank");
+  window.open(`https://admin.powerplatform.microsoft.com/environments/environment/${envId}/hub`, "_blank");
 }
 
 async function loc() {
