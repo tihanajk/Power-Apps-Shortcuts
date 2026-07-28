@@ -24,13 +24,15 @@ function operationClass(operationValue) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  getAuditResults();
   search = document.querySelector("input[name=filter]");
   search.addEventListener("input", function () {
     filterData();
   });
 
   document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+
+  setLoading(true);
+  getAuditResults();
 });
 
 function buildEventFilters() {
@@ -114,6 +116,7 @@ function getAuditResults() {
 function setLoading(isLoading) {
   var indicator = document.getElementById("loading-indicator");
   if (indicator) indicator.style.display = isLoading ? "flex" : "none";
+  if (search) search.disabled = isLoading;
 }
 
 function filterData() {
