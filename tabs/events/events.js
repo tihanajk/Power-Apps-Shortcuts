@@ -60,7 +60,7 @@ function filterData() {
         for (var handler of handlers) {
           for (var k in handler) {
             var value = handler[k]?.toLowerCase();
-            if (value.includes(searchTerm)) {
+            if (value?.includes(searchTerm)) {
               handlerItems.push(handler);
               if (!found) found = true;
               break;
@@ -69,8 +69,7 @@ function filterData() {
         }
 
         if (found) {
-          item["handlers"] = handlerItems;
-          filteredEvents.push(item);
+          filteredEvents.push({ ...item, handlers: handlerItems });
           break;
         }
       } else {

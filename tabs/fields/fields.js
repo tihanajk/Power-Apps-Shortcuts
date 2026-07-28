@@ -48,7 +48,7 @@ function filterFields() {
   var filtered = allFields.filter(
     (f) =>
       (!formOnly || (formOnly && f.onForm)) &&
-      (f.name.includes(searchFilter) || (f.value && f.value.toString().toLowerCase().includes(searchFilter))),
+      (f.name.toLowerCase().includes(searchFilter) || (f.value && f.value.toString().toLowerCase().includes(searchFilter))),
   );
 
   renderResults(filtered);
