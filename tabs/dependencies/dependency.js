@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
 var url;
 var envId;
 var processes = [];
+var searchKeyword = "";
 
 var currentRows = [];
 var sortState = { key: null, dir: 1 };
@@ -104,7 +105,10 @@ function getDependencies() {
     function (response) {
       var fieldName = response.fieldName;
 
-      if (fieldName) document.getElementById("field-name").innerHTML = fieldName;
+      if (fieldName) {
+        document.getElementById("field-name").innerHTML = fieldName;
+        searchKeyword = fieldName;
+      }
 
       url = response.url;
       envId = response.envId;
@@ -284,7 +288,9 @@ function renderDependencies(processes) {
                     ${
                       e.category == CATEGORIES.PLUGIN
                         ? `<div style="color:blue">${e.name} ${e.pl_image ? "🖼️" : "⚡"}</div>`
-                        : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
+                        : e.category == CATEGORIES.WEBRESOURCE
+                          ? `<a href="#" class="wr-link" data-id="${e.id}">${e.name}</a>`
+                          : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
                     }
                     </td>
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
@@ -304,6 +310,17 @@ function renderDependencies(processes) {
 
   document.getElementById("dependency-content").innerHTML = content;
 
+  document.querySelectorAll("a.wr-link").forEach(function (link) {
+    link.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      var id = link.getAttribute("data-id");
+      var wr = processes.find(function (p) {
+        return p.id == id && p.category == CATEGORIES.WEBRESOURCE;
+      });
+      if (wr) openWebResourceViewer(wr);
+    });
+  });
+
   document.querySelectorAll("th.sortable").forEach(function (th) {
     th.addEventListener("click", function () {
       var key = th.getAttribute("data-sort");
@@ -320,10 +337,99 @@ function renderDependencies(processes) {
   makeColumnsResizable();
 }
 
+function escapeHtml(text) {
+  return String(text == null ? "" : text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightKeyword(code, keyword) {
+  var escaped = escapeHtml(code);
+  if (!keyword) return escaped;
+  var re = new RegExp(escapeRegExp(escapeHtml(keyword)), "gi");
+  return escaped.replace(re, function (match) {
+    return `<mark class="wr-highlight">${match}</mark>`;
+  });
+}
+
+function openWebResourceViewer(wr) {
+  var existing = document.getElementById("wr-viewer-overlay");
+  if (existing) existing.remove();
+
+  var keyword = searchKeyword || "";
+  var matchCount = 0;
+  if (keyword && wr.content) {
+    var re = new RegExp(escapeRegExp(keyword), "gi");
+    matchCount = (wr.content.match(re) || []).length;
+  }
+
+  var overlay = document.createElement("div");
+  overlay.id = "wr-viewer-overlay";
+  overlay.className = "wr-viewer-overlay";
+
+  var modal = document.createElement("div");
+  modal.className = "wr-viewer-modal";
+
+  var head = document.createElement("div");
+  head.className = "wr-viewer-head";
+  head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
+    <div class="wr-viewer-meta">${matchCount} match${matchCount === 1 ? "" : "es"} for "${escapeHtml(keyword)}"</div>
+    <button type="button" class="wr-viewer-download" title="Download file">⬇ Download</button>
+    <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
+
+  var body = document.createElement("div");
+  body.className = "wr-viewer-body";
+  var pre = document.createElement("pre");
+  pre.className = "wr-viewer-code";
+  pre.innerHTML = highlightKeyword(wr.content || "", keyword);
+  body.appendChild(pre);
+
+  modal.appendChild(head);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener("keydown", onKey, true);
+  }
+  function onKey(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  }
+  head.querySelector(".wr-viewer-close").addEventListener("click", close);
+  head.querySelector(".wr-viewer-download").addEventListener("click", function () {
+    var fileName = wr.name.split("/").pop() || "webresource.txt";
+    var blob = new Blob([wr.content || ""], { type: "text/plain;charset=utf-8" });
+    var downloadUrl = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(downloadUrl);
+  });
+  overlay.addEventListener("mousedown", function (e) {
+    if (e.target === overlay) close();
+  });
+  document.addEventListener("keydown", onKey, true);
+
+  // Jump to the first highlighted match
+  var firstMark = pre.querySelector("mark.wr-highlight");
+  if (firstMark) firstMark.scrollIntoView({ block: "center" });
+}
+
 function makeColumnsResizable() {
   var table = document.getElementById("main");
   if (!table) return;
-
   var headers = table.querySelectorAll("thead th");
   headers.forEach(function (th) {
     var handle = document.createElement("span");

@@ -796,15 +796,19 @@ async function listFlowDependencies() {
   var wantsWebResources = selectedTypes.includes(-3);
   var wantsProcesses = selectedTypes.some((t) => t !== -1 && t !== -2 && t !== -3);
 
+  var wrNameFilter = "";
   if (wantsWebResources) {
-    var proceed = await paModal.confirm(
-      "Scanning web resource files downloads and searches every unmanaged JavaScript/HTML web resource for the keyword. This is a long running operation and may take a while in large environments. Continue?",
-      { okText: "Search web resources", cancelText: "Skip web resources" },
+    var wrAnswer = await paModal.prompt(
+      "Scanning web resource files downloads and searches every unmanaged JavaScript/HTML web resource for the keyword. This is a long running operation and may take a while in large environments.\n\nOptionally filter which web resources to scan by name (leave blank to scan all):",
+      "",
+      { okText: "Search web resources", cancelText: "Skip web resources", placeholder: "e.g. account or new_" },
     );
-    if (!proceed) {
+    if (wrAnswer == null) {
       selectedTypes = selectedTypes.filter((t) => t !== -3);
       wantsWebResources = false;
       if (selectedTypes.length === 0) return;
+    } else {
+      wrNameFilter = wrAnswer.trim();
     }
   }
 
@@ -837,7 +841,6 @@ async function listFlowDependencies() {
           .map((c) => `<value>${c}</value>`)
           .join("")}
       </condition>
-      ${onlyActive ? '<condition attribute="statecode" operator="eq" value="1" />' : ""}
       <filter type="or">
        <condition attribute="clientdata" operator="like" value="%${term}%" />
         <condition attribute='triggeronupdateattributelist' operator='like' value='%${term}%' />
@@ -897,8 +900,7 @@ async function listFlowDependencies() {
         <condition attribute='filteringattributes' operator='like' value='%${term}%' />
       </filter>
     </filter>
-    ${onlyActive ? "<filter><condition attribute='statecode' operator='eq' value='0' /></filter>" : ""}
-  </entity>
+ </entity>
 </fetch>`;
 
     var escapedFetchXML2 = encodeURIComponent(fetchSteps);
@@ -938,8 +940,7 @@ async function listFlowDependencies() {
       <condition attribute='defaultvalue' operator='like' value='%${term}%' />
       <condition entityname='ev' attribute='value' operator='like' value='%${term}%' />
     </filter>
-    ${onlyActive ? "<filter><condition attribute='statecode' operator='eq' value='0' /></filter>" : ""}
-    <order attribute='schemaname' />
+<order attribute='schemaname' />
   </entity>
 </fetch>`;
 
@@ -964,9 +965,13 @@ async function listFlowDependencies() {
     var termLower = term.toLowerCase();
     var wrBaseUrl = location.href.split("/main")[0];
 
+    var wrNameCondition = wrNameFilter ? ` and contains(name,'${wrNameFilter.replace(/'/g, "''")}')` : "";
+
     var wrResult = await Xrm.WebApi.retrieveMultipleRecords(
       "webresource",
-      "?$select=name,displayname,webresourceid,webresourcetype,content&$filter=ismanaged eq false and (webresourcetype eq 1 or webresourcetype eq 3)&$orderby=name asc",
+      "?$select=name,displayname,webresourceid,webresourcetype,content&$filter=ismanaged eq false and (webresourcetype eq 1 or webresourcetype eq 3)" +
+        wrNameCondition +
+        "&$orderby=name asc",
     );
 
     wrResult.entities.forEach((e) => {
@@ -988,6 +993,7 @@ async function listFlowDependencies() {
         category: -3,
         primary_entity: e["webresourcetype@OData.Community.Display.V1.FormattedValue"] || "none",
         link: wrBaseUrl + "/WebResources/" + e["name"],
+        content: decoded,
       });
     });
   }
