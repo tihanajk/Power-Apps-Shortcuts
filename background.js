@@ -22,6 +22,7 @@ var fields = [];
 var fieldName = "";
 var processes = [];
 var url = "";
+var dependencyExecutionTime = null;
 
 var plugins = [];
 var assemblyName = "";
@@ -94,10 +95,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     processes = request.data?.processes;
     url = request.data.url;
     envId = request.data.envId;
+    dependencyExecutionTime = request.data?.executionTime ?? null;
 
     if (request.data?.start) openView("tabs/dependencies/dependency.html");
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
-    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId });
+    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId, executionTime: dependencyExecutionTime });
   } else if (request.action === "showPlugins") {
     plugins = request.data.plugins;
     assemblyName = request.data.assemblyName;

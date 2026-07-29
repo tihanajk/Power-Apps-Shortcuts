@@ -13,6 +13,7 @@ var sortState = { key: null, dir: 1 };
 const CATEGORIES = {
   PLUGIN: -1,
   EV: -2,
+  WEBRESOURCE: -3,
   WF: 0,
   BR: 2,
   ACTION: 3,
@@ -28,6 +29,7 @@ var checkboxWF;
 var checkboxPL;
 var checkboxAction;
 var checkboxEV;
+var checkboxWR;
 
 var search;
 
@@ -72,6 +74,11 @@ function initialize() {
     filter();
   });
 
+  checkboxWR = document.querySelector("input[name=wr]");
+  checkboxWR.addEventListener("change", function () {
+    filter();
+  });
+
   search = document.querySelector("input[name=filter]");
   search.addEventListener("input", function () {
     filter();
@@ -106,6 +113,7 @@ function getDependencies() {
         processes = response.processes;
         updateToggleAvailability();
         renderDependencies(processes);
+        showExecutionTime(response.executionTime);
       } else {
         showLoading();
         setTimeout(() => {
@@ -125,8 +133,21 @@ function showLoading() {
     </div>`;
 }
 
-// Only the process types picked in the popup are returned, so disable the
-// toggles for categories that aren't present in the results.
+function showExecutionTime(ms) {
+  var el = document.getElementById("exec-time");
+  if (!el) return;
+  el.classList.remove("exec-green", "exec-yellow", "exec-red");
+  if (ms == null) {
+    el.innerHTML = "";
+    return;
+  }
+  var display = ms >= 1000 ? (ms / 1000).toFixed(2) + " s" : Math.round(ms) + " ms";
+  el.innerHTML =
+    `<svg class="exec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>` +
+    `<span>${display}</span>`;
+  el.classList.add(ms < 10000 ? "exec-green" : ms < 30000 ? "exec-yellow" : "exec-red");
+}
+
 function updateToggleAvailability() {
   var map = [
     { cb: checkboxBR, cat: CATEGORIES.BR },
@@ -136,6 +157,7 @@ function updateToggleAvailability() {
     { cb: checkboxAction, cat: CATEGORIES.ACTION },
     { cb: checkboxPL, cat: CATEGORIES.PLUGIN },
     { cb: checkboxEV, cat: CATEGORIES.EV },
+    { cb: checkboxWR, cat: CATEGORIES.WEBRESOURCE },
   ];
 
   var present = {};
@@ -160,6 +182,7 @@ function filter() {
   var checkedPL = checkboxPL.checked;
   var checkedAction = checkboxAction.checked;
   var checkedEV = checkboxEV.checked;
+  var checkedWR = checkboxWR.checked;
 
   var searchFilter = search.value.toLowerCase();
 
@@ -173,6 +196,7 @@ function filter() {
         (checkedWF && p.category == CATEGORIES.WF) ||
         (checkedPL && p.category == CATEGORIES.PLUGIN) ||
         (checkedEV && p.category == CATEGORIES.EV) ||
+        (checkedWR && p.category == CATEGORIES.WEBRESOURCE) ||
         (checkedAction && p.category == CATEGORIES.ACTION)),
   );
 
@@ -201,7 +225,6 @@ function handleLink(category, id) {
       return "#";
   }
 }
-
 function handleColor(category) {
   switch (category) {
     case CATEGORIES.BR:
@@ -218,6 +241,8 @@ function handleColor(category) {
       return "#15ae19";
     case CATEGORIES.EV:
       return "#e6a817";
+    case CATEGORIES.WEBRESOURCE:
+      return "#0a9396";
     default:
       return "";
   }
@@ -233,6 +258,8 @@ function renderDependencies(processes) {
     if (sortState.key !== key) return "";
     return ` <span class="sort-arrow">${sortState.dir === 1 ? "▲" : "▼"}</span>`;
   }
+
+  document.getElementById("count").innerHTML = `count: ${currentRows.length}`;
 
   var table = `
   <div class="table-container">
@@ -257,7 +284,7 @@ function renderDependencies(processes) {
                     ${
                       e.category == CATEGORIES.PLUGIN
                         ? `<div style="color:blue">${e.name} ${e.pl_image ? "🖼️" : "⚡"}</div>`
-                        : `<a target='_blank' href=${handleLink(e.category, e.id)}>${e.name}</a>`
+                        : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
                     }
                     </td>
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>

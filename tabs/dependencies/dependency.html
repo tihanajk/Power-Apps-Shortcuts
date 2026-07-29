@@ -24,31 +24,36 @@
       </div>
       <div>
         <label class="toggle"
-          ><input type="checkbox" id="brCheckbox" name="br" checked /><span class="toggle-switch"></span
-          ><span class="toggle-label">Business rules</span></label
-        >
-        <label class="toggle"
           ><input type="checkbox" id="flowCheckbox" name="flow" checked /><span class="toggle-switch"></span
-          ><span class="toggle-label">Flows</span></label
+          ><span class="toggle-label">Power Automate</span></label
         >
         <label class="toggle"
-          ><input type="checkbox" id="bpfCheckbox" name="bpf" checked /><span class="toggle-switch"></span
-          ><span class="toggle-label">BPF</span></label
+          ><input type="checkbox" id="brCheckbox" name="br" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Business Rules</span></label
         >
         <label class="toggle"
-          ><input type="checkbox" id="wfCheckbox" name="wf" checked /><span class="toggle-switch"></span><span class="toggle-label">WF</span></label
+          ><input type="checkbox" id="wfCheckbox" name="wf" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Workflows</span></label
         >
         <label class="toggle"
           ><input type="checkbox" id="actionCheckbox" name="action" checked /><span class="toggle-switch"></span
           ><span class="toggle-label">Actions</span></label
         >
         <label class="toggle"
+          ><input type="checkbox" id="bpfCheckbox" name="bpf" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Business Process Flows</span></label
+        >
+        <label class="toggle"
           ><input type="checkbox" id="plCheckbox" name="pl" checked /><span class="toggle-switch"></span
-          ><span class="toggle-label">Plugins</span></label
+          ><span class="toggle-label">Plugin Steps</span></label
         >
         <label class="toggle"
           ><input type="checkbox" id="evCheckbox" name="ev" checked /><span class="toggle-switch"></span
-          ><span class="toggle-label">Environment variables</span></label
+          ><span class="toggle-label">Environment Variables</span></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="wrCheckbox" name="wr" checked /><span class="toggle-switch"></span
+          ><span class="toggle-label">Web Resource files</span></label
         >
       </div>
     </div>
@@ -59,6 +64,11 @@
       <span class="legend-item">🖼️ Plugin with image</span>
       <span class="legend-item">🟢 Active</span>
       <span class="legend-item">🟡 Inactive</span>
+    </div>
+
+    <div class="count-row" style="display: flex; justify-content: space-between; align-items: center">
+      <div id="count" class="count"></div>
+      <span id="exec-time" class="exec-time"></span>
     </div>
 
     <div id="dependency-content">

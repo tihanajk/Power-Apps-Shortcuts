@@ -778,6 +778,7 @@ async function listFlowDependencies() {
     { value: 4, label: "Business Process Flows", checked: true },
     { value: -1, label: "Plugin Steps", checked: true },
     { value: -2, label: "Environment Variables", checked: true },
+    { value: -3, label: "Web Resource files (slow)", checked: false },
   ];
 
   var selection = await paModal.select("Which dependencies do you want to check?", typeOptions, {
@@ -792,7 +793,20 @@ async function listFlowDependencies() {
 
   var wantsPlugins = selectedTypes.includes(-1);
   var wantsEnvVars = selectedTypes.includes(-2);
-  var wantsProcesses = selectedTypes.some((t) => t !== -1 && t !== -2);
+  var wantsWebResources = selectedTypes.includes(-3);
+  var wantsProcesses = selectedTypes.some((t) => t !== -1 && t !== -2 && t !== -3);
+
+  if (wantsWebResources) {
+    var proceed = await paModal.confirm(
+      "Scanning web resource files downloads and searches every unmanaged JavaScript/HTML web resource for the keyword. This is a long running operation and may take a while in large environments. Continue?",
+      { okText: "Search web resources", cancelText: "Skip web resources" },
+    );
+    if (!proceed) {
+      selectedTypes = selectedTypes.filter((t) => t !== -3);
+      wantsWebResources = false;
+      if (selectedTypes.length === 0) return;
+    }
+  }
 
   window.postMessage(
     {
@@ -804,6 +818,8 @@ async function listFlowDependencies() {
     },
     "*",
   );
+
+  var startTime = performance.now();
 
   var fetchXml = `<fetch>
   <entity name="workflow">
@@ -821,6 +837,7 @@ async function listFlowDependencies() {
           .map((c) => `<value>${c}</value>`)
           .join("")}
       </condition>
+      ${onlyActive ? '<condition attribute="statecode" operator="eq" value="1" />' : ""}
       <filter type="or">
        <condition attribute="clientdata" operator="like" value="%${term}%" />
         <condition attribute='triggeronupdateattributelist' operator='like' value='%${term}%' />
@@ -880,6 +897,7 @@ async function listFlowDependencies() {
         <condition attribute='filteringattributes' operator='like' value='%${term}%' />
       </filter>
     </filter>
+    ${onlyActive ? "<filter><condition attribute='statecode' operator='eq' value='0' /></filter>" : ""}
   </entity>
 </fetch>`;
 
@@ -920,6 +938,7 @@ async function listFlowDependencies() {
       <condition attribute='defaultvalue' operator='like' value='%${term}%' />
       <condition entityname='ev' attribute='value' operator='like' value='%${term}%' />
     </filter>
+    ${onlyActive ? "<filter><condition attribute='statecode' operator='eq' value='0' /></filter>" : ""}
     <order attribute='schemaname' />
   </entity>
 </fetch>`;
@@ -941,6 +960,38 @@ async function listFlowDependencies() {
     });
   }
 
+  if (wantsWebResources) {
+    var termLower = term.toLowerCase();
+    var wrBaseUrl = location.href.split("/main")[0];
+
+    var wrResult = await Xrm.WebApi.retrieveMultipleRecords(
+      "webresource",
+      "?$select=name,displayname,webresourceid,webresourcetype,content&$filter=ismanaged eq false and (webresourcetype eq 1 or webresourcetype eq 3)&$orderby=name asc",
+    );
+
+    wrResult.entities.forEach((e) => {
+      var decoded = "";
+      try {
+        decoded = e["content"] ? atob(e["content"]) : "";
+      } catch (err) {
+        decoded = "";
+      }
+
+      if (!decoded.toLowerCase().includes(termLower)) return;
+
+      processes.push({
+        id: e["webresourceid"],
+        name: e["name"],
+        status_display: "Active",
+        status: 1,
+        category_display: "Web Resource",
+        category: -3,
+        primary_entity: e["webresourcetype@OData.Community.Display.V1.FormattedValue"] || "none",
+        link: wrBaseUrl + "/WebResources/" + e["name"],
+      });
+    });
+  }
+
   processes.sort(function (a, b) {
     var nameA = a.name.toLowerCase();
     var nameB = b.name.toLowerCase();
@@ -949,11 +1000,14 @@ async function listFlowDependencies() {
     return 0;
   });
 
+  var executionTime = Math.round(performance.now() - startTime);
+
   window.postMessage(
     {
       type: "GIVE_ME_FLOW_DEPENDENCIES",
       processes: processes,
       fieldName: term,
+      executionTime: executionTime,
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
