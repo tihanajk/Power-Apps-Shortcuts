@@ -20,7 +20,7 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+P` | View Option Sets (including multiselect & boolean) |
 | `Alt+Shift+X` | Execute Retrieve with FetchXML |
 | `Alt+Shift+I` | Display All Fields |
-| `Alt+Shift+D` | List Field Dependencies (Flows, Plugins, Workflows, BRs, BPFs) |
+| `Alt+Shift+D` | List Field Dependencies (Flows, Plugins, Workflows, BRs, BPFs, Actions, Env Variables, Web Resources) |
 | `Alt+Shift+H` | Copy Record GUID to Clipboard |
 | `Alt+Shift+A` | Add Web Resource to a Solution |
 | `Alt+Shift+S` | List Plugin Steps |
@@ -60,7 +60,7 @@ Your choice is remembered across sessions.
 - **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.
 - **Execute Retrieve with FetchXML** — Runs a FetchXML query against the environment and shows the returned records.
 - **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form.
-- **List Field Dependencies** — Shows processes that depend on the record/table: Flows, Plugins, Workflows, Business Rules, and BPFs.
+- **List Field Dependencies** — Shows components that reference the keyword (e.g. a field logical name): Flows, Plugins, Workflows, Business Rules, BPFs, Actions, and Environment Variables. You can also opt in to scan unmanaged JavaScript/HTML **web resource files** (a longer-running operation, with an optional name filter to narrow the scan); matching web resources open in an in-app code viewer with the keyword highlighted, match-to-match navigation (Enter / Shift+Enter), and a button to download the file. Results show the search execution time and can be filtered by type, active state, and text.
 - **Copy Record GUID to Clipboard** — Copies the current record's GUID to your clipboard (reads it from the URL or the form).
 - **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
 - **List Plugin Steps** — Lists the registered plugin steps for the current context.

@@ -378,7 +378,11 @@ function openWebResourceViewer(wr) {
   var head = document.createElement("div");
   head.className = "wr-viewer-head";
   head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
-    <div class="wr-viewer-meta">${matchCount} match${matchCount === 1 ? "" : "es"} for "${escapeHtml(keyword)}"</div>
+    <div class="wr-viewer-nav">
+      <span class="wr-viewer-counter">${matchCount ? "1" : "0"} / ${matchCount}</span>
+      <button type="button" class="wr-viewer-prev" title="Previous match (Shift+Enter)" ${matchCount ? "" : "disabled"}>‹</button>
+      <button type="button" class="wr-viewer-next" title="Next match (Enter)" ${matchCount ? "" : "disabled"}>›</button>
+    </div>
     <button type="button" class="wr-viewer-download" title="Download file">⬇ Download</button>
     <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
 
@@ -388,6 +392,9 @@ function openWebResourceViewer(wr) {
   pre.className = "wr-viewer-code";
   pre.innerHTML = highlightKeyword(wr.content || "", keyword);
   body.appendChild(pre);
+
+  var marks = pre.querySelectorAll("mark.wr-highlight");
+  var currentIndex = 0;
 
   modal.appendChild(head);
   modal.appendChild(body);
@@ -402,6 +409,9 @@ function openWebResourceViewer(wr) {
     if (e.key === "Escape") {
       e.preventDefault();
       close();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (marks.length) gotoMatch(currentIndex + (e.shiftKey ? -1 : 1));
     }
   }
   head.querySelector(".wr-viewer-close").addEventListener("click", close);
@@ -422,9 +432,28 @@ function openWebResourceViewer(wr) {
   });
   document.addEventListener("keydown", onKey, true);
 
+  head.querySelector(".wr-viewer-prev").addEventListener("click", function () {
+    if (marks.length) gotoMatch(currentIndex - 1);
+  });
+  head.querySelector(".wr-viewer-next").addEventListener("click", function () {
+    if (marks.length) gotoMatch(currentIndex + 1);
+  });
+
+  function gotoMatch(index) {
+    if (!marks.length) return;
+    currentIndex = ((index % marks.length) + marks.length) % marks.length;
+    marks.forEach(function (m) {
+      m.classList.remove("wr-highlight-active");
+    });
+    var mark = marks[currentIndex];
+    mark.classList.add("wr-highlight-active");
+    mark.scrollIntoView({ block: "center" });
+    var counter = head.querySelector(".wr-viewer-counter");
+    if (counter) counter.textContent = `${currentIndex + 1} / ${marks.length}`;
+  }
+
   // Jump to the first highlighted match
-  var firstMark = pre.querySelector("mark.wr-highlight");
-  if (firstMark) firstMark.scrollIntoView({ block: "center" });
+  if (marks.length) gotoMatch(0);
 }
 
 function makeColumnsResizable() {
