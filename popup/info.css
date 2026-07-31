@@ -19,7 +19,7 @@ body {
   padding: 16px;
   background-color: var(--bg);
   color: var(--text);
-  width: 310px;
+  width: 350px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -193,7 +193,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 320px;
+  max-height: 280px;
   overflow-y: auto;
   padding-right: 2px;
 }
@@ -319,4 +319,26 @@ body {
 
 #action-buttons::-webkit-scrollbar-thumb:hover {
   background-color: #5a5a5a;
+}
+
+/* Footer */
+.popup-footer {
+  position: sticky;
+  bottom: -16px;
+  margin: 0 -16px -16px;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.popup-footer a {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.popup-footer a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }

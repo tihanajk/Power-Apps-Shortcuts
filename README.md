@@ -38,6 +38,8 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 
 Don't want to memorize shortcuts? Click the extension icon to open the popup, where every action is grouped and searchable — just type to filter and press <kbd>Enter</kbd> to run.
 
+![Popup launcher](img/screenshots/popup.png)
+
 The popup also has a **"Show results in a modal on the current tab"** toggle:
 
 - **Off (default):** views like Environment Variables, Dependencies, and Audit History open in a new browser tab.
@@ -58,9 +60,19 @@ Your choice is remembered across sessions.
 - **Quick Field Update** — Lets you update a field value on the current record directly, without opening the full editor.
 - **Toggle Ribbon Debug** — Adds or removes `&ribbondebug=true` from the URL to turn command-bar (ribbon) debugging on or off.
 - **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.
+
+  ![Option sets](img/screenshots/optionsets.png)
+
 - **Execute Retrieve with FetchXML** — Runs a FetchXML query against the environment and shows the returned records.
 - **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form.
 - **List Field Dependencies** — Shows components that reference the keyword (e.g. a field logical name): Flows, Plugins, Workflows, Business Rules, BPFs, Actions, and Environment Variables. You can also opt in to scan unmanaged JavaScript/HTML **web resource files** (a longer-running operation, with an optional name filter to narrow the scan); matching web resources open in an in-app code viewer with the keyword highlighted, match-to-match navigation (Enter / Shift+Enter), and a button to download the file. Results show the search execution time and can be filtered by type, active state, and text.
+
+  ![Field dependencies](img/screenshots/dependencies.png)
+
+  ![Dependency check options](img/screenshots/dependencies-view.png)
+
+  ![Web resource code viewer](img/screenshots/webresource-viewer.png)
+
 - **Copy Record GUID to Clipboard** — Copies the current record's GUID to your clipboard (reads it from the URL or the form).
 - **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
 - **List Plugin Steps** — Lists the registered plugin steps for the current context.
@@ -68,9 +80,22 @@ Your choice is remembered across sessions.
 - **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values.
 - **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls.
 - **Display Audit History for the Record** — Shows the audit history (changes over time) for the current record.
+
+  ![Audit history](img/screenshots/audit.png)
+
 - **Show Unsaved (Dirty) Fields** — Lists the fields on the current form that have unsaved changes.
 - **Open Maker Portal for the Current Environment** — Opens the Power Apps Maker Portal targeted at the current environment.
 - **Open Power Platform Admin Center for the Current Environment** — Opens the Power Platform Admin Center targeted at the current environment.
+
+---
+
+### 💬 Feedback & Support
+
+Have a suggestion, found a bug, or hit an error? Please open an issue on GitHub:
+
+👉 [Report a bug or request a feature](https://github.com/tihanajk/Power-Apps-Shortcuts/issues)
+
+When reporting a bug, include the steps to reproduce it, what you expected to happen, and any error messages (from the browser console if possible) so it can be fixed faster.
 
 ---
 
