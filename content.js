@@ -164,6 +164,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("UPDATE_ENV_VARIABLE", data);
       break;
     }
+
+    case "createEnvVar": {
+      var createData = {
+        displayName: request.displayName,
+        schemaName: request.schemaName,
+        type: request.type,
+        defaultValue: request.defaultValue,
+        value: request.value,
+      };
+      execute("CREATE_ENV_VARIABLE", createData);
+      break;
+    }
   }
 });
 

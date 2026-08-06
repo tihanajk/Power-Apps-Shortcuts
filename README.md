@@ -25,7 +25,7 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+A` | Add Web Resource to a Solution |
 | `Alt+Shift+S` | List Plugin Steps |
 | `Alt+Shift+E` | List Script Events on the Form |
-| `Alt+Shift+V` | List Environment Variables (view & edit values) |
+| `Alt+Shift+V` | List Environment Variables (view, edit & create values) |
 | `Alt+Shift+T` | List Form Layout (tabs, sections & controls) |
 | `Alt+Shift+Y` | Display Audit History for the Record |
 | `Alt+Shift+W` | Show Unsaved (Dirty) Fields |
@@ -77,7 +77,7 @@ Your choice is remembered across sessions.
 - **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
 - **List Plugin Steps** — Lists the registered plugin steps for the current context.
 - **List Script Events on the Form** — Lists the JavaScript event handlers (OnLoad, OnChange, OnSave, etc.) wired up on the current form.
-- **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values.
+- **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values, or create a new environment variable (name, type, default and current value).
 - **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls.
 - **Display Audit History for the Record** — Shows the audit history (changes over time) for the current record.
 

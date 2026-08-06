@@ -140,6 +140,11 @@
   outline-offset: 0;
 }
 
+.wr-filter-label {
+  font-weight: 600;
+  color: #2f3a6b;
+}
+
 .count-row {
   display: flex;
   align-items: center;

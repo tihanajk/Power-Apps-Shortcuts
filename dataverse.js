@@ -817,6 +817,7 @@ async function listFlowDependencies() {
       type: "GIVE_ME_FLOW_DEPENDENCIES",
       start: true,
       fieldName: term,
+      wrNameFilter: wantsWebResources ? wrNameFilter : "",
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
     },
@@ -1013,6 +1014,7 @@ async function listFlowDependencies() {
       type: "GIVE_ME_FLOW_DEPENDENCIES",
       processes: processes,
       fieldName: term,
+      wrNameFilter: wantsWebResources ? wrNameFilter : "",
       executionTime: executionTime,
       url: location.href.split("/main")[0],
       envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
@@ -1330,6 +1332,33 @@ async function updateEnvironmentVariable(data) {
   }
 }
 
+async function createEnvironmentVariable(data) {
+  try {
+    var definition = {
+      schemaname: data.schemaName,
+      displayname: data.displayName || data.schemaName,
+      type: parseInt(data.type, 10),
+    };
+    if (data.defaultValue != null && data.defaultValue !== "") {
+      definition.defaultvalue = String(data.defaultValue);
+    }
+
+    var created = await Xrm.WebApi.createRecord("environmentvariabledefinition", definition);
+
+    if (data.value != null && data.value !== "") {
+      await Xrm.WebApi.createRecord("environmentvariablevalue", {
+        value: String(data.value),
+        "EnvironmentVariableDefinitionId@odata.bind": `/environmentvariabledefinitions(${created.id})`,
+      });
+    }
+
+    window.postMessage({ type: "ENV_VAR_SAVED" }, "*");
+    await listEnvironmentVariables({ refresh: true });
+  } catch (e) {
+    window.postMessage({ type: "ENV_VAR_SAVE_ERROR", error: e.message }, "*");
+  }
+}
+
 function refreshVariables() {
   listEnvironmentVariables({ refresh: true });
 }
@@ -1557,32 +1586,38 @@ async function listAuditHistory() {
   }
 }
 
-window.addEventListener("message", function (event, info) {
-  if (event.source !== window || !event.data?.type) return;
+// This script is re-injected on every command, so guard against registering
+// the message listener more than once (duplicate listeners fire handlers multiple times).
+if (!window.__paDataverseListenerAdded) {
+  window.__paDataverseListenerAdded = true;
+  window.addEventListener("message", function (event, info) {
+    if (event.source !== window || !event.data?.type) return;
 
-  const handlers = {
-    YOU_HAVE_THE_SIGHT: god,
-    LOCATE_ME: loc,
-    COPY_GUID: copyGuid,
-    OPEN_MAKER: openMaker,
-    OPEN_ADMIN: openAdminCenter,
-    SHOW_DIRTY_FIELDS: showDirtyFields,
-    SHOW_OPTIONS: getOptions,
-    LIST_SECURITY_ROLES: listSecurityRoles,
-    QUICK_FIELD_UPDATE: updateField,
-    EXECUTE_FETCH_XML: retrieveRecords,
-    SHOW_ALL_FIELDS: getAllFields,
-    GET_FLOW_DEPENDENCIES: listFlowDependencies,
-    ADD_WR_TO_SOL: addWebresourceToSolution,
-    LIST_PLUGINS: listPlugins,
-    LIST_EVENTS: listEvents,
-    LIST_ENV_VARIABLES: listEnvironmentVariables,
-    UPDATE_ENV_VARIABLE: updateEnvironmentVariable,
-    ENV_VAR_SAVED: refreshVariables,
-    LIST_FORM_LAYOUT: listFormLayout,
-    SHOW_AUDIT_HISTORY: listAuditHistory,
-  };
+    const handlers = {
+      YOU_HAVE_THE_SIGHT: god,
+      LOCATE_ME: loc,
+      COPY_GUID: copyGuid,
+      OPEN_MAKER: openMaker,
+      OPEN_ADMIN: openAdminCenter,
+      SHOW_DIRTY_FIELDS: showDirtyFields,
+      SHOW_OPTIONS: getOptions,
+      LIST_SECURITY_ROLES: listSecurityRoles,
+      QUICK_FIELD_UPDATE: updateField,
+      EXECUTE_FETCH_XML: retrieveRecords,
+      SHOW_ALL_FIELDS: getAllFields,
+      GET_FLOW_DEPENDENCIES: listFlowDependencies,
+      ADD_WR_TO_SOL: addWebresourceToSolution,
+      LIST_PLUGINS: listPlugins,
+      LIST_EVENTS: listEvents,
+      LIST_ENV_VARIABLES: listEnvironmentVariables,
+      UPDATE_ENV_VARIABLE: updateEnvironmentVariable,
+      CREATE_ENV_VARIABLE: createEnvironmentVariable,
+      ENV_VAR_SAVED: refreshVariables,
+      LIST_FORM_LAYOUT: listFormLayout,
+      SHOW_AUDIT_HISTORY: listAuditHistory,
+    };
 
-  const handler = handlers[event.data.type];
-  if (handler) handler(event?.data?.dataForScript);
-});
+    const handler = handlers[event.data.type];
+    if (handler) handler(event?.data?.dataForScript);
+  });
+}

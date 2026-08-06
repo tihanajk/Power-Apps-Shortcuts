@@ -1,5 +1,34 @@
 /* Variables tab — base styles inherited from ../common.css */
 
+#createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 16px;
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+#createBtn:hover {
+  color: #ffffff;
+  background-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(106, 126, 157, 0.3);
+}
+
+#createBtn:active {
+  transform: scale(0.97);
+}
+
 /* Column widths */
 th:nth-child(1),
 td:nth-child(1) {

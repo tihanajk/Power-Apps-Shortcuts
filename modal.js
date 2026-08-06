@@ -482,10 +482,6 @@
       }
       document.addEventListener("keydown", onKey, true);
 
-      overlay.addEventListener("mousedown", function (e) {
-        if (e.target === overlay && config.type !== "prompt" && config.type !== "select" && config.type !== "form") cleanup(cancelValue);
-      });
-
       modal.appendChild(header);
       modal.appendChild(body);
       modal.appendChild(footer);

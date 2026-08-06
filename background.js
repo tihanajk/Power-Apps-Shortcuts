@@ -23,6 +23,7 @@ var fieldName = "";
 var processes = [];
 var url = "";
 var dependencyExecutionTime = null;
+var dependencyWrNameFilter = "";
 
 var plugins = [];
 var assemblyName = "";
@@ -96,10 +97,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     url = request.data.url;
     envId = request.data.envId;
     dependencyExecutionTime = request.data?.executionTime ?? null;
+    dependencyWrNameFilter = request.data?.wrNameFilter ?? "";
 
     if (request.data?.start) openView("tabs/dependencies/dependency.html");
   } else if (request.action === "GET_PROCESS_DEPENDENCIES") {
-    sendResponse({ processes: processes, fieldName: fieldName, url: url, envId: envId, executionTime: dependencyExecutionTime });
+    sendResponse({
+      processes: processes,
+      fieldName: fieldName,
+      url: url,
+      envId: envId,
+      executionTime: dependencyExecutionTime,
+      wrNameFilter: dependencyWrNameFilter,
+    });
   } else if (request.action === "showPlugins") {
     plugins = request.data.plugins;
     assemblyName = request.data.assemblyName;
@@ -132,6 +141,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === "REFRESH_ENV_VARS") {
     if (envVarSourceTabId) {
       chrome.tabs.sendMessage(envVarSourceTabId, { message: "refreshEnvVars" });
+    }
+  } else if (request.action === "CREATE_ENV_VAR") {
+    if (envVarSourceTabId) {
+      chrome.tabs.sendMessage(envVarSourceTabId, {
+        message: "createEnvVar",
+        displayName: request.displayName,
+        schemaName: request.schemaName,
+        type: request.type,
+        defaultValue: request.defaultValue,
+        value: request.value,
+      });
     }
   } else if (request.action === "refreshedEnvironmentVariables") {
     variablesData = request.data;

@@ -110,6 +110,8 @@ function getDependencies() {
         searchKeyword = fieldName;
       }
 
+      showWrNameFilter(response.wrNameFilter);
+
       url = response.url;
       envId = response.envId;
 
@@ -129,12 +131,28 @@ function getDependencies() {
 }
 
 function showLoading() {
+  setTogglesDisabled(true);
   var content = document.getElementById("dependency-content");
   if (content.querySelector("#loading")) return;
   content.innerHTML = `<div id="loading" class="loading">
       <span class="spinner"></span>
       <span>Loading dependencies...</span>
     </div>`;
+}
+
+function setTogglesDisabled(disabled) {
+  [checkboxActive, checkboxBR, checkboxFlow, checkboxBPF, checkboxWF, checkboxPL, checkboxAction, checkboxEV, checkboxWR].forEach(function (cb) {
+    if (!cb) return;
+    cb.disabled = disabled;
+    var label = cb.closest(".toggle");
+    if (label) label.classList.toggle("toggle-disabled", disabled);
+  });
+}
+
+function showWrNameFilter(filter) {
+  var el = document.getElementById("wr-filter-label");
+  if (!el) return;
+  el.innerHTML = filter ? ` (${escapeHtml(filter)})` : "";
 }
 
 function showExecutionTime(ms) {
@@ -163,6 +181,10 @@ function updateToggleAvailability() {
     { cb: checkboxEV, cat: CATEGORIES.EV },
     { cb: checkboxWR, cat: CATEGORIES.WEBRESOURCE },
   ];
+
+  checkboxActive.disabled = false;
+  var activeLabel = checkboxActive.closest(".toggle");
+  if (activeLabel) activeLabel.classList.remove("toggle-disabled");
 
   var present = {};
   processes.forEach(function (p) {
