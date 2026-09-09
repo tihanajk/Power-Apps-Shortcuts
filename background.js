@@ -228,6 +228,9 @@ function handleCommand(command) {
     case "open_admin":
       sendMessageToTab("openAdmin");
       break;
+    case "open_solution":
+      sendMessageToTab("openSolution");
+      break;
     case "add_wr_to_solution":
       sendMessageToTab("addWebresourceToSolution");
       break;

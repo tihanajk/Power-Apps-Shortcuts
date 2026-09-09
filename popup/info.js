@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { command: "flow_dependency_check", label: "List process dependencies" },
         { command: "list_plugins", label: "List plugin steps" },
         { command: "add_wr_to_solution", label: "Add web resource to a solution" },
+        { command: "open_solution", label: "Open solution in Power Apps" },
         { command: "list_securityroles", label: "List security roles" },
       ],
     },

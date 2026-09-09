@@ -121,6 +121,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("OPEN_ADMIN");
       break;
 
+    case "openSolution":
+      execute("OPEN_SOLUTION");
+      break;
+
     case "listPlugins":
       execute("LIST_PLUGINS");
       break;

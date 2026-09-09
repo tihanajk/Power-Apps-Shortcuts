@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "2.0.0.30",
+  "version": "2.0.0.31",
   "name": "Power Apps Shortcuts",
   "icons": {
     "16": "img/icon.png",
@@ -72,6 +72,9 @@
     },
     "open_admin": {
       "description": "Open Power Platform Admin Center for this environment"
+    },
+    "open_solution": {
+      "description": "Open a solution in Power Apps"
     },
     "add_wr_to_solution": {
       "description": "Add webresource to a solution"

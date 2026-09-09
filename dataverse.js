@@ -108,6 +108,57 @@ function openAdminCenter() {
   window.open(`https://admin.powerplatform.microsoft.com/environments/environment/${envId}/hub`, "_blank");
 }
 
+async function openSolution() {
+  if (typeof Xrm === "undefined") {
+    paModal.alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  var envId = Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId;
+  if (!envId) {
+    paModal.alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  var solutions = [];
+  try {
+    var solRes = await Xrm.WebApi.retrieveMultipleRecords(
+      "solution",
+      "?$select=solutionid,uniquename,friendlyname&$filter=isvisible eq true and uniquename ne 'Default'&$orderby=friendlyname asc",
+    );
+    solRes.entities.forEach((s) => {
+      if (s.solutionid) solutions.push({ id: s.solutionid, unique: s.uniquename, friendly: s.friendlyname });
+    });
+  } catch (e) {
+    paModal.alert("Error loading solutions: " + e.message);
+    return;
+  }
+
+  if (solutions.length == 0) {
+    paModal.alert("No solutions found");
+    return;
+  }
+
+  var solutionOptions = solutions.map((s) => ({ value: s.id, label: s.friendly ? `${s.friendly} (${s.unique})` : s.unique }));
+
+  var res = await paModal.form("Open solution in Power Apps", [
+    {
+      name: "solution",
+      label: "Solution",
+      type: "combobox",
+      options: solutionOptions,
+      defaultValue: solutionOptions[0].value,
+      placeholder: "Type to search...",
+    },
+  ]);
+  if (res == null) return;
+
+  var solutionId = res.solution;
+  if (!solutionId) return;
+
+  window.open(`https://make.powerapps.com/environments/${envId}/solutions/${solutionId}`, "_blank");
+}
+
 async function loc() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = await paModal.prompt("Locate field by name");
@@ -1599,6 +1650,7 @@ if (!window.__paDataverseListenerAdded) {
       COPY_GUID: copyGuid,
       OPEN_MAKER: openMaker,
       OPEN_ADMIN: openAdminCenter,
+      OPEN_SOLUTION: openSolution,
       SHOW_DIRTY_FIELDS: showDirtyFields,
       SHOW_OPTIONS: getOptions,
       LIST_SECURITY_ROLES: listSecurityRoles,
