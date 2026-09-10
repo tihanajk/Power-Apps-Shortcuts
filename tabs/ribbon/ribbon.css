@@ -1,0 +1,322 @@
+/* Ribbon inspector — tab-specific styling. Shared rules live in ../common.css */
+
+.count {
+  margin-bottom: 8px;
+}
+
+table {
+  color: var(--color-text);
+}
+
+#main col.col-button {
+  width: 18%;
+}
+#main col.col-location {
+  width: 8%;
+}
+#main col.col-visible {
+  width: 7%;
+}
+#main col.col-command {
+  width: 17%;
+}
+#main col.col-function {
+  width: 24%;
+}
+#main col.col-visibility {
+  width: 26%;
+}
+
+.btn-label {
+  font-weight: 600;
+}
+
+.btn-id,
+.cmd-id {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  word-break: break-all;
+}
+
+.fn-name {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.rule {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--color-border);
+}
+.rule:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.rule-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-right: 6px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #fff;
+}
+.rule-kind.enable {
+  background-color: #2f855a;
+}
+.rule-kind.display {
+  background-color: #b7791f;
+}
+
+.rule-detail {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.muted {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+a {
+  color: var(--color-primary-hover);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 4px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  padding: 16px;
+  color: #9b2c2c;
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* ---------- Location filter buttons ---------- */
+#loc-filters {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.loc-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+  color: var(--color-text);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.loc-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.loc-btn.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ---------- Location badges ---------- */
+.loc-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 4px 4px 0;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #fff;
+}
+.loc-tag.form {
+  background-color: #3182ce;
+}
+.loc-tag.view {
+  background-color: #805ad5;
+}
+.loc-tag.subgrid {
+  background-color: #319795;
+}
+
+/* ---------- Visible badge ---------- */
+.vis-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #fff;
+}
+.vis-tag.yes {
+  background-color: #2f855a;
+}
+.vis-tag.no {
+  background-color: #a0aec0;
+}
+
+/* ---------- Web resource code viewer ---------- */
+.wr-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483647;
+}
+
+.wr-viewer-modal {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  width: min(900px, calc(100vw - 40px));
+  max-height: calc(100vh - 60px);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wr-viewer-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+}
+
+.wr-viewer-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+  word-break: break-all;
+  flex: 1;
+}
+
+.wr-viewer-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wr-viewer-counter {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  min-width: 48px;
+  text-align: center;
+}
+
+.wr-viewer-prev,
+.wr-viewer-next {
+  background: #3a3a3a;
+  border: none;
+  color: #d4d4d4;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 3px 9px;
+  border-radius: 4px;
+}
+
+.wr-viewer-prev:hover,
+.wr-viewer-next:hover {
+  background: #4a4a4a;
+}
+
+.wr-viewer-prev:disabled,
+.wr-viewer-next:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.wr-viewer-close {
+  background: transparent;
+  border: none;
+  color: #d4d4d4;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.wr-viewer-close:hover {
+  background: #3a3a3a;
+}
+
+.wr-viewer-download {
+  background: #0e639c;
+  border: none;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.wr-viewer-download:hover {
+  background: #1177bb;
+}
+
+.wr-viewer-body {
+  overflow: auto;
+  padding: 0;
+}
+
+.wr-viewer-code {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.wr-highlight {
+  background: #f6e05e;
+  color: #1a1a1a;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.wr-highlight-active {
+  background: #fb923c;
+  outline: 2px solid #f97316;
+  outline-offset: 0;
+}

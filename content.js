@@ -141,6 +141,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_FORM_LAYOUT");
       break;
 
+    case "listRibbon":
+      execute("LIST_RIBBON");
+      break;
+
     case "showAuditHistory":
       execute("SHOW_AUDIT_HISTORY");
       break;
@@ -299,6 +303,11 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_FORM_LAYOUT") {
     chrome.runtime.sendMessage({
       action: "showFormLayout",
+      data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_RIBBON") {
+    chrome.runtime.sendMessage({
+      action: "showRibbon",
       data: event.data,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_AUDIT_HISTORY") {

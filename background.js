@@ -35,6 +35,8 @@ var envVarSourceTabId = null;
 
 var formLayoutData = [];
 
+var ribbonData = null;
+
 var auditHistoryData = [];
 var doneFetchingAudit = false;
 
@@ -165,6 +167,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     openView("tabs/formLayout/formLayout.html");
   } else if (request.action == "GET_FORM_LAYOUT") {
     sendResponse({ data: formLayoutData });
+  } else if (request.action == "showRibbon") {
+    ribbonData = request.data;
+    if (request.data && request.data.loading) {
+      openView("tabs/ribbon/ribbon.html");
+    } else {
+      chrome.runtime.sendMessage({ action: "RIBBON_READY", data: request.data });
+    }
+  } else if (request.action == "GET_RIBBON") {
+    sendResponse({ data: ribbonData });
   } else if (request.action == "showAuditHistory") {
     auditHistoryData = request.data;
     doneFetchingAudit = request.last;
@@ -245,6 +256,9 @@ function handleCommand(command) {
       break;
     case "list_form_layout":
       sendMessageToTab("listFormLayout");
+      break;
+    case "list_ribbon":
+      sendMessageToTab("listRibbon");
       break;
     case "show_audit_history":
       sendMessageToTab("showAuditHistory");

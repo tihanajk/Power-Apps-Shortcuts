@@ -1637,6 +1637,379 @@ async function listAuditHistory() {
   }
 }
 
+async function listRibbon() {
+  var entityName = null;
+  try {
+    if (typeof Xrm !== "undefined" && Xrm.Page && Xrm.Page.data && Xrm.Page.data.entity) {
+      entityName = Xrm.Page.data.entity.getEntityName();
+    }
+  } catch (e) {
+    entityName = null;
+  }
+  if (!entityName) {
+    var m = location.href.match(/[?&]etn=([^&]+)/i);
+    if (m) entityName = decodeURIComponent(m[1]);
+  }
+  if (!entityName) {
+    entityName = await paModal.prompt("Entity logical name for the ribbon?");
+  }
+  if (!entityName) return;
+
+  // Open the results tab immediately with a loading state, then stream results.
+  window.postMessage({ type: "GIVE_ME_RIBBON", loading: true, entity: entityName }, "*");
+
+  var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+  var wrBaseUrl = location.href.split("/main")[0];
+
+  // Retrieve each ribbon location separately so every button can be tagged
+  // with the location(s) it appears in (form, view/grid, subgrid).
+  var locationFilters = [
+    { key: "form", member: "Form" },
+    { key: "view", member: "HomepageGrid" },
+    { key: "subgrid", member: "SubGrid" },
+  ];
+
+  var merged = {};
+  var anySuccess = false;
+  var firstError = null;
+
+  for (var lf of locationFilters) {
+    var xmlText;
+    try {
+      xmlText = await retrieveRibbonXml(clientUrl, entityName, lf.member);
+    } catch (e) {
+      if (!firstError) firstError = e.message;
+      continue;
+    }
+    if (!xmlText) continue;
+    anySuccess = true;
+
+    parseRibbonButtons(xmlText, wrBaseUrl).forEach(function (b) {
+      var key = b.id + "|" + b.commandId;
+      if (merged[key]) {
+        if (merged[key].locations.indexOf(lf.key) === -1) merged[key].locations.push(lf.key);
+      } else {
+        b.locations = [lf.key];
+        merged[key] = b;
+      }
+    });
+  }
+
+  if (!anySuccess) {
+    window.postMessage(
+      {
+        type: "GIVE_ME_RIBBON",
+        loading: false,
+        entity: entityName,
+        error: firstError ? "Error retrieving ribbon: " + firstError : "No ribbon definitions were found for " + entityName,
+      },
+      "*",
+    );
+    return;
+  }
+
+  // Keep buttons in ribbon definition order (form, then view, then subgrid).
+  var buttons = Object.keys(merged).map((k) => merged[k]);
+
+  // Flag which buttons are actually rendered on the current page's command bar.
+  var liveIds = collectVisibleRibbonIds();
+  buttons.forEach((b) => (b.visible = isRibbonButtonVisible(b, liveIds)));
+
+  // Fetch the source of every referenced web resource so the code can be shown inline.
+  var libNames = {};
+  buttons.forEach(function (b) {
+    b.functions.forEach((f) => f.library && (libNames[f.library.name] = true));
+    b.enableRules.forEach((r) => r.library && (libNames[r.library.name] = true));
+    b.displayRules.forEach((r) => r.library && (libNames[r.library.name] = true));
+  });
+  var libraryContents = await fetchWebResourceContents(Object.keys(libNames));
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_RIBBON",
+      loading: false,
+      entity: entityName,
+      buttons: buttons,
+      libraryContents: libraryContents,
+    },
+    "*",
+  );
+}
+
+async function fetchWebResourceContents(names) {
+  var map = {};
+  if (!names.length) return map;
+  try {
+    for (var i = 0; i < names.length; i += 20) {
+      var chunk = names.slice(i, i + 20);
+      var filter = chunk.map((n) => "name eq '" + n.replace(/'/g, "''") + "'").join(" or ");
+      var res = await Xrm.WebApi.retrieveMultipleRecords(
+        "webresource",
+        "?$select=name,content&$filter=(" + filter + ") and (webresourcetype eq 1 or webresourcetype eq 3)",
+      );
+      res.entities.forEach((e) => (map[e.name] = e.content ? atob(e.content) : ""));
+    }
+  } catch (e) {
+    // Leave libraries without content; the UI falls back to opening the web resource URL.
+  }
+  return map;
+}
+
+function collectVisibleRibbonIds() {
+  var ids = [];
+  document.querySelectorAll("[data-id],[data-lp-id]").forEach(function (el) {
+    var tag = el.tagName.toLowerCase();
+    var role = el.getAttribute("role") || "";
+    var actionable = tag === "button" || role.indexOf("menuitem") === 0 || role === "button";
+    if (!actionable) return;
+    if (el.offsetParent === null && el.getClientRects().length === 0) return;
+    var did = el.getAttribute("data-id");
+    var lp = el.getAttribute("data-lp-id");
+    if (did) ids.push(did);
+    if (lp) ids.push(lp);
+  });
+  return ids;
+}
+
+function isRibbonButtonVisible(button, liveIds) {
+  for (var i = 0; i < liveIds.length; i++) {
+    var lid = liveIds[i];
+    if (button.id && lid.indexOf(button.id) !== -1) return true;
+    if (button.commandId && lid.indexOf(button.commandId) !== -1) return true;
+  }
+  return false;
+}
+
+async function retrieveRibbonXml(clientUrl, entityName, filterMember) {
+  var apiUrl =
+    clientUrl +
+    "/api/data/v9.2/RetrieveEntityRibbon(EntityName=@p1,RibbonLocationFilter=@p2)" +
+    "?@p1='" +
+    encodeURIComponent(entityName) +
+    "'&@p2=Microsoft.Dynamics.CRM.RibbonLocationFilters'" +
+    filterMember +
+    "'";
+
+  var resp = await fetch(apiUrl, {
+    headers: { Accept: "application/json", "OData-MaxVersion": "4.0", "OData-Version": "4.0" },
+  });
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  var json = await resp.json();
+  var bytes = ribbonBase64ToBytes(json.CompressedEntityXml);
+  var entries = await ribbonUnzip(bytes);
+  var decoder = new TextDecoder("utf-8");
+  var texts = [];
+  for (var entry of entries) {
+    var text = decoder.decode(entry.data);
+    // Keep every XML part: labels (LocLabels) can be packaged separately from the ribbon.
+    if (text.indexOf("<") !== -1 && (text.indexOf("Ribbon") !== -1 || text.indexOf("CommandDefinition") !== -1 || text.indexOf("LocLabel") !== -1)) {
+      texts.push(text);
+    }
+  }
+  return texts.length ? texts : null;
+}
+
+function parseRibbonButtons(xmlTexts, wrBaseUrl) {
+  if (typeof xmlTexts === "string") xmlTexts = [xmlTexts];
+  var docs = xmlTexts.map((t) => new DOMParser().parseFromString(t, "text/xml"));
+
+  var commandMap = {};
+  var enableRuleMap = {};
+  var displayRuleMap = {};
+  var locMap = {};
+
+  docs.forEach(function (doc) {
+    doc.querySelectorAll("CommandDefinition").forEach((cd) => (commandMap[cd.getAttribute("Id")] = cd));
+    doc.querySelectorAll("RuleDefinitions EnableRules > EnableRule").forEach((r) => (enableRuleMap[r.getAttribute("Id")] = r));
+    doc.querySelectorAll("RuleDefinitions DisplayRules > DisplayRule").forEach((r) => (displayRuleMap[r.getAttribute("Id")] = r));
+    doc.querySelectorAll("LocLabels > LocLabel").forEach((ll) => {
+      var titles = ll.querySelectorAll("Titles > Title");
+      var picked = null;
+      titles.forEach((t) => {
+        if (picked == null || t.getAttribute("languagecode") === "1033") picked = t.getAttribute("description");
+      });
+      locMap[ll.getAttribute("Id")] = picked;
+    });
+  });
+
+  // Trailing tokens that are structural, not part of a friendly name.
+  var GENERIC_SEGMENT =
+    /^(button|command|commandbar|menuitem|menusection|flyout|flyoutanchor|group|tab|control|splitbutton|togglebutton|labeltext|title|tooltip\w*)$/i;
+
+  var humanize = function (raw) {
+    if (!raw) return "";
+    var segs = raw.split(/[.:|]/).filter(Boolean);
+    while (segs.length > 1 && GENERIC_SEGMENT.test(segs[segs.length - 1])) segs.pop();
+    var seg = segs.pop() || raw;
+    seg = seg.replace(/_/g, " ").replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+    return seg.trim();
+  };
+
+  var resolveLabel = function (value) {
+    if (!value) return "";
+    if (value.indexOf("$LocLabels:") === 0) {
+      var id = value.substring("$LocLabels:".length);
+      return locMap[id] || humanize(id);
+    }
+    if (value.indexOf("$Resources") === 0) {
+      var idx = value.indexOf(":");
+      return humanize(idx >= 0 ? value.substring(idx + 1) : value);
+    }
+    return value;
+  };
+
+  var libraryLink = function (library) {
+    if (!library) return null;
+    var name = library.indexOf("$webresource:") === 0 ? library.substring("$webresource:".length) : library;
+    return { name: name, url: wrBaseUrl + "/WebResources/" + name };
+  };
+
+  var describeRule = function (ruleEl) {
+    var children = Array.from(ruleEl.children);
+    if (children.length === 0) return ruleEl.getAttribute("Id") || "";
+    return children
+      .map((c) => {
+        var attrs = Array.from(c.attributes)
+          .map((a) => `${a.name}="${a.value}"`)
+          .join(" ");
+        return attrs ? `${c.tagName} ${attrs}` : c.tagName;
+      })
+      .join("  |  ");
+  };
+
+  var buttonTags = ["Button", "SplitButton", "ToggleButton", "FlyoutAnchor", "MenuSection"];
+  var seen = {};
+  var buttons = [];
+
+  docs.forEach(function (doc) {
+    doc.querySelectorAll("[Command]").forEach((el) => {
+      if (buttonTags.indexOf(el.tagName) === -1) return;
+
+      var commandId = el.getAttribute("Command");
+      var id = el.getAttribute("Id") || "";
+      var key = id + "|" + commandId;
+      if (seen[key]) return;
+      seen[key] = true;
+
+      var cd = commandMap[commandId];
+
+      var functions = [];
+      var urls = [];
+      if (cd) {
+        cd.querySelectorAll("Actions > JavaScriptFunction").forEach((jf) => {
+          functions.push({
+            functionName: jf.getAttribute("FunctionName"),
+            library: libraryLink(jf.getAttribute("Library")),
+          });
+        });
+        cd.querySelectorAll("Actions > Url").forEach((u) => urls.push(u.getAttribute("Address")));
+      }
+
+      var enableRules = [];
+      var displayRules = [];
+      if (cd) {
+        cd.querySelectorAll("EnableRules > EnableRule").forEach((er) => {
+          var rule = enableRuleMap[er.getAttribute("Ref") || er.getAttribute("Id")];
+          var customFn = rule ? rule.querySelector("CustomRule") : null;
+          enableRules.push({
+            id: er.getAttribute("Ref") || er.getAttribute("Id"),
+            detail: rule ? describeRule(rule) : "",
+            library: customFn ? libraryLink(customFn.getAttribute("Library")) : null,
+            functionName: customFn ? customFn.getAttribute("FunctionName") : null,
+          });
+        });
+        cd.querySelectorAll("DisplayRules > DisplayRule").forEach((dr) => {
+          var rule = displayRuleMap[dr.getAttribute("Ref") || dr.getAttribute("Id")];
+          var customFn = rule ? rule.querySelector("CustomRule") : null;
+          displayRules.push({
+            id: dr.getAttribute("Ref") || dr.getAttribute("Id"),
+            detail: rule ? describeRule(rule) : "",
+            library: customFn ? libraryLink(customFn.getAttribute("Library")) : null,
+            functionName: customFn ? customFn.getAttribute("FunctionName") : null,
+          });
+        });
+      }
+
+      buttons.push({
+        id: id,
+        label: resolveLabel(el.getAttribute("LabelText")) || resolveLabel(el.getAttribute("ToolTipTitle")) || humanize(id),
+        tooltip: resolveLabel(el.getAttribute("ToolTipDescription")),
+        commandId: commandId,
+        hasDefinition: !!cd,
+        functions: functions,
+        urls: urls,
+        enableRules: enableRules,
+        displayRules: displayRules,
+      });
+    });
+  });
+
+  return buttons;
+}
+
+function ribbonBase64ToBytes(b64) {
+  var binary = atob(b64);
+  var len = binary.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// Minimal ZIP reader for the OPC package returned by RetrieveEntityRibbon.
+// Reads the central directory and inflates deflate entries natively.
+async function ribbonUnzip(bytes) {
+  var dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+  var eocd = -1;
+  for (var i = bytes.length - 22; i >= 0; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error("Invalid ribbon archive");
+
+  var count = dv.getUint16(eocd + 10, true);
+  var cdOffset = dv.getUint32(eocd + 16, true);
+
+  var entries = [];
+  var p = cdOffset;
+  for (var n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    var method = dv.getUint16(p + 10, true);
+    var compSize = dv.getUint32(p + 20, true);
+    var nameLen = dv.getUint16(p + 28, true);
+    var extraLen = dv.getUint16(p + 30, true);
+    var commentLen = dv.getUint16(p + 32, true);
+    var localOffset = dv.getUint32(p + 42, true);
+    var name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
+
+    var lhNameLen = dv.getUint16(localOffset + 26, true);
+    var lhExtraLen = dv.getUint16(localOffset + 28, true);
+    var dataStart = localOffset + 30 + lhNameLen + lhExtraLen;
+    var compData = bytes.subarray(dataStart, dataStart + compSize);
+
+    var data;
+    if (method === 0) {
+      data = compData;
+    } else if (method === 8) {
+      data = await ribbonInflateRaw(compData);
+    } else {
+      data = compData;
+    }
+    entries.push({ name: name, data: data });
+
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return entries;
+}
+
+async function ribbonInflateRaw(compData) {
+  var stream = new Blob([compData]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
 // This script is re-injected on every command, so guard against registering
 // the message listener more than once (duplicate listeners fire handlers multiple times).
 if (!window.__paDataverseListenerAdded) {
@@ -1667,6 +2040,7 @@ if (!window.__paDataverseListenerAdded) {
       ENV_VAR_SAVED: refreshVariables,
       LIST_FORM_LAYOUT: listFormLayout,
       SHOW_AUDIT_HISTORY: listAuditHistory,
+      LIST_RIBBON: listRibbon,
     };
 
     const handler = handlers[event.data.type];

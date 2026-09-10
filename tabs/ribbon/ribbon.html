@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ribbon buttons</title>
+    <link rel="stylesheet" href="../common.css" />
+    <link rel="stylesheet" href="ribbon.css" />
+  </head>
+
+  <body>
+    <div id="header">
+      <div style="display: flex; justify-content: space-between">
+        <h1 id="entity-name"></h1>
+        <button type="button" id="downloadBtn">Export to excel</button>
+      </div>
+      <input id="search" placeholder="Search button, command, function or rule" name="filter" type="text" />
+      <div id="loc-filters">
+        <button type="button" class="loc-btn active" data-loc="all">All</button>
+        <button type="button" class="loc-btn" data-loc="form">Form</button>
+        <button type="button" class="loc-btn" data-loc="view">View</button>
+        <button type="button" class="loc-btn" data-loc="subgrid">Subgrid</button>
+        <label class="toggle">
+          <input type="checkbox" id="visible-only" />
+          <span class="toggle-switch"></span>
+          <span class="toggle-label">Visible only</span>
+        </label>
+      </div>
+    </div>
+    <div id="ribbon-content">Results</div>
+    <script src="../../xlsx.full.min.js"></script>
+    <script src="../../excelHelper.js"></script>
+    <script src="ribbon.js"></script>
+  </body>
+</html>
