@@ -1733,8 +1733,8 @@ async function listRibbon() {
   buttons.forEach((b) => delete b._i);
 
   // Flag which buttons are actually rendered on the current page's command bar.
-  var liveIds = collectVisibleRibbonIds();
-  buttons.forEach((b) => (b.visible = isRibbonButtonVisible(b, liveIds)));
+  var liveRibbon = collectVisibleRibbonIds();
+  buttons.forEach((b) => (b.visible = isRibbonButtonVisible(b, liveRibbon)));
 
   // Fetch the source of every referenced web resource so the code can be shown inline.
   var libNames = {};
@@ -1853,6 +1853,7 @@ async function fetchWebResourceContents(names) {
 
 function collectVisibleRibbonIds() {
   var ids = [];
+  var labels = [];
   document.querySelectorAll("[data-id],[data-lp-id]").forEach(function (el) {
     var tag = el.tagName.toLowerCase();
     var role = el.getAttribute("role") || "";
@@ -1863,15 +1864,26 @@ function collectVisibleRibbonIds() {
     var lp = el.getAttribute("data-lp-id");
     if (did) ids.push(did);
     if (lp) ids.push(lp);
+    var aria = el.getAttribute("aria-label");
+    if (aria) labels.push(aria.trim().toLowerCase());
+    var text = (el.textContent || "").trim();
+    if (text) labels.push(text.toLowerCase());
   });
-  return ids;
+  return { ids: ids, labels: labels };
 }
 
-function isRibbonButtonVisible(button, liveIds) {
-  for (var i = 0; i < liveIds.length; i++) {
-    var lid = liveIds[i];
+function isRibbonButtonVisible(button, live) {
+  var ids = live.ids || [];
+  for (var i = 0; i < ids.length; i++) {
+    var lid = ids[i];
     if (button.id && lid.indexOf(button.id) !== -1) return true;
     if (button.commandId && lid.indexOf(button.commandId) !== -1) return true;
+  }
+  // Modern command bar buttons often render without the command's unique name in
+  // their data-id, so fall back to matching the visible button label.
+  if (button.label) {
+    var lbl = String(button.label).trim().toLowerCase();
+    if (lbl && (live.labels || []).indexOf(lbl) !== -1) return true;
   }
   return false;
 }

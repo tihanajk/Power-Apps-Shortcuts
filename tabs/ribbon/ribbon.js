@@ -73,7 +73,7 @@ function applyData(data) {
 }
 
 function renderLoading(entity) {
-  document.getElementById("entity-name").textContent = "Ribbon — " + (entity || "");
+  document.getElementById("entity-name").textContent = "Ribbon - " + (entity || "");
   document.getElementById("ribbon-content").innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Retrieving ribbon definitions…</span></div>';
 }

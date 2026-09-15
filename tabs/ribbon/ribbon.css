@@ -122,10 +122,11 @@ a {
 
 /* ---------- Location filter buttons ---------- */
 #loc-filters {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
-  margin-left: 10px;
-  vertical-align: middle;
+  margin-top: 10px;
 }
 
 .loc-btn {
