@@ -6,6 +6,32 @@
 
   var Z = 2147483647;
 
+  function formatXml(xml) {
+    if (!xml) return xml;
+    var PAD = "  ";
+    var normalized = String(xml)
+      .replace(/\r?\n/g, "")
+      .replace(/>\s+</g, "><")
+      .trim();
+    var tokens = normalized.split(/(<[^>]+>)/g).filter(function (t) {
+      return t.trim().length;
+    });
+    var indent = 0;
+    var lines = [];
+    tokens.forEach(function (token) {
+      if (/^<\/.+>$/.test(token)) {
+        indent = Math.max(indent - 1, 0);
+        lines.push(PAD.repeat(indent) + token);
+      } else if (/^<[^!?].*[^\/]>$/.test(token)) {
+        lines.push(PAD.repeat(indent) + token);
+        indent++;
+      } else {
+        lines.push(PAD.repeat(indent) + token);
+      }
+    });
+    return lines.join("\n");
+  }
+
   function ensureStyles() {
     if (document.getElementById("pa-modal-style")) return;
     var style = document.createElement("style");
@@ -17,6 +43,9 @@
       ".pa-modal{background:#fff;color:#1f2937;width:min(460px,calc(100vw - 40px));max-height:calc(100vh - 60px);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden;animation:pa-pop .12s ease}",
       ".pa-modal-wide{width:min(720px,calc(100vw - 40px))}",
       ".pa-modal-header{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #eef0f3;font-weight:600;font-size:15px}",
+      ".pa-modal-title{flex:1;min-width:0}",
+      ".pa-modal-close{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin:-4px -6px -4px 0;padding:0;border:none;border-radius:6px;background:transparent;color:#6b7280;cursor:pointer;font-size:18px;line-height:1}",
+      ".pa-modal-close:hover{background:#f3f4f6;color:#1f2937}",
       ".pa-modal-body{padding:16px 18px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;overflow:auto}",
       ".pa-modal-input{width:100%;box-sizing:border-box;margin-top:12px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13.5px;font-family:inherit;color:#1f2937}",
       ".pa-modal-input:focus{outline:none;border-color:#6a7e9d;box-shadow:0 0 0 2px rgba(106,126,157,.25)}",
@@ -32,6 +61,11 @@
       ".pa-modal-combobox-empty{padding:7px 10px;font-size:12.5px;color:#9ca3af}",
       ".pa-modal-textarea{width:100%;box-sizing:border-box;margin-top:12px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:ui-monospace,'Cascadia Code',Consolas,monospace;line-height:1.45;color:#1f2937;resize:vertical;min-height:160px;white-space:pre}",
       ".pa-modal-textarea:focus{outline:none;border-color:#6a7e9d;box-shadow:0 0 0 2px rgba(106,126,157,.25)}",
+      ".pa-modal-textarea-wrap{position:relative;margin-top:12px}",
+      ".pa-modal-textarea-wrap .pa-modal-textarea{margin-top:0}",
+      ".pa-modal-copy-icon{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:1px solid #d1d5db;border-radius:6px;background:rgba(255,255,255,.9);color:#374151;cursor:pointer;z-index:1}",
+      ".pa-modal-copy-icon:hover{background:#f3f4f6}",
+      ".pa-modal-copy-icon.copied{color:#16a34a;border-color:#16a34a}",
       ".pa-modal-hint{margin-top:6px;font-size:11.5px;color:#9ca3af}",
       ".pa-modal-options{display:flex;flex-direction:column;gap:8px;margin-top:12px}",
       ".pa-modal-option{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}",
@@ -66,7 +100,22 @@
 
       var header = document.createElement("div");
       header.className = "pa-modal-header";
-      header.textContent = config.title || "Power Apps Shortcuts";
+      var headerTitle = document.createElement("span");
+      headerTitle.className = "pa-modal-title";
+      headerTitle.textContent = config.title || "Power Apps Shortcuts";
+      header.appendChild(headerTitle);
+      if (config.type !== "alert") {
+        var closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "pa-modal-close";
+        closeBtn.title = "Close";
+        closeBtn.setAttribute("aria-label", "Close");
+        closeBtn.innerHTML = "&times;";
+        closeBtn.addEventListener("click", function () {
+          cleanup(cancelValue);
+        });
+        header.appendChild(closeBtn);
+      }
 
       var body = document.createElement("div");
       body.className = "pa-modal-body";
@@ -75,12 +124,34 @@
       var input = null;
       if (config.type === "prompt") {
         if (config.multiline) {
+          var textareaWrap = document.createElement("div");
+          textareaWrap.className = "pa-modal-textarea-wrap";
+          body.appendChild(textareaWrap);
+          var copyIconBtn = null;
+          if (config.copyBtn) {
+            copyIconBtn = document.createElement("button");
+            copyIconBtn.type = "button";
+            copyIconBtn.className = "pa-modal-copy-icon";
+            copyIconBtn.title = "Copy to clipboard";
+            copyIconBtn.innerHTML =
+              '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+            textareaWrap.appendChild(copyIconBtn);
+          }
           input = document.createElement("textarea");
           input.className = "pa-modal-textarea";
           input.rows = config.rows || 10;
           input.value = config.defaultValue != null ? String(config.defaultValue) : "";
           if (config.placeholder) input.placeholder = config.placeholder;
-          body.appendChild(input);
+          textareaWrap.appendChild(input);
+          if (copyIconBtn) {
+            copyIconBtn.addEventListener("click", function () {
+              navigator.clipboard.writeText(input.value);
+              copyIconBtn.classList.add("copied");
+              setTimeout(function () {
+                copyIconBtn.classList.remove("copied");
+              }, 1200);
+            });
+          }
           var hint = document.createElement("div");
           hint.className = "pa-modal-hint";
           hint.textContent = "Drag the bottom-right corner to resize • Ctrl+Enter to submit";
@@ -426,6 +497,18 @@
         document.removeEventListener("keydown", onKey, true);
         overlay.remove();
         resolve(result);
+      }
+
+      if (config.type === "prompt" && config.formatXml && input) {
+        var formatBtn = document.createElement("button");
+        formatBtn.className = "pa-modal-btn pa-modal-btn-secondary";
+        formatBtn.textContent = "Format";
+        formatBtn.style.marginRight = "auto";
+        formatBtn.addEventListener("click", function () {
+          input.value = formatXml(input.value);
+          input.focus();
+        });
+        footer.appendChild(formatBtn);
       }
 
       if (config.type !== "alert") {
