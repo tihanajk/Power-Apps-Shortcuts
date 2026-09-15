@@ -186,6 +186,24 @@ a {
   background-color: #a0aec0;
 }
 
+/* ---------- Modern command / Power Fx tags ---------- */
+.modern-tag,
+.fx-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+.modern-tag {
+  background-color: #6b46c1;
+}
+.fx-tag {
+  background-color: #2b6cb0;
+}
+
 /* ---------- Web resource code viewer ---------- */
 .wr-viewer-overlay {
   position: fixed;

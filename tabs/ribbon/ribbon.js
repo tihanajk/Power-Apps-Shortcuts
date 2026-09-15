@@ -5,7 +5,16 @@ var locationFilter = "all";
 var visibleOnly = false;
 var libraryContents = {};
 
-var LOC_LABELS = { form: "Form", view: "View", subgrid: "Subgrid" };
+var LOC_LABELS = {
+  form: "Form",
+  view: "View",
+  subgrid: "Subgrid",
+  associated: "Associated",
+  quickform: "Quick form",
+  global: "Global",
+  dashboard: "Dashboard",
+  other: "Other",
+};
 
 document.addEventListener("DOMContentLoaded", function () {
   getRibbonResults();
@@ -119,8 +128,12 @@ function functionsCell(b) {
   var parts = [];
   b.functions.forEach(function (f) {
     var fn = f.functionName ? `<span class="fn-name">${escapeHtml(f.functionName)}</span>` : `<span class="muted">(no function)</span>`;
-    var lib = f.library ? `<div>${codeLinkHtml(f.library, f.functionName)}</div>` : "";
-    parts.push(fn + lib);
+    if (f.powerfx) {
+      parts.push(fn + ` <span class="fx-tag">Power Fx</span>`);
+    } else {
+      var lib = f.library ? `<div>${codeLinkHtml(f.library, f.functionName)}</div>` : "";
+      parts.push(fn + lib);
+    }
   });
   b.urls.forEach(function (u) {
     parts.push(`<div><a href="${escapeHtml(u)}" target="_blank">${escapeHtml(u)}</a></div>`);
@@ -173,7 +186,7 @@ function render(buttons) {
       var label = b.label ? escapeHtml(b.label) : `<span class="muted">(no label)</span>`;
       var cmd = b.hasDefinition ? escapeHtml(b.commandId) : `${escapeHtml(b.commandId)} <span class="muted">(no definition)</span>`;
       return `<tr>
-          <td><span class="btn-label">${label}</span><span class="btn-id">${escapeHtml(b.id)}</span></td>
+          <td><span class="btn-label">${label}</span>${b.modern ? ' <span class="modern-tag">Modern</span>' : ""}<span class="btn-id">${escapeHtml(b.id)}</span></td>
           <td>${locationsCell(b)}</td>
           <td>${visibleCell(b)}</td>
           <td><span class="cmd-id">${cmd}</span></td>

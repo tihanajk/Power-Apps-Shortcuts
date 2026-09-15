@@ -9,10 +9,7 @@
   function formatXml(xml) {
     if (!xml) return xml;
     var PAD = "  ";
-    var normalized = String(xml)
-      .replace(/\r?\n/g, "")
-      .replace(/>\s+</g, "><")
-      .trim();
+    var normalized = String(xml).replace(/\r?\n/g, "").replace(/>\s+</g, "><").trim();
     var tokens = normalized.split(/(<[^>]+>)/g).filter(function (t) {
       return t.trim().length;
     });

@@ -737,6 +737,8 @@ async function retrieveRecords() {
     {
       multiline: true,
       rows: 14,
+      formatXml: true,
+      copyBtn: true,
     },
   );
   if (fetchXml == null || fetchXml.trim() === "") return;
@@ -1695,7 +1697,10 @@ async function listRibbon() {
     });
   }
 
-  if (!anySuccess) {
+  // Modern (Power Fx / JavaScript) commands live in the appaction table, not the ribbon XML.
+  var modernButtons = await fetchModernCommands(entityName, wrBaseUrl);
+
+  if (!anySuccess && modernButtons.length === 0) {
     window.postMessage(
       {
         type: "GIVE_ME_RIBBON",
@@ -1708,8 +1713,24 @@ async function listRibbon() {
     return;
   }
 
-  // Keep buttons in ribbon definition order (form, then view, then subgrid).
-  var buttons = Object.keys(merged).map((k) => merged[k]);
+  // Combine classic and modern, then order each location group by ribbon sequence so
+  // modern commands land in their real position relative to classic buttons.
+  var LOC_ORDER = { form: 0, view: 1, subgrid: 2, associated: 3, quickform: 4, global: 5, dashboard: 6, other: 7 };
+  var buttons = Object.keys(merged)
+    .map((k) => merged[k])
+    .concat(modernButtons);
+
+  buttons.forEach((b, i) => (b._i = i));
+  buttons.sort(function (a, b) {
+    var la = LOC_ORDER[a.locations[0]] ?? 99;
+    var lb = LOC_ORDER[b.locations[0]] ?? 99;
+    if (la !== lb) return la - lb;
+    var sa = a.sequence == null ? Infinity : a.sequence;
+    var sb = b.sequence == null ? Infinity : b.sequence;
+    if (sa !== sb) return sa - sb;
+    return a._i - b._i;
+  });
+  buttons.forEach((b) => delete b._i);
 
   // Flag which buttons are actually rendered on the current page's command bar.
   var liveIds = collectVisibleRibbonIds();
@@ -1734,6 +1755,81 @@ async function listRibbon() {
     },
     "*",
   );
+}
+
+async function fetchModernCommands(entityName, wrBaseUrl) {
+  var LOC = { 0: "form", 1: "view", 2: "subgrid", 3: "associated", 4: "quickform", 5: "global", 6: "dashboard" };
+  var buttons = [];
+  try {
+    var select =
+      "appactionid,name,uniquename,buttonlabeltext,buttontooltipdescription,location,onclickeventtype," +
+      "onclickeventformulafunctionname,onclickeventformulacomponentname,onclickeventjavascriptfunctionname," +
+      "onclickeventjavascriptparameters,visibilitytype,visibilityformulafunctionname,visibilityformulacomponentname," +
+      "hidden,isdisabled,type,sequence,componentstate";
+    var q =
+      "?$select=" +
+      select +
+      "&$expand=OnClickEventJavaScriptWebResourceId($select=name)" +
+      "&$filter=contextvalue eq '" +
+      entityName.replace(/'/g, "''") +
+      "' and componentstate eq 0" +
+      "&$orderby=sequence asc";
+
+    var res = await Xrm.WebApi.retrieveMultipleRecords("appaction", q);
+
+    res.entities.forEach(function (a) {
+      if (a.type === 3) return; // group container, not an actual button
+
+      var functions = [];
+      if (a.onclickeventtype === 2) {
+        var wrName = a["OnClickEventJavaScriptWebResourceId"] && a["OnClickEventJavaScriptWebResourceId"].name;
+        functions.push({
+          functionName: a.onclickeventjavascriptfunctionname,
+          library: wrName ? { name: wrName, url: wrBaseUrl + "/WebResources/" + wrName } : null,
+        });
+      } else if (a.onclickeventtype === 1) {
+        functions.push({
+          functionName: a.onclickeventformulafunctionname || a.onclickeventformulacomponentname || "OnSelect",
+          library: null,
+          powerfx: true,
+        });
+      }
+
+      var displayRules = [];
+      if (a.hidden) displayRules.push({ id: "Hidden", detail: "Hidden = Yes", library: null, functionName: null });
+      if (a.isdisabled)
+        displayRules.push({ id: "IsDisabled", detail: "IsDisabled = Yes (classic equivalent shown)", library: null, functionName: null });
+      if (a.visibilitytype === 1) {
+        displayRules.push({
+          id: "Visibility (Power Fx)",
+          detail: a.visibilityformulafunctionname || a.visibilityformulacomponentname || "Formula",
+          library: null,
+          functionName: null,
+          powerfx: true,
+        });
+      } else if (a.visibilitytype === 2) {
+        displayRules.push({ id: "Visibility", detail: "Classic rules", library: null, functionName: null });
+      }
+
+      buttons.push({
+        id: a.uniquename || a.appactionid,
+        label: a.buttonlabeltext || a.name || "",
+        tooltip: a.buttontooltipdescription || "",
+        commandId: a.uniquename || a.name || "",
+        hasDefinition: true,
+        modern: true,
+        sequence: a.sequence != null ? a.sequence : null,
+        functions: functions,
+        urls: [],
+        enableRules: [],
+        displayRules: displayRules,
+        locations: [LOC[a.location] || "other"],
+      });
+    });
+  } catch (e) {
+    // Modern commands are optional; ignore failures so the classic ribbon still shows.
+  }
+  return buttons;
 }
 
 async function fetchWebResourceContents(names) {
@@ -1936,6 +2032,7 @@ function parseRibbonButtons(xmlTexts, wrBaseUrl) {
         tooltip: resolveLabel(el.getAttribute("ToolTipDescription")),
         commandId: commandId,
         hasDefinition: !!cd,
+        sequence: el.getAttribute("Sequence") != null ? parseFloat(el.getAttribute("Sequence")) : null,
         functions: functions,
         urls: urls,
         enableRules: enableRules,
