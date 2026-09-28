@@ -40,6 +40,16 @@ table {
   word-break: break-all;
 }
 
+.label-source {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  background-color: #edf2f7;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
 .fn-name {
   font-family: "Cascadia Code", Consolas, monospace;
   font-size: 0.8rem;
@@ -169,6 +179,21 @@ a {
 }
 .loc-tag.subgrid {
   background-color: #319795;
+}
+.loc-tag.associated {
+  background-color: #dd6b20;
+}
+.loc-tag.quickform {
+  background-color: #d53f8c;
+}
+.loc-tag.global {
+  background-color: #2c5282;
+}
+.loc-tag.dashboard {
+  background-color: #38a169;
+}
+.loc-tag.other {
+  background-color: #718096;
 }
 
 /* ---------- Visible badge ---------- */

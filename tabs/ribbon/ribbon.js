@@ -86,8 +86,30 @@ function renderError(message) {
 chrome.runtime.onMessage.addListener(function (request) {
   if (request.action === "RIBBON_READY") {
     applyData(request.data);
+  } else if (request.action === "WR_CONTENT_READY") {
+    libraryContents[request.name] = request.content || "";
+    var cbs = pendingWrCallbacks[request.name] || [];
+    delete pendingWrCallbacks[request.name];
+    cbs.forEach(function (cb) {
+      cb(libraryContents[request.name]);
+    });
   }
 });
+
+// Web resource sources are fetched lazily; callbacks waiting per web resource name.
+var pendingWrCallbacks = {};
+
+function requestWrContent(name, cb) {
+  if (libraryContents[name] != null) {
+    cb(libraryContents[name]);
+    return;
+  }
+  if (!pendingWrCallbacks[name]) pendingWrCallbacks[name] = [];
+  pendingWrCallbacks[name].push(cb);
+  if (pendingWrCallbacks[name].length === 1) {
+    chrome.runtime.sendMessage({ action: "REQUEST_WR_CONTENT", name: name, requestId: name });
+  }
+}
 
 function buttonMatches(b, term) {
   if (!term) return true;
@@ -147,12 +169,8 @@ var codeLinks = [];
 
 function codeLinkHtml(library, keyword) {
   if (!library) return "";
-  var content = libraryContents[library.name];
-  if (content == null) {
-    return `<a href="${escapeHtml(library.url)}" target="_blank">${escapeHtml(library.name)}</a>`;
-  }
   var idx = codeLinks.length;
-  codeLinks.push({ name: library.name, content: content, keyword: keyword || "" });
+  codeLinks.push({ name: library.name, url: library.url, keyword: keyword || "" });
   return `<a href="#" class="wr-code-link" data-code="${idx}">${escapeHtml(library.name)}</a>`;
 }
 
@@ -186,7 +204,7 @@ function render(buttons) {
       var label = b.label ? escapeHtml(b.label) : `<span class="muted">(no label)</span>`;
       var cmd = b.hasDefinition ? escapeHtml(b.commandId) : `${escapeHtml(b.commandId)} <span class="muted">(no definition)</span>`;
       return `<tr>
-          <td><span class="btn-label">${label}</span>${b.modern ? ' <span class="modern-tag">Modern</span>' : ""}<span class="btn-id">${escapeHtml(b.id)}</span></td>
+          <td><span class="btn-label">${label}</span>${b.modern ? ' <span class="modern-tag">Modern</span>' : ""}${b.labelSource ? ` <span class="label-source" title="Where the label text comes from">${escapeHtml(b.labelSource)}</span>` : ""}<span class="btn-id">${escapeHtml(b.id)}</span></td>
           <td>${locationsCell(b)}</td>
           <td>${visibleCell(b)}</td>
           <td><span class="cmd-id">${cmd}</span></td>
@@ -237,6 +255,7 @@ function downloadData() {
   allButtons.forEach(function (b) {
     rows.push({
       Button: b.label || "",
+      "Label Source": b.labelSource || "",
       "Button Id": b.id,
       Location: (b.locations || []).map((loc) => LOC_LABELS[loc] || loc).join(", "),
       Visible: b.visible ? "Yes" : "No",
@@ -277,21 +296,6 @@ function openWebResourceViewer(wr) {
   var existing = document.getElementById("wr-viewer-overlay");
   if (existing) existing.remove();
 
-  // Prefer highlighting the full function path; fall back to its short name if not found.
-  var keyword = wr.keyword || "";
-  if (keyword && wr.content) {
-    var full = new RegExp(escapeRegExp(keyword), "gi");
-    if (!(wr.content.match(full) || []).length && keyword.indexOf(".") !== -1) {
-      keyword = keyword.split(".").pop();
-    }
-  }
-
-  var matchCount = 0;
-  if (keyword && wr.content) {
-    var re = new RegExp(escapeRegExp(keyword), "gi");
-    matchCount = (wr.content.match(re) || []).length;
-  }
-
   var overlay = document.createElement("div");
   overlay.id = "wr-viewer-overlay";
   overlay.className = "wr-viewer-overlay";
@@ -303,27 +307,24 @@ function openWebResourceViewer(wr) {
   head.className = "wr-viewer-head";
   head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
     <div class="wr-viewer-nav">
-      <span class="wr-viewer-counter">${matchCount ? "1" : "0"} / ${matchCount}</span>
-      <button type="button" class="wr-viewer-prev" title="Previous match (Shift+Enter)" ${matchCount ? "" : "disabled"}>‹</button>
-      <button type="button" class="wr-viewer-next" title="Next match (Enter)" ${matchCount ? "" : "disabled"}>›</button>
+      <span class="wr-viewer-counter">0 / 0</span>
+      <button type="button" class="wr-viewer-prev" title="Previous match (Shift+Enter)" disabled>‹</button>
+      <button type="button" class="wr-viewer-next" title="Next match (Enter)" disabled>›</button>
     </div>
-    <button type="button" class="wr-viewer-download" title="Download file">⬇ Download</button>
+    <button type="button" class="wr-viewer-download" title="Download file" disabled>⬇ Download</button>
     <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
 
   var body = document.createElement("div");
   body.className = "wr-viewer-body";
-  var pre = document.createElement("pre");
-  pre.className = "wr-viewer-code";
-  pre.innerHTML = highlightKeyword(wr.content || "", keyword);
-  body.appendChild(pre);
-
-  var marks = pre.querySelectorAll("mark.wr-highlight");
-  var currentIndex = 0;
+  body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Loading web resource…</span></div>';
 
   modal.appendChild(head);
   modal.appendChild(body);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+
+  var marks = [];
+  var currentIndex = 0;
 
   function close() {
     overlay.remove();
@@ -338,31 +339,6 @@ function openWebResourceViewer(wr) {
       if (marks.length) gotoMatch(currentIndex + (e.shiftKey ? -1 : 1));
     }
   }
-  head.querySelector(".wr-viewer-close").addEventListener("click", close);
-  head.querySelector(".wr-viewer-download").addEventListener("click", function () {
-    var fileName = wr.name.split("/").pop() || "webresource.txt";
-    var blob = new Blob([wr.content || ""], { type: "text/plain;charset=utf-8" });
-    var downloadUrl = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(downloadUrl);
-  });
-  overlay.addEventListener("mousedown", function (e) {
-    if (e.target === overlay) close();
-  });
-  document.addEventListener("keydown", onKey, true);
-
-  head.querySelector(".wr-viewer-prev").addEventListener("click", function () {
-    if (marks.length) gotoMatch(currentIndex - 1);
-  });
-  head.querySelector(".wr-viewer-next").addEventListener("click", function () {
-    if (marks.length) gotoMatch(currentIndex + 1);
-  });
-
   function gotoMatch(index) {
     if (!marks.length) return;
     currentIndex = ((index % marks.length) + marks.length) % marks.length;
@@ -374,5 +350,72 @@ function openWebResourceViewer(wr) {
     if (counter) counter.textContent = `${currentIndex + 1} / ${marks.length}`;
   }
 
-  if (marks.length) gotoMatch(0);
+  head.querySelector(".wr-viewer-close").addEventListener("click", close);
+  overlay.addEventListener("mousedown", function (e) {
+    if (e.target === overlay) close();
+  });
+  document.addEventListener("keydown", onKey, true);
+
+  function populate(content) {
+    // Prefer highlighting the full function path; fall back to its short name if not found.
+    var keyword = wr.keyword || "";
+    if (keyword && content) {
+      var full = new RegExp(escapeRegExp(keyword), "gi");
+      if (!(content.match(full) || []).length && keyword.indexOf(".") !== -1) {
+        keyword = keyword.split(".").pop();
+      }
+    }
+
+    var matchCount = 0;
+    if (keyword && content) {
+      var re = new RegExp(escapeRegExp(keyword), "gi");
+      matchCount = (content.match(re) || []).length;
+    }
+
+    body.innerHTML = "";
+    var pre = document.createElement("pre");
+    pre.className = "wr-viewer-code";
+    pre.innerHTML = highlightKeyword(content || "", keyword);
+    body.appendChild(pre);
+
+    marks = Array.prototype.slice.call(pre.querySelectorAll("mark.wr-highlight"));
+    currentIndex = 0;
+
+    var counter = head.querySelector(".wr-viewer-counter");
+    if (counter) counter.textContent = `${matchCount ? 1 : 0} / ${matchCount}`;
+
+    var prevBtn = head.querySelector(".wr-viewer-prev");
+    var nextBtn = head.querySelector(".wr-viewer-next");
+    prevBtn.disabled = !matchCount;
+    nextBtn.disabled = !matchCount;
+    prevBtn.addEventListener("click", function () {
+      if (marks.length) gotoMatch(currentIndex - 1);
+    });
+    nextBtn.addEventListener("click", function () {
+      if (marks.length) gotoMatch(currentIndex + 1);
+    });
+
+    var dl = head.querySelector(".wr-viewer-download");
+    dl.disabled = false;
+    dl.addEventListener("click", function () {
+      var fileName = wr.name.split("/").pop() || "webresource.txt";
+      var blob = new Blob([content || ""], { type: "text/plain;charset=utf-8" });
+      var downloadUrl = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(downloadUrl);
+    });
+
+    if (marks.length) gotoMatch(0);
+  }
+
+  requestWrContent(wr.name, function (content) {
+    // Ignore if the viewer was closed before the content arrived.
+    if (!document.body.contains(overlay)) return;
+    populate(content);
+  });
 }

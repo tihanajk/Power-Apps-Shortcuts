@@ -168,15 +168,21 @@ async function loc() {
     }
 
     var header = false;
+    var headerControl = null;
     Xrm.Page.ui.headerSection.controls.get().forEach((c) => {
       var attr = c?.getAttribute();
       var name = attr?.getName();
 
-      if (name == field) header = true;
+      if (name == field) {
+        header = true;
+        headerControl = c;
+      }
     });
 
     var tabs = [];
     var sections = [];
+    var foundTab = null;
+    var foundControl = null;
 
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
@@ -190,6 +196,10 @@ async function loc() {
           if (name == field) {
             tabs.push(`${t?.getLabel()}  (${t?.getName()})`);
             sections.push(`${s?.getLabel()}  (${s?.getName()})`);
+            if (!foundTab) {
+              foundTab = t;
+              foundControl = c;
+            }
           }
         }),
       ),
@@ -204,9 +214,85 @@ async function loc() {
       });
     }
 
-    if (message != "") paModal.alert(message);
-    else paModal.alert("⚠️ Field not found");
+    if (message == "") {
+      paModal.alert("⚠️ Field not found");
+      return;
+    }
+
+    var goThere = await paModal.confirm(message + "\n👉 Go to this field on the form?");
+    if (!goThere) return;
+
+    var targetTab = foundTab;
+    var targetControl = foundControl || headerControl;
+
+    if (targetTab) {
+      try {
+        targetTab.setFocus();
+      } catch (e) {}
+    }
+    if (targetControl) {
+      try {
+        targetControl.setFocus();
+      } catch (e) {}
+      highlightControl(field);
+    }
   }
+}
+
+// Circles/pulses the located field in the DOM so the user can spot it on the form.
+function highlightControl(fieldName) {
+  // Wait for any tab switch to render before locating the DOM node.
+  setTimeout(function () {
+    var el =
+      document.querySelector(`[data-id="${fieldName}.fieldControl"]`) ||
+      document.querySelector(`[data-id^="${fieldName}.fieldControl"]`) ||
+      document.querySelector(`[data-id="${fieldName}"]`);
+
+    if (!el && document.activeElement && document.activeElement !== document.body) {
+      el = document.activeElement.closest("[data-id]") || document.activeElement;
+    }
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Draw the ring as a fixed overlay on <body> so it can't be clipped or
+    // stacked under ancestor divs (overflow:hidden / stacking contexts).
+    var ring = document.createElement("div");
+    ring.style.position = "fixed";
+    ring.style.pointerEvents = "none";
+    ring.style.border = "3px solid #d81b60";
+    ring.style.borderRadius = "6px";
+    ring.style.boxShadow = "0 0 8px 2px rgba(216,27,96,0.6)";
+    ring.style.transition = "opacity 0.25s ease";
+    ring.style.zIndex = "2147483647";
+    ring.style.opacity = "1";
+    document.body.appendChild(ring);
+
+    function position() {
+      var r = el.getBoundingClientRect();
+      ring.style.top = r.top - 3 + "px";
+      ring.style.left = r.left - 3 + "px";
+      ring.style.width = r.width + "px";
+      ring.style.height = r.height + "px";
+    }
+    position();
+    window.addEventListener("scroll", position, true);
+    window.addEventListener("resize", position, true);
+
+    var on = true;
+    var count = 0;
+    var timer = setInterval(function () {
+      ring.style.opacity = on ? "1" : "0";
+      on = !on;
+      count++;
+      if (count >= 8) {
+        clearInterval(timer);
+        window.removeEventListener("scroll", position, true);
+        window.removeEventListener("resize", position, true);
+        ring.remove();
+      }
+    }, 400);
+  }, 400);
 }
 
 async function getOptions() {
@@ -800,7 +886,8 @@ async function getAllFields() {
     var fieldName = key;
     var parts = key.split("_value");
     if (parts.length > 1) {
-      fieldName = key.split("_")[1];
+      var parts = key.split("_"); // take everything after the first underscore
+      fieldName = parts.slice(1).join("_");
     }
     if (!onForm) {
       onForm = Xrm.Page.getAttribute(fieldName) != null;
@@ -1736,25 +1823,30 @@ async function listRibbon() {
   var liveRibbon = collectVisibleRibbonIds();
   buttons.forEach((b) => (b.visible = isRibbonButtonVisible(b, liveRibbon)));
 
-  // Fetch the source of every referenced web resource so the code can be shown inline.
-  var libNames = {};
-  buttons.forEach(function (b) {
-    b.functions.forEach((f) => f.library && (libNames[f.library.name] = true));
-    b.enableRules.forEach((r) => r.library && (libNames[r.library.name] = true));
-    b.displayRules.forEach((r) => r.library && (libNames[r.library.name] = true));
-  });
-  var libraryContents = await fetchWebResourceContents(Object.keys(libNames));
-
+  // Web resource sources are fetched lazily (see FETCH_WR_CONTENT) so we don't
+  // download code the user may never open.
   window.postMessage(
     {
       type: "GIVE_ME_RIBBON",
       loading: false,
       entity: entityName,
       buttons: buttons,
-      libraryContents: libraryContents,
+      libraryContents: {},
     },
     "*",
   );
+}
+
+// Fetches a single web resource's source on demand when the ribbon view requests it.
+async function fetchWrContentOnDemand(data) {
+  var name = data && data.name;
+  var requestId = data && data.requestId;
+  var content = "";
+  if (name) {
+    var map = await fetchWebResourceContents([name]);
+    content = map[name] != null ? map[name] : "";
+  }
+  window.postMessage({ type: "GIVE_ME_WR_CONTENT", name: name, content: content, requestId: requestId }, "*");
 }
 
 async function fetchModernCommands(entityName, wrBaseUrl) {
@@ -1814,6 +1906,7 @@ async function fetchModernCommands(entityName, wrBaseUrl) {
       buttons.push({
         id: a.uniquename || a.appactionid,
         label: a.buttonlabeltext || a.name || "",
+        labelSource: a.buttonlabeltext ? "buttonlabeltext" : a.name ? "name" : "",
         tooltip: a.buttontooltipdescription || "",
         commandId: a.uniquename || a.name || "",
         hasDefinition: true,
@@ -2038,9 +2131,31 @@ function parseRibbonButtons(xmlTexts, wrBaseUrl) {
         });
       }
 
+      var labelTextRaw = el.getAttribute("LabelText");
+      var tooltipTitleRaw = el.getAttribute("ToolTipTitle");
+      var resolvedLabelText = resolveLabel(labelTextRaw);
+      var resolvedTooltipTitle = resolveLabel(tooltipTitleRaw);
+      var label, labelSource;
+      var labelKind = function (raw) {
+        if (raw.indexOf("$LocLabels:") === 0) return " (localized label)";
+        if (raw.indexOf("$Resources") === 0) return " (system resource)";
+        return "";
+      };
+      if (resolvedLabelText) {
+        label = resolvedLabelText;
+        labelSource = "LabelText" + labelKind(labelTextRaw);
+      } else if (resolvedTooltipTitle) {
+        label = resolvedTooltipTitle;
+        labelSource = "ToolTipTitle" + labelKind(tooltipTitleRaw);
+      } else {
+        label = humanize(id);
+        labelSource = "derived from Id";
+      }
+
       buttons.push({
         id: id,
-        label: resolveLabel(el.getAttribute("LabelText")) || resolveLabel(el.getAttribute("ToolTipTitle")) || humanize(id),
+        label: label,
+        labelSource: labelSource,
         tooltip: resolveLabel(el.getAttribute("ToolTipDescription")),
         commandId: commandId,
         hasDefinition: !!cd,
@@ -2150,6 +2265,7 @@ if (!window.__paDataverseListenerAdded) {
       LIST_FORM_LAYOUT: listFormLayout,
       SHOW_AUDIT_HISTORY: listAuditHistory,
       LIST_RIBBON: listRibbon,
+      FETCH_WR_CONTENT: fetchWrContentOnDemand,
     };
 
     const handler = handlers[event.data.type];

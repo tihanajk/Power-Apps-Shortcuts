@@ -36,6 +36,7 @@ var envVarSourceTabId = null;
 var formLayoutData = [];
 
 var ribbonData = null;
+var ribbonSourceTabId = null;
 
 var auditHistoryData = [];
 var doneFetchingAudit = false;
@@ -169,6 +170,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ data: formLayoutData });
   } else if (request.action == "showRibbon") {
     ribbonData = request.data;
+    ribbonSourceTabId = sender.tab?.id;
     if (request.data && request.data.loading) {
       openView("tabs/ribbon/ribbon.html");
     } else {
@@ -176,6 +178,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   } else if (request.action == "GET_RIBBON") {
     sendResponse({ data: ribbonData });
+  } else if (request.action === "REQUEST_WR_CONTENT") {
+    if (ribbonSourceTabId) {
+      chrome.tabs.sendMessage(ribbonSourceTabId, {
+        message: "fetchWrContent",
+        name: request.name,
+        requestId: request.requestId,
+      });
+    }
+  } else if (request.action === "wrContentReady") {
+    chrome.runtime.sendMessage({
+      action: "WR_CONTENT_READY",
+      name: request.name,
+      content: request.content,
+      requestId: request.requestId,
+    });
   } else if (request.action == "showAuditHistory") {
     auditHistoryData = request.data;
     doneFetchingAudit = request.last;

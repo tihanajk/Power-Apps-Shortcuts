@@ -153,6 +153,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_ENV_VARIABLES", { refresh: true });
       break;
 
+    case "fetchWrContent":
+      execute("FETCH_WR_CONTENT", { name: request.name, requestId: request.requestId });
+      break;
+
     case "updateEnvVar": {
       // window._envVarUpdate = {
       //   definitionId: request.definitionId,
@@ -309,6 +313,13 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showRibbon",
       data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_WR_CONTENT") {
+    chrome.runtime.sendMessage({
+      action: "wrContentReady",
+      name: event.data.name,
+      content: event.data.content,
+      requestId: event.data.requestId,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_AUDIT_HISTORY") {
     chrome.runtime.sendMessage({
