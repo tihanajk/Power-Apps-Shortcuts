@@ -91,9 +91,6 @@
     "list_form_layout": {
       "description": "List form tabs, sections and controls"
     },
-    "list_ribbon": {
-      "description": "Inspect ribbon buttons (function, code and visibility)"
-    },
     "show_audit_history": {
       "description": "Display audit history for the record"
     }
@@ -114,8 +111,7 @@
         "tabs/events/events.html",
         "tabs/variables/variables.html",
         "tabs/formLayout/formLayout.html",
-        "tabs/auditHistory/auditHistory.html",
-        "tabs/ribbon/ribbon.html"
+        "tabs/auditHistory/auditHistory.html"
       ],
       "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"]
     }
@@ -137,8 +133,7 @@
         "tabs/events/events.js",
         "tabs/variables/variables.js",
         "tabs/formLayout/formLayout.js",
-        "tabs/auditHistory/auditHistory.js",
-        "tabs/ribbon/ribbon.js"
+        "tabs/auditHistory/auditHistory.js"
       ]
     }
   ]
