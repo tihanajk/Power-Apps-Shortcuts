@@ -58,6 +58,7 @@ Your choice is remembered across sessions.
 - **Open Entity List** — Prompts for an entity (table) logical name and opens its list view in a new tab.
 - **Open Record** — Prompts for an entity name and record GUID, then opens that specific record in a new tab.
 - **Quick Field Update** — Lets you update a field value on the current record directly, without opening the full editor.
+- **Touch a Field** — Re-saves a field with its current value (no data change) to trigger plugins, workflows, or flows registered on the record's update.
 - **Toggle Ribbon Debug** — Adds or removes `&ribbondebug=true` from the URL to turn command-bar (ribbon) debugging on or off.
 - **Inspect Ribbon Buttons** — Lists every ribbon (command bar) button for the current table and, for each one, the JavaScript function it calls, a link to open that web resource code, and its visibility logic (enable and display rules). Reads the classic ribbon definitions via `RetrieveEntityRibbon`.
 - **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.

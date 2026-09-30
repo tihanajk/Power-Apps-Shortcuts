@@ -55,6 +55,9 @@
     "quick_field_update": {
       "description": "Quick field update"
     },
+    "touch_field": {
+      "description": "Touch a field (re-save same value to trigger processes)"
+    },
     "execute_fetchxml": {
       "description": "Execute fetchXML"
     },

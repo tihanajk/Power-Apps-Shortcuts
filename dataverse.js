@@ -816,6 +816,57 @@ async function updateField() {
   }
 }
 
+// Re-saves a field with its current value so registered plugins/flows fire without changing data.
+async function touchField() {
+  if (typeof Xrm === "undefined" || !Xrm.Page) return;
+
+  var entityName = Xrm.Page.data.entity.getEntityName();
+  var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+
+  var field = await paModal.prompt("Field logical name to touch (re-saves the same value to trigger background processes)");
+  if (field == null) return;
+  field = field.trim();
+  if (field === "") return;
+
+  var type = await getAttributeType(entityName, field);
+  var typeLower = String(type || "").toLowerCase();
+  var isLookup = typeLower === "lookup" || typeLower === "customer" || typeLower === "owner";
+
+  try {
+    var record = await Xrm.WebApi.retrieveRecord(entityName, entityId, "?$select=" + field);
+
+    var entity = {};
+
+    if (isLookup) {
+      var lookupId = record["_" + field + "_value"];
+      if (!lookupId) {
+        paModal.alert("⚠️ Lookup is empty - nothing to touch");
+        return;
+      }
+      var targetEntity = record["_" + field + "_value@Microsoft.Dynamics.CRM.lookuplogicalname"];
+      var info = await getLookupInfo(entityName, field);
+      var navProp = info && info.navByTarget[targetEntity];
+      var targetMeta = await getEntitySetAndName(targetEntity);
+      if (!navProp || !targetMeta) {
+        paModal.alert("Could not resolve lookup metadata for " + field);
+        return;
+      }
+      entity[navProp + "@odata.bind"] = `/${targetMeta.entitySet}(${lookupId})`;
+    } else {
+      if (!(field in record)) {
+        paModal.alert("⚠️ Field '" + field + "' not found on this record");
+        return;
+      }
+      entity[field] = record[field];
+    }
+
+    await Xrm.WebApi.updateRecord(entityName, entityId, entity);
+    paModal.alert("✅ Touched '" + field + "' - background processes triggered");
+  } catch (e) {
+    paModal.alert("Error: " + e.message);
+  }
+}
+
 async function retrieveRecords() {
   var fetchXml = await paModal.prompt(
     "Enter fetchXml",
@@ -2252,6 +2303,7 @@ if (!window.__paDataverseListenerAdded) {
       SHOW_OPTIONS: getOptions,
       LIST_SECURITY_ROLES: listSecurityRoles,
       QUICK_FIELD_UPDATE: updateField,
+      TOUCH_FIELD: touchField,
       EXECUTE_FETCH_XML: retrieveRecords,
       SHOW_ALL_FIELDS: getAllFields,
       GET_FLOW_DEPENDENCIES: listFlowDependencies,

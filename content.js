@@ -73,6 +73,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("QUICK_FIELD_UPDATE");
       break;
 
+    case "touchField":
+      execute("TOUCH_FIELD");
+      break;
+
     case "executeFetchXml":
       execute("EXECUTE_FETCH_XML");
       break;

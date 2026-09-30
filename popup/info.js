@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
       title: "Data",
       items: [
         { command: "quick_field_update", label: "Quick field update" },
+        { command: "touch_field", label: "Touch a field (trigger processes)" },
         { command: "execute_fetchxml", label: "Execute fetchXML" },
         { command: "show_audit_history", label: "Display audit history" },
         { command: "list_environment_variables", label: "Environment variables" },

@@ -238,6 +238,9 @@ function handleCommand(command) {
     case "quick_field_update":
       sendMessageToTab("quickFieldUpdate");
       break;
+    case "touch_field":
+      sendMessageToTab("touchField");
+      break;
     case "execute_fetchxml":
       sendMessageToTab("executeFetchXml");
       break;
