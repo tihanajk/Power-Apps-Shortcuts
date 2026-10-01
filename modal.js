@@ -139,6 +139,7 @@
           input.rows = config.rows || 10;
           input.value = config.defaultValue != null ? String(config.defaultValue) : "";
           if (config.placeholder) input.placeholder = config.placeholder;
+          if (config.readonly) input.readOnly = true;
           textareaWrap.appendChild(input);
           if (copyIconBtn) {
             copyIconBtn.addEventListener("click", function () {
@@ -151,7 +152,9 @@
           }
           var hint = document.createElement("div");
           hint.className = "pa-modal-hint";
-          hint.textContent = "Drag the bottom-right corner to resize • Ctrl+Enter to submit";
+          hint.textContent = config.readonly
+            ? "Drag the bottom-right corner to resize"
+            : "Drag the bottom-right corner to resize • Ctrl+Enter to submit";
           body.appendChild(hint);
         } else {
           input = document.createElement("input");
@@ -159,6 +162,7 @@
           input.type = "text";
           input.value = config.defaultValue != null ? String(config.defaultValue) : "";
           if (config.placeholder) input.placeholder = config.placeholder;
+          if (config.readonly) input.readOnly = true;
           body.appendChild(input);
         }
       }

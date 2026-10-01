@@ -96,6 +96,9 @@
     },
     "show_audit_history": {
       "description": "Display audit history for the record"
+    },
+    "list_ribbon": {
+      "description": "Inspect ribbon (command bar) buttons"
     }
   },
   "web_accessible_resources": [
@@ -114,7 +117,8 @@
         "tabs/events/events.html",
         "tabs/variables/variables.html",
         "tabs/formLayout/formLayout.html",
-        "tabs/auditHistory/auditHistory.html"
+        "tabs/auditHistory/auditHistory.html",
+        "tabs/ribbon/ribbon.html"
       ],
       "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"]
     }
@@ -136,7 +140,8 @@
         "tabs/events/events.js",
         "tabs/variables/variables.js",
         "tabs/formLayout/formLayout.js",
-        "tabs/auditHistory/auditHistory.js"
+        "tabs/auditHistory/auditHistory.js",
+        "tabs/ribbon/ribbon.js"
       ]
     }
   ]

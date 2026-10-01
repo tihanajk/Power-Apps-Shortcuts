@@ -111,12 +111,12 @@ function renderPlugins(plugins) {
                       .map(
                         (s) =>
                           `<li>
-                            <h3 class="step">⚡ ${s.name} ${s.status == 1 ? "🟢" : "🟡"}
-                            ${s.mode == 0 ? '<div style="margin-left:10px; overflow-wrap: break-word;" >🔀 Synchronous</div>' : s.mode == 1 ? '<div style="margin-left:10px; overflow-wrap: break-word;">⏱️ Asynchronous</div>' : s.mode}            
-                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;">🔍 ${s.filter}</div>` : ""}
+                            <h3 class="step"><span title="Step">⚡</span> ${s.name} ${s.status == 1 ? `<span title="Enabled">🟢</span>` : `<span title="Disabled">🟡</span>`}
+                            ${s.mode == 0 ? '<div style="margin-left:10px; overflow-wrap: break-word;" ><span title="Synchronous">🔀</span> Synchronous</div>' : s.mode == 1 ? '<div style="margin-left:10px; overflow-wrap: break-word;"><span title="Asynchronous">⏱️</span> Asynchronous</div>' : s.mode}            
+                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;"><span title="Filters">🔍</span> ${s.filter}</div>` : ""}
                             </h3>
                             <ul class="images">
-                            ${s.image.name ? `<li><h3>🖼️ ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
+                            ${s.image.name ? `<li><h3><span title="Image">🖼️</span> ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
                             </ul>
                           </li>`,
                       )

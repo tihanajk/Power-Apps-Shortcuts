@@ -19,6 +19,9 @@ var envId = "";
 var securityUrl = "";
 var allFields = [];
 var fields = [];
+var fieldsUrl = "";
+var fieldsEntityMetadataId = null;
+var fieldsSolutionId = null;
 var fieldName = "";
 var processes = [];
 var url = "";
@@ -91,9 +94,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     allFields = request.result;
     fields = request.fields;
     entityName = request.entityName;
+    fieldsUrl = request.url;
+    fieldsEntityMetadataId = request.entityMetadataId;
+    fieldsSolutionId = request.solutionId;
     openView("tabs/fields/fields.html");
   } else if (request.action === "GET_ALL_FIELDS") {
-    sendResponse({ allFields: allFields, entityName: entityName, fields: fields });
+    sendResponse({
+      allFields: allFields,
+      entityName: entityName,
+      fields: fields,
+      url: fieldsUrl,
+      entityMetadataId: fieldsEntityMetadataId,
+      solutionId: fieldsSolutionId,
+    });
   } else if (request.action === "showFlowDependencies") {
     fieldName = request.data.fieldName;
     processes = request.data?.processes;

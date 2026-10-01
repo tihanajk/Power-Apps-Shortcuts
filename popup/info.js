@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { command: "list_form_layout", label: "List tabs, sections & controls" },
         { command: "list_script_events", label: "List script events on the form" },
         { command: "ribbon_debug", label: "Toggle ribbon debug" },
-        // { command: "list_ribbon", label: "Inspect ribbon buttons" },
+        { command: "list_ribbon", label: "Inspect ribbon buttons" },
       ],
     },
     {

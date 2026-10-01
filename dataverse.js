@@ -912,13 +912,50 @@ async function getAllFields() {
 
   var url = Xrm.Page.context.getClientUrl();
   var attributeMetadata = await fetch(
-    url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes?$select=LogicalName,SourceType`,
+    url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes?$select=LogicalName,SourceType,AttributeType,MetadataId`,
     {
       method: "GET",
       headers: header,
     },
   );
   var resp = await attributeMetadata.json();
+
+  // Entity MetadataId and the Default solution id, used to open the native calculated-field editor.
+  var entityMetadataId = null;
+  var solutionId = null;
+  try {
+    var entityMetaRes = await fetch(url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=MetadataId`, {
+      method: "GET",
+      headers: header,
+    });
+    entityMetadataId = (await entityMetaRes.json())?.MetadataId ?? null;
+
+    var solRes = await fetch(url + `/api/data/v9.2/solutions?$filter=uniquename eq 'Default'&$select=solutionid`, {
+      method: "GET",
+      headers: header,
+    });
+    solutionId = (await solRes.json())?.value?.[0]?.solutionid ?? null;
+  } catch (e) {}
+
+  // Retrieve the Power Fx expression for pfx formula columns (SourceType 3).
+  var formulaMap = {};
+  await Promise.all(
+    resp.value
+      .filter((a) => a.SourceType === 3)
+      .map(async (a) => {
+        try {
+          var typeName = a.AttributeType + "AttributeMetadata";
+          var r = await fetch(
+            url +
+              `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes(LogicalName='${a.LogicalName}')/Microsoft.Dynamics.CRM.${typeName}?$select=LogicalName,FormulaDefinition`,
+            { method: "GET", headers: header },
+          );
+          if (!r.ok) return;
+          var d = await r.json();
+          if (d.FormulaDefinition) formulaMap[a.LogicalName] = d.FormulaDefinition;
+        } catch (e) {}
+      }),
+  );
 
   var altKeyMetadata = await fetch(
     url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=SchemaName&$expand=Keys($select=KeyAttributes)`,
@@ -944,10 +981,19 @@ async function getAllFields() {
       onForm = Xrm.Page.getAttribute(fieldName) != null;
     }
 
-    var behavior = resp.value.find((a) => a.LogicalName == fieldName)?.SourceType;
+    var attrMeta = resp.value.find((a) => a.LogicalName == fieldName);
+    var behavior = attrMeta?.SourceType;
 
     var isAltKey = altKeys.includes(fieldName);
-    fields.push({ name: key, value: value, onForm: onForm, behavior: behavior, isAltKey: isAltKey });
+    fields.push({
+      name: key,
+      value: value,
+      onForm: onForm,
+      behavior: behavior,
+      isAltKey: isAltKey,
+      metadataId: attrMeta?.MetadataId,
+      formula: formulaMap[fieldName],
+    });
   });
   window.postMessage(
     {
@@ -955,6 +1001,9 @@ async function getAllFields() {
       result: result,
       fields: fields,
       entityName: entityName,
+      url: url,
+      entityMetadataId: entityMetadataId,
+      solutionId: solutionId,
     },
     "*",
   );

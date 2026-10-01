@@ -55,7 +55,7 @@ function renderTable(options) {
       .map(
         (o) =>
           `<tr id="main">
-            <td>${o?.Multi ? "Ⓜ️ " : ""}${o?.Bool ? "🅱️ " : ""}${o?.LogicalName}${o?.OnForm ? " 🟢" : ""}</td>
+            <td>${o?.Multi ? `<span title="Multiselect optionset">Ⓜ️</span> ` : ""}${o?.Bool ? `<span title="Boolean">🅱️</span> ` : ""}${o?.LogicalName}${o?.OnForm ? ` <span title="On form">🟢</span>` : ""}</td>
             <td> ${makeMiniTable(o.Options)}</td>
           </tr>`,
       )

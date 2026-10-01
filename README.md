@@ -66,7 +66,7 @@ Your choice is remembered across sessions.
   ![Option sets](img/screenshots/optionsets.png)
 
 - **Execute Retrieve with FetchXML** — Runs a FetchXML query against the environment and shows the returned records.
-- **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form.
+- **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form. Each field is tagged with symbols (hover for a tooltip): 🟢 on form, 🔑 alternate key, ©️ calculated, ®️ rollup, and 🌀 Power Fx (pfx). Clicking ©️ or ®️ opens the field's native formula editor; clicking 🌀 shows its Power Fx formula.
 - **List Field Dependencies** — Shows components that reference the keyword (e.g. a field logical name): Flows, Plugins, Workflows, Business Rules, BPFs, Actions, and Environment Variables. You can also opt in to scan unmanaged JavaScript/HTML **web resource files** (a longer-running operation, with an optional name filter to narrow the scan); matching web resources open in an in-app code viewer with the keyword highlighted, match-to-match navigation (Enter / Shift+Enter), and a button to download the file. Results show the search execution time and can be filtered by type, active state, and text.
 
   ![Field dependencies](img/screenshots/dependencies.png)

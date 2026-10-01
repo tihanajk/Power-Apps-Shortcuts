@@ -309,7 +309,7 @@ function renderDependencies(processes) {
                     <td>
                     ${
                       e.category == CATEGORIES.PLUGIN
-                        ? `<div style="color:blue">${e.name} ${e.pl_image ? "🖼️" : "⚡"}</div>`
+                        ? `<div style="color:blue">${e.name} ${e.pl_image ? `<span title="Field is used in a plugin step image">🖼️</span>` : `<span title="Field is in the plugin step trigger (filtering attributes)">⚡</span>`}</div>`
                         : e.category == CATEGORIES.WEBRESOURCE
                           ? `<a href="#" class="wr-link" data-id="${e.id}">${e.name}</a>`
                           : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
@@ -318,7 +318,7 @@ function renderDependencies(processes) {
                     <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
                     <td id="primary-entity" style="color:#5d699a">${e.primary_entity != "none" ? e.primary_entity : ""}</td>
                     <td style="color:${e.status == 1 ? "" : "grey"}">
-                    ${e.status == 1 ? "🟢" : "🟡"} ${e.status_display}
+                    ${e.status == 1 ? `<span title="Active">🟢</span>` : `<span title="Inactive">🟡</span>`} ${e.status_display}
                     </td>
                 </tr>`,
             )

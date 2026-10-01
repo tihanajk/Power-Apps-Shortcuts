@@ -292,6 +292,9 @@ window.addEventListener("message", (event) => {
       result: event.data.result,
       fields: event.data.fields,
       entityName: event.data.entityName,
+      url: event.data.url,
+      entityMetadataId: event.data.entityMetadataId,
+      solutionId: event.data.solutionId,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_FLOW_DEPENDENCIES") {
     chrome.runtime.sendMessage({
