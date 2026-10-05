@@ -161,6 +161,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("FETCH_WR_CONTENT", { name: request.name, requestId: request.requestId });
       break;
 
+    case "fetchPage":
+      execute("FETCH_PAGE", { fetchXml: request.fetchXml, entitySetName: request.entitySetName, page: request.page });
+      break;
+
     case "updateEnvVar": {
       // window._envVarUpdate = {
       //   definitionId: request.definitionId,
@@ -282,9 +286,23 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_FETCH_RESULTS") {
     chrome.runtime.sendMessage({
       action: "showRetrieveResult",
+      loading: event.data.loading,
       result: event.data.result,
       entityName: event.data.entityName,
       url: event.data.url,
+      page: event.data.page,
+      hasMore: event.data.hasMore,
+      paged: event.data.paged,
+      entitySetName: event.data.entitySetName,
+      fetchXml: event.data.fetchXml,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_FETCH_PAGE") {
+    chrome.runtime.sendMessage({
+      action: "fetchPageReady",
+      result: event.data.result,
+      page: event.data.page,
+      hasMore: event.data.hasMore,
+      error: event.data.error,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_ALL_FIELDS") {
     chrome.runtime.sendMessage({

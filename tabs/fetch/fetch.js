@@ -1,3 +1,12 @@
+var state = {
+  entityName: "",
+  url: "",
+  page: 1,
+  hasMore: false,
+  paged: false,
+  navigating: false,
+};
+
 document.addEventListener("DOMContentLoaded", function () {
   getFetchResults();
 
@@ -7,7 +16,44 @@ document.addEventListener("DOMContentLoaded", function () {
       filterResults(search.value.toLowerCase());
     });
   }
+
+  // Content is re-rendered on each page, so delegate the row click once.
+  document.getElementById("fetch-content").addEventListener("click", function (e) {
+    var row = e.target.closest("tr.clickable");
+    if (!row) return;
+    var recordUrl = row.getAttribute("data-url");
+    if (recordUrl) window.open(recordUrl, "_blank");
+  });
+
+  document.getElementById("prevPage").addEventListener("click", function () {
+    if (state.page > 1) goToPage(state.page - 1);
+  });
+  document.getElementById("nextPage").addEventListener("click", function () {
+    if (state.hasMore) goToPage(state.page + 1);
+  });
+
+  var pageInput = document.getElementById("pageInput");
+  pageInput.addEventListener("change", jumpToInputPage);
+  pageInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") jumpToInputPage();
+  });
 });
+
+function jumpToInputPage() {
+  var target = parseInt(document.getElementById("pageInput").value, 10);
+  if (!target || target < 1) target = 1;
+  if (target === state.page) return;
+  goToPage(target);
+}
+
+// Fetches the next/previous 5000-row page on demand from the source Dataverse tab.
+function goToPage(page) {
+  if (state.navigating) return;
+  state.navigating = true;
+  updatePager();
+  renderLoading(state.entityName);
+  chrome.runtime.sendMessage({ action: "REQUEST_FETCH_PAGE", page: page });
+}
 
 function filterResults(term) {
   var table = document.getElementById("main");
@@ -26,21 +72,84 @@ function getFetchResults() {
       action: "GET_FETCH",
     },
     function (response) {
-      var content = renderResults(response.fetchData, response.fetchEntityName, response.url);
-
-      document.getElementById("fetch-content").innerHTML = content;
-
-      var fetchContent = document.getElementById("fetch-content");
-      fetchContent.addEventListener("click", function (e) {
-        var row = e.target.closest("tr.clickable");
-        if (!row) return;
-        var recordUrl = row.getAttribute("data-url");
-        if (recordUrl) window.open(recordUrl, "_blank");
-      });
+      applyData(response);
     },
   );
 
   document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
+}
+
+// Results arrive after the tab has already opened in a loading state.
+chrome.runtime.onMessage.addListener(function (request) {
+  if (request.action === "FETCH_READY") {
+    applyData({
+      fetchData: request.data.result,
+      fetchEntityName: request.data.entityName,
+      url: request.data.url,
+      page: request.data.page,
+      hasMore: request.data.hasMore,
+      paged: request.data.paged,
+      loading: false,
+    });
+  } else if (request.action === "FETCH_PAGE_READY") {
+    state.navigating = false;
+    if (request.data.error) {
+      renderLoading(state.entityName);
+      document.getElementById("fetch-content").innerHTML = `<div>⚠️ ${request.data.error}</div>`;
+      updatePager();
+      return;
+    }
+    state.page = request.data.page;
+    state.hasMore = request.data.hasMore === true;
+    renderPage(request.data.result);
+  }
+});
+
+function applyData(response) {
+  if (!response) return;
+
+  if (response.loading) {
+    renderLoading(response.fetchEntityName);
+    return;
+  }
+
+  state.entityName = response.fetchEntityName || state.entityName;
+  state.url = response.url || state.url;
+  state.page = response.page || 1;
+  state.hasMore = response.hasMore === true;
+  state.paged = response.paged === true;
+  state.navigating = false;
+
+  renderPage(response.fetchData);
+}
+
+function renderPage(fetchData) {
+  var hasRows = fetchData.entities.length > 0;
+  document.getElementById("count-row").style.display = hasRows ? "flex" : "none";
+  document.getElementById("count").textContent = "count: " + fetchData.entities.length;
+  document.getElementById("fetch-content").innerHTML = renderResults(fetchData, state.entityName, state.url);
+  updatePager();
+}
+
+function updatePager() {
+  var pager = document.getElementById("pager");
+  // Only show paging controls when there is actually more than one page.
+  var needed = state.paged && (state.hasMore || state.page > 1);
+  pager.style.display = needed ? "flex" : "none";
+  if (!needed) return;
+
+  var pageInput = document.getElementById("pageInput");
+  if (document.activeElement !== pageInput) pageInput.value = state.page;
+  pageInput.disabled = state.navigating;
+  document.getElementById("prevPage").disabled = state.navigating || state.page <= 1;
+  document.getElementById("nextPage").disabled = state.navigating || !state.hasMore;
+}
+
+function renderLoading(entityName) {
+  if (entityName) {
+    document.getElementById("title").innerHTML = `Fetched data for entity ${entityName.toUpperCase()}`;
+  }
+  document.getElementById("fetch-content").innerHTML = '<div class="loading"><div class="spinner"></div><span>Retrieving records…</span></div>';
 }
 
 function downloadData() {
@@ -52,16 +161,11 @@ function downloadData() {
 }
 
 function renderResults(fetchData, entityName, url) {
-  var content = "";
-
   document.getElementById("title").innerHTML = `Fetched data for entity ${entityName.toUpperCase()}`;
 
   if (fetchData.entities.length == 0) {
-    content += "<div>No data</div>";
-    return content;
+    return "<div>No data</div>";
   }
-
-  content += `<div class="count">count: ${fetchData.entities.length}</div>`;
 
   var first = fetchData.entities[0];
   var columns = ["_"];
@@ -105,6 +209,5 @@ function renderResults(fetchData, entityName, url) {
     </div>
   </div>`;
 
-  content += table;
-  return content;
+  return table;
 }

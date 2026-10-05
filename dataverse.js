@@ -884,16 +884,12 @@ async function touchField() {
 }
 
 async function retrieveRecords() {
-  var fetchXml = await paModal.prompt(
-    "Enter fetchXml",
-    '<fetch top="50">\n  <entity name="account">\n    <attribute name="name" />\n  </entity>\n</fetch>',
-    {
-      multiline: true,
-      rows: 14,
-      formatXml: true,
-      copyBtn: true,
-    },
-  );
+  var fetchXml = await paModal.prompt("Enter fetchXml", '<fetch>\n  <entity name="account">\n    <attribute name="name" />\n  </entity>\n</fetch>', {
+    multiline: true,
+    rows: 14,
+    formatXml: true,
+    copyBtn: true,
+  });
   if (fetchXml == null || fetchXml.trim() === "") return;
 
   var match = fetchXml.match(/<entity\s+name\s*=\s*["']([^"']+)["']/i);
@@ -902,20 +898,119 @@ async function retrieveRecords() {
     return;
   }
   var entityName = match[1];
+  var clientUrl = Xrm.Page.context.getClientUrl();
 
-  var escapedFetchXML = encodeURIComponent(fetchXml);
+  // Open the results tab immediately with a loading state, then load the first page.
+  postFetchResults({ loading: true, entityName: entityName, url: clientUrl });
 
-  var result = await Xrm.WebApi.retrieveMultipleRecords(entityName, "?fetchXml=" + escapedFetchXML);
+  try {
+    // Dataverse caps top at 5000 per request, so only a top within that limit can be a single call.
+    var topMatch = fetchXml.match(/<fetch[^>]*\btop\s*=\s*["'](\d+)["']/i);
+    var topVal = topMatch ? parseInt(topMatch[1], 10) : 0;
+    if (topVal > 0 && topVal <= 5000) {
+      var escapedFetchXML = encodeURIComponent(fetchXml);
+      var result = await Xrm.WebApi.retrieveMultipleRecords(entityName, "?fetchXml=" + escapedFetchXML);
+      postFetchResults({ result: result, entityName: entityName, url: clientUrl, page: 1, hasMore: false, paged: false });
+      return;
+    }
 
+    // First page of 5000; further pages are fetched on demand when the user navigates.
+    var entitySetName = await getEntitySetName(clientUrl, entityName);
+    var pageData = await fetchFetchXmlPage(clientUrl, entitySetName, fetchXml, 1);
+    postFetchResults({
+      result: { entities: pageData.entities },
+      entityName: entityName,
+      url: clientUrl,
+      page: 1,
+      hasMore: pageData.hasMore,
+      paged: true,
+      entitySetName: entitySetName,
+      fetchXml: fetchXml,
+    });
+  } catch (e) {
+    paModal.alert("Error: " + (e && e.message ? e.message : e));
+    // Stop the tab's loading state even if the fetch failed.
+    postFetchResults({ result: { entities: [] }, entityName: entityName, url: clientUrl, page: 1, hasMore: false, paged: false });
+  }
+}
+
+// Fetches a single page on demand when the results tab navigates to it.
+async function fetchRecordsPage(data) {
+  var clientUrl = Xrm.Page.context.getClientUrl();
+  try {
+    var pageData = await fetchFetchXmlPage(clientUrl, data.entitySetName, data.fetchXml, data.page);
+    window.postMessage(
+      {
+        type: "GIVE_ME_FETCH_PAGE",
+        result: { entities: pageData.entities },
+        page: data.page,
+        hasMore: pageData.hasMore,
+      },
+      "*",
+    );
+  } catch (e) {
+    window.postMessage(
+      {
+        type: "GIVE_ME_FETCH_PAGE",
+        error: e && e.message ? e.message : String(e),
+        page: data.page,
+      },
+      "*",
+    );
+  }
+}
+
+function postFetchResults(data) {
   window.postMessage(
     {
       type: "GIVE_ME_FETCH_RESULTS",
-      result: result,
-      entityName: entityName,
-      url: Xrm.Page.context.getClientUrl(),
+      loading: data.loading === true,
+      result: data.result || null,
+      entityName: data.entityName,
+      url: data.url,
+      page: data.page || 1,
+      hasMore: data.hasMore === true,
+      paged: data.paged === true,
+      entitySetName: data.entitySetName || "",
+      fetchXml: data.fetchXml || "",
     },
     "*",
   );
+}
+
+async function getEntitySetName(clientUrl, entityName) {
+  var defRes = await fetch(clientUrl + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=EntitySetName`, {
+    method: "GET",
+    headers: header,
+  });
+  return (await defRes.json()).EntitySetName;
+}
+
+// Retrieves one page (5000 rows) and reports whether more pages remain.
+async function fetchFetchXmlPage(clientUrl, entitySetName, fetchXml, page) {
+  var pagedXml = applyFetchPaging(fetchXml, page);
+  var res = await fetch(clientUrl + `/api/data/v9.2/${entitySetName}?fetchXml=` + encodeURIComponent(pagedXml), {
+    method: "GET",
+    headers: header,
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status + " while retrieving records");
+
+  var json = await res.json();
+  return { entities: json.value || [], hasMore: json["@Microsoft.Dynamics.CRM.morerecords"] === true };
+}
+
+// Sets page/count on the fetch root so the next page can be requested.
+function applyFetchPaging(fetchXml, page) {
+  var doc = new DOMParser().parseFromString(fetchXml, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("Invalid fetchXml");
+
+  var fetchEl = doc.documentElement;
+  // top can't be combined with count/page paging, so remove it.
+  fetchEl.removeAttribute("top");
+  fetchEl.setAttribute("page", String(page));
+  fetchEl.setAttribute("count", "5000");
+
+  return new XMLSerializer().serializeToString(doc);
 }
 
 async function getAllFields() {
@@ -2370,6 +2465,7 @@ if (!window.__paDataverseListenerAdded) {
       QUICK_FIELD_UPDATE: updateField,
       TOUCH_FIELD: touchField,
       EXECUTE_FETCH_XML: retrieveRecords,
+      FETCH_PAGE: fetchRecordsPage,
       SHOW_ALL_FIELDS: getAllFields,
       GET_FLOW_DEPENDENCIES: listFlowDependencies,
       ADD_WR_TO_SOL: addWebresourceToSolution,

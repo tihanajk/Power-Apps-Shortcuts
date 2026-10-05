@@ -15,6 +15,14 @@
       </div>
       <input id="search" placeholder="Search" name="filter" type="text" />
     </div>
+    <div id="count-row" class="count-row" style="display: none">
+      <span id="count" class="count"></span>
+      <div id="pager" class="pager" style="display: none">
+        <button type="button" id="prevPage">◀ Prev</button>
+        <span class="pager-page">Page <input type="number" id="pageInput" min="1" value="1" /></span>
+        <button type="button" id="nextPage">Next ▶</button>
+      </div>
+    </div>
     <div id="fetch-content">Results</div>
     <script src="../../xlsx.full.min.js"></script>
     <script src="../../excelHelper.js"></script>

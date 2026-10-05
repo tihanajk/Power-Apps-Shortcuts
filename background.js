@@ -14,6 +14,13 @@ var doneFetchingSecurity = false;
 var fetchData = [];
 var entityName = "";
 var fetchUrl = "";
+var fetchLoading = false;
+var fetchPage = 1;
+var fetchHasMore = false;
+var fetchPaged = false;
+var fetchXmlQuery = "";
+var fetchEntitySetName = "";
+var fetchSourceTabId = null;
 var orgId = "";
 var envId = "";
 var securityUrl = "";
@@ -84,12 +91,67 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === "GET_SECURITY") {
     sendResponse({ roles: securityData, last: doneFetchingSecurity, orgId: orgId, envId: envId, url: securityUrl });
   } else if (request.action === "showRetrieveResult") {
-    fetchData = request.result;
     entityName = request.entityName;
     fetchUrl = request.url;
-    openView("tabs/fetch/fetch.html");
+    if (sender.tab?.id != null) fetchSourceTabId = sender.tab.id;
+    if (request.loading) {
+      // Open the tab first in a loading state; the first page streams in afterwards.
+      fetchData = { entities: [] };
+      fetchLoading = true;
+      fetchPaged = false;
+      fetchPage = 1;
+      fetchHasMore = false;
+      openView("tabs/fetch/fetch.html");
+    } else {
+      fetchData = request.result;
+      fetchLoading = false;
+      fetchPage = request.page || 1;
+      fetchHasMore = request.hasMore === true;
+      fetchPaged = request.paged === true;
+      if (request.fetchXml) fetchXmlQuery = request.fetchXml;
+      if (request.entitySetName) fetchEntitySetName = request.entitySetName;
+      chrome.runtime.sendMessage({
+        action: "FETCH_READY",
+        data: {
+          result: fetchData,
+          entityName: entityName,
+          url: fetchUrl,
+          page: fetchPage,
+          hasMore: fetchHasMore,
+          paged: fetchPaged,
+        },
+      });
+    }
   } else if (request.action === "GET_FETCH") {
-    sendResponse({ fetchData: fetchData, fetchEntityName: entityName, url: fetchUrl });
+    sendResponse({
+      fetchData: fetchData,
+      fetchEntityName: entityName,
+      url: fetchUrl,
+      loading: fetchLoading,
+      page: fetchPage,
+      hasMore: fetchHasMore,
+      paged: fetchPaged,
+    });
+  } else if (request.action === "REQUEST_FETCH_PAGE") {
+    // Ask the source Dataverse tab to retrieve the requested page on demand.
+    if (fetchSourceTabId != null) {
+      chrome.tabs.sendMessage(fetchSourceTabId, {
+        message: "fetchPage",
+        fetchXml: fetchXmlQuery,
+        entitySetName: fetchEntitySetName,
+        page: request.page,
+      });
+    }
+  } else if (request.action === "fetchPageReady") {
+    if (!request.error) {
+      fetchData = request.result;
+      fetchPage = request.page;
+      fetchHasMore = request.hasMore === true;
+    }
+    chrome.runtime.sendMessage({
+      action: "FETCH_PAGE_READY",
+      data: { result: request.result, page: request.page, hasMore: request.hasMore, error: request.error },
+    });
   } else if (request.action === "showAllFields") {
     allFields = request.result;
     fields = request.fields;
