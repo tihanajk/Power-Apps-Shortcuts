@@ -183,6 +183,8 @@ async function loc() {
     var sections = [];
     var foundTab = null;
     var foundControl = null;
+    var visibleTab = null;
+    var visibleControl = null;
 
     Xrm.Page.ui.tabs.get().forEach((t) =>
       t.sections.get().forEach((s) =>
@@ -199,6 +201,13 @@ async function loc() {
             if (!foundTab) {
               foundTab = t;
               foundControl = c;
+            }
+            // Among multiple locations, remember the first one that is actually visible.
+            var tabVisible = typeof t.getVisible != "function" || t.getVisible();
+            var controlVisible = typeof c.getVisible != "function" || c.getVisible();
+            if (!visibleControl && tabVisible && controlVisible) {
+              visibleTab = t;
+              visibleControl = c;
             }
           }
         }),
@@ -222,8 +231,15 @@ async function loc() {
     var goThere = await paModal.confirm(message + "\n👉 Go to this field on the form?");
     if (!goThere) return;
 
-    var targetTab = foundTab;
-    var targetControl = foundControl || headerControl;
+    var headerVisible = headerControl && (typeof headerControl.getVisible != "function" || headerControl.getVisible());
+
+    var targetTab = visibleTab;
+    var targetControl = visibleControl || (headerVisible ? headerControl : null);
+
+    if (!targetControl) {
+      paModal.alert("⚠️ This field is hidden");
+      return;
+    }
 
     if (targetTab) {
       try {
