@@ -285,10 +285,14 @@ function escapeRegExp(text) {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function keywordBoundaryRegex(keyword, flags) {
+  return new RegExp("(?<![\\w$])" + escapeRegExp(keyword) + "(?![\\w$])", flags);
+}
+
 function highlightKeyword(code, keyword) {
   var escaped = escapeHtml(code);
   if (!keyword) return escaped;
-  var re = new RegExp(escapeRegExp(escapeHtml(keyword)), "gi");
+  var re = keywordBoundaryRegex(escapeHtml(keyword), "gi");
   return escaped.replace(re, (match) => `<mark class="wr-highlight">${match}</mark>`);
 }
 
@@ -360,7 +364,7 @@ function openWebResourceViewer(wr) {
     // Prefer highlighting the full function path; fall back to its short name if not found.
     var keyword = wr.keyword || "";
     if (keyword && content) {
-      var full = new RegExp(escapeRegExp(keyword), "gi");
+      var full = keywordBoundaryRegex(keyword, "gi");
       if (!(content.match(full) || []).length && keyword.indexOf(".") !== -1) {
         keyword = keyword.split(".").pop();
       }
@@ -368,7 +372,7 @@ function openWebResourceViewer(wr) {
 
     var matchCount = 0;
     if (keyword && content) {
-      var re = new RegExp(escapeRegExp(keyword), "gi");
+      var re = keywordBoundaryRegex(keyword, "gi");
       matchCount = (content.match(re) || []).length;
     }
 
