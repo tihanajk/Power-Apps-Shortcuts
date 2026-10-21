@@ -28,6 +28,12 @@ document.addEventListener("DOMContentLoaded", function () {
         { command: "open_maker", label: "Open Maker Portal", desc: "Open make.powerapps.com for this environment." },
         { command: "open_admin", label: "Open Admin Center", desc: "Open the Power Platform Admin Center for this environment." },
         { command: "copy_guid", label: "Copy record GUID", desc: "Copy the current record's GUID to the clipboard." },
+        {
+          command: "show_context_info",
+          label: "Environment & form info",
+          desc: "Show app, environment, org, user and current form/record details.",
+          isNew: true,
+        },
       ],
     },
     {
@@ -53,7 +59,12 @@ document.addEventListener("DOMContentLoaded", function () {
           desc: "List registered form/field event handlers and their libraries.",
         },
         { command: "ribbon_debug", label: "Toggle ribbon debug", desc: "Turn Dataverse ribbon debugging on or off for this page." },
-        { command: "list_ribbon", label: "Inspect ribbon buttons", desc: "Browse ribbon/command bar buttons with rules and web resource sources." },
+        {
+          command: "list_ribbon",
+          label: "Inspect ribbon buttons",
+          desc: "Browse ribbon/command bar buttons with rules and web resource sources.",
+          isNew: true,
+        },
       ],
     },
     {
@@ -64,8 +75,14 @@ document.addEventListener("DOMContentLoaded", function () {
           command: "touch_field",
           label: "Touch a field (trigger processes)",
           desc: "Re-save a field with its current value to fire background processes.",
+          isNew: true,
         },
-        { command: "execute_fetchxml", label: "Execute fetchXML", desc: "Run a FetchXML query and browse the results (paged 5000 at a time)." },
+        {
+          command: "execute_fetchxml",
+          label: "Execute fetchXML",
+          desc: "Run a FetchXML query and browse the results (paged 5000 at a time).",
+          isNew: true,
+        },
         {
           command: "show_audit_history",
           label: "Display audit history",
@@ -84,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
           label: "Add web resource to a solution",
           desc: "Search web resources and add a match to a chosen solution.",
         },
-        { command: "open_solution", label: "Open solution in Power Apps", desc: "Pick a solution and open it in the maker portal." },
+        { command: "open_solution", label: "Open solution in Power Apps", desc: "Pick a solution and open it in the maker portal.", isNew: true },
         { command: "list_securityroles", label: "List security roles", desc: "List the current user's and teams' security roles." },
       ],
     },
@@ -118,6 +135,13 @@ document.addEventListener("DOMContentLoaded", function () {
         label.textContent = c.label;
 
         btn.appendChild(label);
+
+        if (c.isNew) {
+          const badge = document.createElement("span");
+          badge.className = "action-new";
+          badge.textContent = "NEW";
+          btn.appendChild(badge);
+        }
 
         const shortcut = shortcutMap[c.command];
         if (shortcut) {
@@ -211,6 +235,15 @@ document.addEventListener("DOMContentLoaded", function () {
 // Changelog shown in the "What's new" popup. Add a new entry at the top whenever
 // something major ships; only the most recent 5 versions are displayed.
 const CHANGELOG = [
+  {
+    version: "2.0.0.34",
+    notes: [
+      "🧭 New Environment & form info view — app, environment, org, user and current record details at a glance.",
+      "🔌 List Plugin Steps now covers service endpoints and webhooks — pick them right from the dropdown.",
+      "🗂️ Filter the plugin picker by managed or unmanaged.",
+      "📜 Form script libraries open in an in-app code viewer instead of a new tab.",
+    ],
+  },
   {
     version: "2.0.0.33",
     notes: [

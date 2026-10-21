@@ -77,8 +77,8 @@ Your choice is remembered across sessions.
 
 - **Copy Record GUID to Clipboard** — Copies the current record's GUID to your clipboard (reads it from the URL or the form).
 - **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
-- **List Plugin Steps** — Lists the registered plugin steps for the current context.
-- **List Script Events on the Form** — Lists the JavaScript event handlers (OnLoad, OnChange, OnSave, etc.) wired up on the current form.
+- **List Plugin Steps** — Lists the registered plugin steps for a chosen plugin assembly, service endpoint, or webhook. The picker can be filtered by managed or unmanaged, and service endpoints show their URL, contract, and message format alongside each step.
+- **List Script Events on the Form** — Lists the JavaScript event handlers (OnLoad, OnChange, OnSave, etc.) wired up on the current form. Script libraries open in an in-app, resizable code viewer (with a download button) instead of a new tab.
 - **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values, or create a new environment variable (name, type, default and current value).
 - **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls.
 - **Display Audit History for the Record** — Shows the audit history (changes over time) for the current record.

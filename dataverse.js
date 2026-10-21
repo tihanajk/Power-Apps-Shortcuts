@@ -1,3 +1,8 @@
+// Strips the Defender for Cloud Apps (.mcas.ms) reverse-proxy suffix so WebResource links resolve on the real org host.
+function getOrgBaseUrl() {
+  return location.href.split("/main")[0].replace(/\.mcas\.ms(?=[:/]|$)/i, "");
+}
+
 function god() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     const selectedTab = Xrm.Page.ui.tabs.get((x) => x.getDisplayState() === "expanded")[0];
@@ -106,6 +111,249 @@ function openAdminCenter() {
   }
 
   window.open(`https://admin.powerplatform.microsoft.com/environments/environment/${envId}/hub`, "_blank");
+}
+
+// Gathers app / environment / user context plus form & record details for the context info tab.
+async function showContextInfo() {
+  if (typeof Xrm === "undefined") {
+    paModal.alert("⚠️ Could not determine the current environment");
+    return;
+  }
+
+  var gc = Xrm.Utility.getGlobalContext();
+  var clientUrl = gc.getClientUrl();
+  var orgSettings = gc.organizationSettings;
+  var userSettings = gc.userSettings;
+
+  var info = { app: {}, environment: {}, user: {}, form: null };
+
+  try {
+    var app = await gc.getCurrentAppProperties();
+    info.app = {
+      name: app.displayName || "",
+      appId: app.appId || "",
+      uniqueName: app.uniqueName || "",
+      url: app.appId ? `${clientUrl}/main.aspx?appid=${app.appId}` : "",
+    };
+  } catch (e) {}
+
+  info.environment = {
+    orgUrl: clientUrl,
+    orgUniqueName: orgSettings.uniqueName,
+    organizationId: orgSettings.organizationId,
+    environmentId: orgSettings.bapEnvironmentId,
+    tenantId: "",
+    geo: "",
+    baseLanguageId: orgSettings.languageId,
+    baseCurrencyId: orgSettings.baseCurrencyId ? String(orgSettings.baseCurrencyId).replace(/[{}]/g, "") : "",
+    autoSaveEnabled: typeof orgSettings.isAutoSaveEnabled === "boolean" ? orgSettings.isAutoSaveEnabled : "",
+    version: typeof gc.getVersion === "function" ? gc.getVersion() : "",
+  };
+
+  // RetrieveCurrentOrganization exposes the tenant id and geo, which aren't on the client global context.
+  try {
+    var orgRes = await fetch(
+      clientUrl + "/api/data/v9.2/RetrieveCurrentOrganization(AccessType=@p1)?@p1=Microsoft.Dynamics.CRM.EndpointAccessType'Default'",
+      { method: "GET", headers: header },
+    );
+    var orgJson = await orgRes.json();
+    if (orgJson && orgJson.Detail) {
+      info.environment.tenantId = orgJson.Detail.TenantId || "";
+      info.environment.geo = orgJson.Detail.Geo || "";
+      if (!info.environment.environmentId) info.environment.environmentId = orgJson.Detail.EnvironmentId || "";
+    }
+  } catch (e) {}
+
+  info.user = {
+    name: userSettings.userName,
+    userId: userSettings.userId ? userSettings.userId.replace(/[{}]/g, "") : "",
+    email: "",
+    domainName: "",
+    languageId: userSettings.languageId,
+    businessUnitId: "",
+    roles: [],
+  };
+
+  try {
+    if (info.user.userId) {
+      var u = await Xrm.WebApi.retrieveRecord("systemuser", info.user.userId, "?$select=internalemailaddress,domainname");
+      info.user.email = u.internalemailaddress || "";
+      info.user.domainName = u.domainname || "";
+    }
+  } catch (e) {}
+
+  try {
+    var who = await (await fetch(clientUrl + "/api/data/v9.2/WhoAmI()", { method: "GET", headers: header })).json();
+    info.user.businessUnitId = who.BusinessUnitId || "";
+    if (who.OrganizationId) info.environment.organizationId = who.OrganizationId;
+  } catch (e) {}
+
+  try {
+    var roleIds = (userSettings.securityRoles || []).map((r) => r.replace(/[{}]/g, ""));
+    if (roleIds.length) {
+      var filter = roleIds.map((id) => `roleid eq ${id}`).join(" or ");
+      var rolesRes = await Xrm.WebApi.retrieveMultipleRecords("role", `?$select=name&$filter=${filter}`);
+      info.user.roles = rolesRes.entities.map((r) => r.name).sort();
+    }
+  } catch (e) {}
+
+  try {
+    if (Xrm.Page && Xrm.Page.data && Xrm.Page.data.entity) {
+      var entity = Xrm.Page.data.entity;
+      var entityName = entity.getEntityName();
+      var recordId = entity.getId() ? entity.getId().replace(/[{}]/g, "") : "";
+      var FORM_TYPES = { 0: "Undefined", 1: "Create", 2: "Update", 3: "Read Only", 4: "Disabled", 6: "Bulk Edit" };
+      var formSelector = Xrm.Page.ui.formSelector;
+
+      var form = {
+        entityName: entityName,
+        recordId: recordId,
+        primaryName: typeof entity.getPrimaryAttributeValue === "function" ? entity.getPrimaryAttributeValue() : "",
+        recordUrl: recordId ? `${clientUrl}/main.aspx?pagetype=entityrecord&etn=${entityName}&id=${recordId}` : "",
+        entitySetName: "",
+        objectTypeCode: "",
+        primaryIdAttribute: "",
+        primaryNameAttribute: "",
+        formType: FORM_TYPES[Xrm.Page.ui.getFormType()] || String(Xrm.Page.ui.getFormType()),
+        formName: formSelector && formSelector.getCurrentItem ? formSelector.getCurrentItem()?.getLabel() || "" : "",
+        formId: formSelector && formSelector._formId ? formSelector._formId.guid : "",
+        isDirty: entity.getIsDirty(),
+        processName: "",
+        activeStage: "",
+        tabCount: 0,
+        sectionCount: 0,
+        controlCount: 0,
+        createdOn: "",
+        modifiedOn: "",
+        createdBy: "",
+        modifiedBy: "",
+        owner: "",
+        status: "",
+        statusReason: "",
+        table: {},
+        businessProcessFlows: [],
+        views: [],
+        relationships: { oneToMany: [], manyToOne: [], manyToMany: [] },
+        relatedTables: [],
+      };
+
+      try {
+        var process = Xrm.Page.data.process;
+        if (process && typeof process.getActiveProcess === "function") {
+          var activeProcess = process.getActiveProcess();
+          form.processName = activeProcess ? activeProcess.getName() : "";
+          var activeStage = typeof process.getActiveStage === "function" ? process.getActiveStage() : null;
+          form.activeStage = activeStage ? activeStage.getName() : "";
+        }
+      } catch (e) {}
+
+      try {
+        var metaRes = await fetch(
+          clientUrl +
+            `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=ObjectTypeCode,EntitySetName,PrimaryIdAttribute,PrimaryNameAttribute,SchemaName,DisplayName,Description,OwnershipType,IsCustomEntity,IsActivity,IsAuditEnabled,HasNotes,HasActivities,IsManaged`,
+          { method: "GET", headers: header },
+        );
+        var meta = await metaRes.json();
+        form.objectTypeCode = meta.ObjectTypeCode;
+        form.entitySetName = meta.EntitySetName;
+        form.primaryIdAttribute = meta.PrimaryIdAttribute;
+        form.primaryNameAttribute = meta.PrimaryNameAttribute;
+        form.table = {
+          displayName: meta.DisplayName && meta.DisplayName.UserLocalizedLabel ? meta.DisplayName.UserLocalizedLabel.Label : "",
+          schemaName: meta.SchemaName || "",
+          description: meta.Description && meta.Description.UserLocalizedLabel ? meta.Description.UserLocalizedLabel.Label : "",
+          ownershipType: meta.OwnershipType || "",
+          isCustom: typeof meta.IsCustomEntity === "boolean" ? meta.IsCustomEntity : "",
+          isActivity: typeof meta.IsActivity === "boolean" ? meta.IsActivity : "",
+          auditEnabled: typeof meta.IsAuditEnabled === "object" ? meta.IsAuditEnabled.Value : meta.IsAuditEnabled,
+          hasNotes: typeof meta.HasNotes === "object" ? meta.HasNotes.Value : meta.HasNotes,
+          hasActivities: typeof meta.HasActivities === "object" ? meta.HasActivities.Value : meta.HasActivities,
+          isManaged: typeof meta.IsManaged === "boolean" ? meta.IsManaged : "",
+        };
+      } catch (e) {}
+
+      // Record audit / ownership details (only for an existing record).
+      try {
+        if (recordId && form.entitySetName) {
+          var recRes = await fetch(
+            clientUrl +
+              `/api/data/v9.2/${form.entitySetName}(${recordId})?$select=createdon,modifiedon,statecode,statuscode,_createdby_value,_modifiedby_value,_ownerid_value`,
+            { method: "GET", headers: header },
+          );
+          var rec = await recRes.json();
+          var fv = (k) => rec[k + "@OData.Community.Display.V1.FormattedValue"] || "";
+          form.createdOn = fv("createdon") || rec.createdon || "";
+          form.modifiedOn = fv("modifiedon") || rec.modifiedon || "";
+          form.createdBy = fv("_createdby_value");
+          form.modifiedBy = fv("_modifiedby_value");
+          form.owner = fv("_ownerid_value");
+          form.status = fv("statecode");
+          form.statusReason = fv("statuscode");
+        }
+      } catch (e) {}
+
+      Xrm.Page.ui.tabs.forEach(function (t) {
+        form.tabCount++;
+        t.sections.forEach(function (s) {
+          form.sectionCount++;
+          s.controls.forEach(function () {
+            form.controlCount++;
+          });
+        });
+      });
+
+      // Business process flows defined for this table.
+      try {
+        var bpfRes = await fetch(
+          clientUrl + `/api/data/v9.2/workflows?$select=name,statecode&$filter=category eq 4 and primaryentity eq '${entityName}'&$orderby=name asc`,
+          { method: "GET", headers: header },
+        );
+        var bpfJson = await bpfRes.json();
+        form.businessProcessFlows = (bpfJson.value || []).map((w) => ({ name: w.name, active: w.statecode === 1 }));
+      } catch (e) {}
+
+      // Saved views for this table.
+      try {
+        var VIEW_TYPES = { 0: "Public", 1: "Advanced Find", 2: "Associated", 4: "Quick Find", 8: "Reporting", 16: "Offline", 64: "Lookup" };
+        var viewRes = await fetch(
+          clientUrl + `/api/data/v9.2/savedqueries?$select=name,querytype&$filter=returnedtypecode eq '${entityName}'&$orderby=name asc`,
+          { method: "GET", headers: header },
+        );
+        var viewJson = await viewRes.json();
+        form.views = (viewJson.value || []).map((v) => ({ name: v.name, type: VIEW_TYPES[v.querytype] || "type " + v.querytype }));
+      } catch (e) {}
+
+      // Relationships and the distinct related tables they point to.
+      try {
+        var relRes = await fetch(
+          clientUrl +
+            `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=LogicalName&$expand=OneToManyRelationships($select=SchemaName,ReferencingEntity),ManyToOneRelationships($select=SchemaName,ReferencedEntity),ManyToManyRelationships($select=SchemaName,Entity1LogicalName,Entity2LogicalName)`,
+          { method: "GET", headers: header },
+        );
+        var rel = await relRes.json();
+        var o2m = (rel.OneToManyRelationships || []).map((r) => ({ schema: r.SchemaName, related: r.ReferencingEntity }));
+        var m2o = (rel.ManyToOneRelationships || []).map((r) => ({ schema: r.SchemaName, related: r.ReferencedEntity }));
+        var m2m = (rel.ManyToManyRelationships || []).map((r) => ({
+          schema: r.SchemaName,
+          related: r.Entity1LogicalName === entityName ? r.Entity2LogicalName : r.Entity1LogicalName,
+        }));
+        form.relationships = { oneToMany: o2m, manyToOne: m2o, manyToMany: m2m };
+
+        var relatedSet = {};
+        o2m
+          .concat(m2o)
+          .concat(m2m)
+          .forEach((r) => {
+            if (r.related && r.related !== entityName) relatedSet[r.related] = true;
+          });
+        form.relatedTables = Object.keys(relatedSet).sort();
+      } catch (e) {}
+
+      info.form = form;
+    }
+  } catch (e) {}
+
+  window.postMessage({ type: "GIVE_ME_CONTEXT_INFO", data: info }, "*");
 }
 
 async function openSolution() {
@@ -1315,7 +1563,7 @@ async function listFlowDependencies() {
 
   if (wantsWebResources) {
     var termLower = term.toLowerCase();
-    var wrBaseUrl = location.href.split("/main")[0];
+    var wrBaseUrl = getOrgBaseUrl();
 
     var wrNameCondition = wrNameFilter ? ` and contains(name,'${wrNameFilter.replace(/'/g, "''")}')` : "";
 
@@ -1469,36 +1717,109 @@ async function addWebresourceToSolution() {
 async function listPlugins() {
   var assemblies = [];
   try {
-    var assemblyResult = await Xrm.WebApi.retrieveMultipleRecords("pluginassembly", "?$select=name&$orderby=name asc");
+    var assemblyResult = await Xrm.WebApi.retrieveMultipleRecords("pluginassembly", "?$select=name,ismanaged&$orderby=name asc");
     assemblyResult.entities.forEach((a) => {
-      if (a.name) assemblies.push(a.name);
+      if (a.name) assemblies.push({ name: a.name, managed: a.ismanaged });
     });
   } catch (e) {
     paModal.alert("Error loading assemblies: " + e.message);
     return;
   }
 
-  if (assemblies.length == 0) {
-    paModal.alert("No plugin assemblies found");
+  var serviceEndpoints = [];
+  var webhooks = [];
+  try {
+    var seResult = await Xrm.WebApi.retrieveMultipleRecords(
+      "serviceendpoint",
+      "?$select=serviceendpointid,name,url,contract,messageformat,ismanaged&$orderby=name asc",
+    );
+    seResult.entities.forEach((e) => {
+      var endpoint = {
+        id: e.serviceendpointid,
+        name: e.name,
+        url: e.url,
+        contract: e["contract@OData.Community.Display.V1.FormattedValue"] || "",
+        messageformat: e["messageformat@OData.Community.Display.V1.FormattedValue"] || "",
+        managed: e.ismanaged,
+      };
+      // contract 8 = Webhook; everything else is an Azure Service Bus endpoint.
+      if (e.contract === 8) webhooks.push(endpoint);
+      else serviceEndpoints.push(endpoint);
+    });
+  } catch (e) {
+    // Service endpoints are optional; ignore load failures so plugins still work.
+  }
+
+  if (assemblies.length == 0 && serviceEndpoints.length == 0 && webhooks.length == 0) {
+    paModal.alert("No plugin assemblies, service endpoints or webhooks found");
     return;
   }
 
-  var assemblyOptions = assemblies.map((n) => ({ value: n, label: n }));
+  var groupOf = (managed) => (managed ? "managed" : "unmanaged");
+
+  var assemblyOptions = assemblies.map((a) => ({ value: "asm:" + a.name, label: a.name, group: groupOf(a.managed) }));
+  // The Webhooks entry aggregates multiple webhooks, so it has no managed group and always shows.
+  var webhookOption = webhooks.length > 0 ? [{ value: "webhooks", label: "Webhooks" }] : [];
+  var endpointOptions = serviceEndpoints.map((e) => ({ value: "se:" + e.id, label: "Service Endpoint: " + e.name, group: groupOf(e.managed) }));
+  var options = assemblyOptions.concat(webhookOption, endpointOptions);
 
   var res = await paModal.form("List plugins", [
     {
+      name: "managedState",
+      label: "Managed state",
+      type: "select",
+      options: [
+        { value: "", label: "All" },
+        { value: "managed", label: "Managed" },
+        { value: "unmanaged", label: "Unmanaged" },
+      ],
+      defaultValue: "",
+    },
+    {
       name: "assembly",
-      label: "Assembly name",
+      label: "Assembly / service endpoint",
       type: "combobox",
-      options: assemblyOptions,
-      defaultValue: assemblyOptions[0].value,
+      options: options,
+      defaultValue: options[0].value,
       placeholder: "Type to search...",
+      filterBy: "managedState",
     },
   ]);
   if (res == null) return;
 
-  var assemblyName = (res.assembly || "").trim();
-  if (!assemblyName) return;
+  var selected = (res.assembly || "").trim();
+  if (!selected) return;
+
+  var plugins = [];
+  var selectionName = "";
+
+  if (selected === "webhooks") {
+    selectionName = "Webhooks";
+    plugins = await listWebhookSteps(webhooks);
+  } else if (selected.indexOf("se:") === 0) {
+    var endpoint = serviceEndpoints.find((e) => e.id === selected.substring(3));
+    if (!endpoint) return;
+    selectionName = endpoint.name;
+    plugins = await listServiceEndpointSteps(endpoint);
+  } else {
+    selectionName = selected.indexOf("asm:") === 0 ? selected.substring(4) : selected;
+    plugins = await listAssemblyPlugins(selectionName);
+  }
+
+  window.postMessage(
+    {
+      type: "GIVE_ME_PLUGINS",
+      plugins: plugins,
+      assemblyName: selectionName,
+      url: location.href.split("/main")[0],
+      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+    },
+    "*",
+  );
+}
+
+async function listAssemblyPlugins(assemblyName) {
+  if (!assemblyName) return [];
 
   var originalFetchXML = `<fetch>
   <entity name='plugintype'>
@@ -1513,6 +1834,7 @@ async function listPlugins() {
       <attribute name='filteringattributes' />
       <attribute name='statuscode' />
       <attribute name='mode' />
+      <attribute name='ismanaged' />
       <attribute name='sdkmessageprocessingstepid' />
       <link-entity name='sdkmessageprocessingstepimage' from='sdkmessageprocessingstepid' to='sdkmessageprocessingstepid' link-type='outer' alias='i'>
         <attribute name='attributes' />
@@ -1542,7 +1864,15 @@ async function listPlugins() {
 
       if (steps.find((s) => s.id == id)) return;
 
-      steps.push({ id: id, name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], mode: p["s.mode"], image: image });
+      steps.push({
+        id: id,
+        name: p["s.name"],
+        filter: p["s.filteringattributes"],
+        status: p["s.statuscode"],
+        mode: p["s.mode"],
+        managed: p["s.ismanaged"],
+        image: image,
+      });
       plugins.find((o) => o.id == p.plugintypeid).steps = steps;
     } else {
       var steps = [];
@@ -1551,7 +1881,15 @@ async function listPlugins() {
 
         var id = p["s.sdkmessageprocessingstepid"];
 
-        steps.push({ id: id, name: p["s.name"], filter: p["s.filteringattributes"], status: p["s.statuscode"], mode: p["s.mode"], image: image });
+        steps.push({
+          id: id,
+          name: p["s.name"],
+          filter: p["s.filteringattributes"],
+          status: p["s.statuscode"],
+          mode: p["s.mode"],
+          managed: p["s.ismanaged"],
+          image: image,
+        });
       }
       plugins.push({
         name: p.name,
@@ -1561,16 +1899,67 @@ async function listPlugins() {
     }
   });
 
-  window.postMessage(
+  return plugins;
+}
+
+async function listServiceEndpointSteps(endpoint) {
+  if (!endpoint) return [];
+
+  var fetchXML = `<fetch>
+  <entity name='sdkmessageprocessingstep'>
+    <attribute name='name' />
+    <attribute name='filteringattributes' />
+    <attribute name='statuscode' />
+    <attribute name='mode' />
+    <attribute name='ismanaged' />
+    <attribute name='sdkmessageprocessingstepid' />
+    <filter>
+      <condition attribute='eventhandler' operator='eq' value='${endpoint.id}' />
+    </filter>
+    <link-entity name='sdkmessageprocessingstepimage' from='sdkmessageprocessingstepid' to='sdkmessageprocessingstepid' link-type='outer' alias='i'>
+      <attribute name='attributes' />
+      <attribute name='name' />
+    </link-entity>
+  </entity>
+</fetch>`;
+
+  var result = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + encodeURIComponent(fetchXML));
+
+  var steps = [];
+  result.entities.forEach((p) => {
+    var id = p["sdkmessageprocessingstepid"];
+    if (steps.find((s) => s.id == id)) return;
+
+    var image = { name: p["i.name"], attributes: p["i.attributes"] };
+    steps.push({
+      id: id,
+      name: p["name"],
+      filter: p["filteringattributes"],
+      status: p["statuscode"],
+      mode: p["mode"],
+      managed: p["ismanaged"],
+      image: image,
+    });
+  });
+
+  return [
     {
-      type: "GIVE_ME_PLUGINS",
-      plugins: plugins,
-      assemblyName: assemblyName,
-      url: location.href.split("/main")[0],
-      envId: Xrm.Utility.getGlobalContext().organizationSettings.bapEnvironmentId,
+      name: endpoint.name,
+      id: endpoint.id,
+      isServiceEndpoint: true,
+      endpointInfo: { url: endpoint.url, contract: endpoint.contract, messageformat: endpoint.messageformat },
+      steps: steps,
     },
-    "*",
-  );
+  ];
+}
+
+async function listWebhookSteps(webhooks) {
+  var blocks = [];
+  for (var webhook of webhooks) {
+    var block = await listServiceEndpointSteps(webhook);
+    blocks.push(...block);
+  }
+  return blocks;
 }
 
 async function listEvents() {
@@ -1587,7 +1976,7 @@ async function listEvents() {
 
   var xml = parser.parseFromString(formXml, "text/xml");
 
-  var url = location.href.split("/main")[0];
+  var url = getOrgBaseUrl();
 
   var libraryNodes = xml.querySelectorAll("formLibraries > Library");
   var libraries = Array.from(libraryNodes).map((lib) => ({
@@ -1959,7 +2348,7 @@ async function listRibbon() {
   window.postMessage({ type: "GIVE_ME_RIBBON", loading: true, entity: entityName }, "*");
 
   var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
-  var wrBaseUrl = location.href.split("/main")[0];
+  var wrBaseUrl = getOrgBaseUrl();
 
   // Retrieve each ribbon location separately so every button can be tagged
   // with the location(s) it appears in (form, view/grid, subgrid).
@@ -2459,6 +2848,7 @@ if (!window.__paDataverseListenerAdded) {
       OPEN_MAKER: openMaker,
       OPEN_ADMIN: openAdminCenter,
       OPEN_SOLUTION: openSolution,
+      SHOW_CONTEXT_INFO: showContextInfo,
       SHOW_DIRTY_FIELDS: showDirtyFields,
       SHOW_OPTIONS: getOptions,
       LIST_SECURITY_ROLES: listSecurityRoles,

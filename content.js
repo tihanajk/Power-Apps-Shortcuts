@@ -125,6 +125,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("OPEN_ADMIN");
       break;
 
+    case "showContextInfo":
+      execute("SHOW_CONTEXT_INFO");
+      break;
+
     case "openSolution":
       execute("OPEN_SOLUTION");
       break;
@@ -228,6 +232,7 @@ function openViewInModal(url) {
 
   var iframe = document.createElement("iframe");
   iframe.src = url;
+  iframe.allow = "clipboard-write";
   iframe.style.cssText = "flex:1;width:100%;height:100%;border:none;";
 
   function close() {
@@ -333,6 +338,11 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showFormLayout",
       data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_CONTEXT_INFO") {
+    chrome.runtime.sendMessage({
+      action: "showContextInfo",
+      data: event.data.data,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_RIBBON") {
     chrome.runtime.sendMessage({

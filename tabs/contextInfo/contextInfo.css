@@ -1,0 +1,126 @@
+/* Environment & form info tab — base styles inherited from ../common.css */
+
+#info-content {
+  padding: 2px 0;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-section {
+  padding: 8px 0 4px;
+}
+
+.info-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-primary-hover);
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.sec-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary-hover);
+  background: var(--color-row-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  letter-spacing: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  margin: 0 -8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.info-row:hover {
+  background: var(--color-row-hover);
+}
+
+.info-label {
+  flex: 0 0 220px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.info-value {
+  flex: 1;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+
+.info-value a {
+  color: var(--color-primary-hover);
+}
+
+.copy-hint {
+  flex: 0 0 auto;
+  min-width: 16px;
+  font-size: 11px;
+  color: var(--color-primary-hover);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.info-row:hover .copy-hint::before {
+  content: "⧉";
+  font-size: 13px;
+}
+
+.info-row:hover .copy-hint {
+  opacity: 0.55;
+}
+
+/* Keep the "copied" confirmation fully visible over the hover icon */
+.copy-hint:not(:empty) {
+  opacity: 1;
+}
+
+.info-row:hover .copy-hint:not(:empty)::before {
+  content: "";
+}
+
+.info-empty {
+  color: var(--color-muted);
+  font-size: 12px;
+  padding: 4px 8px 10px;
+}
+
+.info-list {
+  list-style: none;
+  margin: 2px 0 8px;
+  padding: 0;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.info-list-item {
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 5px 8px;
+  border-radius: 7px;
+  word-break: break-word;
+  transition: background 0.12s ease;
+}
+
+.info-list-item:hover {
+  background: var(--color-row-hover);
+}

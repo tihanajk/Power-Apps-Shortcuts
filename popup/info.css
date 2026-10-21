@@ -19,7 +19,7 @@ body {
   padding: 16px;
   background-color: var(--bg);
   color: var(--text);
-  width: 350px;
+  width: 375px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -416,6 +416,17 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.action-new {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
 }
 
 .action-kbd {

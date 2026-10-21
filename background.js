@@ -39,6 +39,7 @@ var plugins = [];
 var assemblyName = "";
 
 var eventData;
+var eventSourceTabId = null;
 
 var variablesData = [];
 var envVarSourceTabId = null;
@@ -50,6 +51,8 @@ var ribbonSourceTabId = null;
 
 var auditHistoryData = [];
 var doneFetchingAudit = false;
+
+var contextInfoData = null;
 
 // Opens one of the extension's view pages either as a new browser tab or as an
 // in-page modal (iframe overlay) in the current tab, based on the user's
@@ -195,6 +198,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ plugins: plugins, assemblyName: assemblyName });
   } else if (request.action == "showEvents") {
     eventData = request.data;
+    eventSourceTabId = sender.tab?.id;
     openView("tabs/events/events.html");
   } else if (request.action == "GET_FORM_EVENTS") {
     sendResponse({ data: eventData });
@@ -254,8 +258,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action == "GET_RIBBON") {
     sendResponse({ data: ribbonData });
   } else if (request.action === "REQUEST_WR_CONTENT") {
-    if (ribbonSourceTabId) {
-      chrome.tabs.sendMessage(ribbonSourceTabId, {
+    var wrTabId = ribbonSourceTabId || eventSourceTabId;
+    if (wrTabId) {
+      chrome.tabs.sendMessage(wrTabId, {
         message: "fetchWrContent",
         name: request.name,
         requestId: request.requestId,
@@ -274,6 +279,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.first) openView("tabs/auditHistory/auditHistory.html");
   } else if (request.action == "GET_AUDIT_HISTORY") {
     sendResponse({ data: auditHistoryData, last: doneFetchingAudit });
+  } else if (request.action == "showContextInfo") {
+    contextInfoData = request.data;
+    openView("tabs/contextInfo/contextInfo.html");
+  } else if (request.action == "GET_CONTEXT_INFO") {
+    sendResponse({ data: contextInfoData });
   }
 });
 
@@ -357,6 +367,9 @@ function handleCommand(command) {
       break;
     case "show_audit_history":
       sendMessageToTab("showAuditHistory");
+      break;
+    case "show_context_info":
+      sendMessageToTab("showContextInfo");
       break;
     default:
       break;
