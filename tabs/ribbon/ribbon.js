@@ -194,10 +194,45 @@ function visibilityCell(b) {
   return parts.join("");
 }
 
+function collectLibraries(buttons) {
+  var byName = {};
+  buttons.forEach(function (b) {
+    var rules = (b.functions || []).concat(b.enableRules || [], b.displayRules || []);
+    rules.forEach(function (r) {
+      if (r.library && r.library.name && !byName[r.library.name]) {
+        byName[r.library.name] = r.library;
+      }
+    });
+  });
+  return Object.keys(byName)
+    .sort(function (a, b) {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    })
+    .map(function (name) {
+      return byName[name];
+    });
+}
+
+function librariesSection(buttons) {
+  var libs = collectLibraries(buttons);
+  if (libs.length === 0) return "";
+  var items = libs
+    .map(function (lib) {
+      return `<li>${codeLinkHtml(lib, "")}</li>`;
+    })
+    .join("");
+  return `<div class="js-files">
+      <div class="js-files-title">${libs.length} JavaScript file${libs.length === 1 ? "" : "s"}</div>
+      <ul class="js-files-list">${items}</ul>
+    </div>`;
+}
+
 function render(buttons) {
   var content = `<div class="count">${buttons.length} button${buttons.length === 1 ? "" : "s"}</div>`;
 
   codeLinks = [];
+
+  content += librariesSection(buttons);
 
   var rows = buttons
     .map(function (b) {

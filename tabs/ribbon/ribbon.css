@@ -4,6 +4,34 @@
   margin-bottom: 8px;
 }
 
+.js-files {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-surface, #f7fafc);
+}
+
+.js-files-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.js-files-list {
+  margin: 0;
+  padding-left: 18px;
+  columns: 2;
+  column-gap: 24px;
+}
+
+.js-files-list li {
+  margin-bottom: 2px;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.8rem;
+  break-inside: avoid;
+}
+
 table {
   color: var(--color-text);
 }
