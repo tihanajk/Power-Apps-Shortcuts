@@ -192,7 +192,7 @@ function handleLibraries(libraries) {
             .map(
               (l) => `<tr>
             <td>
-              <a target='_blank' href='${l.link}'>${l.name}</a>
+              <a href='#' class='wr-code-link' data-name='${escapeHtml(l.name)}'>${escapeHtml(l.name)}</a>
             </td>            
             <td>${l.libraryUniqueId}</td></tr>`,
             )
@@ -206,4 +206,117 @@ function handleLibraries(libraries) {
   // }
 
   document.getElementById("libraries-content").innerHTML = content;
+
+  document.querySelectorAll("a.wr-code-link").forEach(function (link) {
+    link.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      openWebResourceViewer({ name: link.getAttribute("data-name") });
+    });
+  });
+}
+
+// Web resource sources are fetched lazily; cache and per-name callbacks pending a response.
+var libraryContents = {};
+var pendingWrCallbacks = {};
+
+chrome.runtime.onMessage.addListener(function (request) {
+  if (request.action === "WR_CONTENT_READY") {
+    libraryContents[request.name] = request.content || "";
+    var cbs = pendingWrCallbacks[request.name] || [];
+    delete pendingWrCallbacks[request.name];
+    cbs.forEach(function (cb) {
+      cb(libraryContents[request.name]);
+    });
+  }
+});
+
+function requestWrContent(name, cb) {
+  if (libraryContents[name] != null) {
+    cb(libraryContents[name]);
+    return;
+  }
+  if (!pendingWrCallbacks[name]) pendingWrCallbacks[name] = [];
+  pendingWrCallbacks[name].push(cb);
+  if (pendingWrCallbacks[name].length === 1) {
+    chrome.runtime.sendMessage({ action: "REQUEST_WR_CONTENT", name: name, requestId: name });
+  }
+}
+
+function escapeHtml(text) {
+  return String(text == null ? "" : text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function openWebResourceViewer(wr) {
+  var existing = document.getElementById("wr-viewer-overlay");
+  if (existing) existing.remove();
+
+  var overlay = document.createElement("div");
+  overlay.id = "wr-viewer-overlay";
+  overlay.className = "wr-viewer-overlay";
+
+  var modal = document.createElement("div");
+  modal.className = "wr-viewer-modal";
+
+  var head = document.createElement("div");
+  head.className = "wr-viewer-head";
+  head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
+    <button type="button" class="wr-viewer-download" title="Download file" disabled>⬇ Download</button>
+    <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
+
+  var body = document.createElement("div");
+  body.className = "wr-viewer-body";
+  body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Loading web resource…</span></div>';
+
+  modal.appendChild(head);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener("keydown", onKey, true);
+  }
+  function onKey(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  }
+  head.querySelector(".wr-viewer-close").addEventListener("click", close);
+  overlay.addEventListener("mousedown", function (e) {
+    if (e.target === overlay) close();
+  });
+  document.addEventListener("keydown", onKey, true);
+
+  function populate(content) {
+    body.innerHTML = "";
+    var pre = document.createElement("pre");
+    pre.className = "wr-viewer-code";
+    pre.textContent = content || "";
+    body.appendChild(pre);
+
+    var dl = head.querySelector(".wr-viewer-download");
+    dl.disabled = false;
+    dl.addEventListener("click", function () {
+      var fileName = wr.name.split("/").pop() || "webresource.txt";
+      var blob = new Blob([content || ""], { type: "text/plain;charset=utf-8" });
+      var downloadUrl = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(downloadUrl);
+    });
+  }
+
+  requestWrContent(wr.name, function (content) {
+    // Ignore if the viewer was closed before the content arrived.
+    if (!document.body.contains(overlay)) return;
+    populate(content);
+  });
 }
