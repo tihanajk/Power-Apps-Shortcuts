@@ -50,6 +50,20 @@
   background: var(--color-primary-hover);
 }
 
+.endpoint-info {
+  margin: 4px 8px 0;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.endpoint-info > div {
+  margin: 2px 0;
+}
+
 .steps {
   list-style-type: none;
   padding-left: 1rem;

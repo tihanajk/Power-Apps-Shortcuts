@@ -42,8 +42,8 @@ function downloadData() {
 function initialize() {
   document.querySelectorAll(".plugin-title").forEach((title) => {
     title.addEventListener("click", () => {
-      const steps = title.nextElementSibling;
-      steps.classList.toggle("visible");
+      const steps = title.parentElement.querySelector(".steps");
+      if (steps) steps.classList.toggle("visible");
     });
   });
 
@@ -103,7 +103,8 @@ function renderPlugins(plugins) {
       .map(
         (p) =>
           `<div class="plugin-block">
-            <h2 class="plugin-title">${p?.name}</h2>
+            <h2 class="plugin-title">${p?.isServiceEndpoint ? '<span title="Service Endpoint">🔌</span> ' : ""}${p?.name}</h2>
+              ${p?.isServiceEndpoint && p.endpointInfo ? renderEndpointInfo(p.endpointInfo) : ""}
               <ul class="steps">
               ${
                 p.steps.length > 0
@@ -133,11 +134,28 @@ function renderPlugins(plugins) {
   document.getElementById("tree").innerHTML = content;
 }
 
+function escapeHtml(text) {
+  return String(text == null ? "" : text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderEndpointInfo(info) {
+  var rows = [];
+  if (info.url) rows.push(`<div><span title="URL">🔗</span> ${escapeHtml(info.url)}</div>`);
+  if (info.contract) rows.push(`<div><span title="Contract">📄</span> ${escapeHtml(info.contract)}</div>`);
+  if (info.messageformat) rows.push(`<div><span title="Message format">✉️</span> ${escapeHtml(info.messageformat)}</div>`);
+  if (rows.length === 0) return "";
+  return `<div class="endpoint-info">${rows.join("")}</div>`;
+}
+
 function toggleTree() {
   var toggleOn = document.getElementById("expandCheck").checked;
 
   document.querySelectorAll(".plugin-title").forEach((title) => {
-    const steps = title.nextElementSibling;
+    const steps = title.parentElement.querySelector(".steps");
+    if (!steps) return;
     if (toggleOn) {
       steps.classList.add("visible");
     } else {
