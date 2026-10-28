@@ -209,8 +209,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action == "GET_ENVIRONMENT_VARIABLES") {
     sendResponse({ data: variablesData });
   } else if (request.action === "SAVE_ENV_VAR") {
-    if (envVarSourceTabId) {
-      chrome.tabs.sendMessage(envVarSourceTabId, {
+    // In modal mode the view runs in an iframe inside the Dataverse tab, so the
+    // sender tab is the correct target when the stored id was lost (SW restart).
+    var saveTabId = envVarSourceTabId || sender.tab?.id;
+    if (saveTabId) {
+      envVarSourceTabId = saveTabId;
+      chrome.tabs.sendMessage(saveTabId, {
         message: "updateEnvVar",
         definitionId: request.definitionId,
         valueId: request.valueId,
@@ -221,12 +225,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
     }
   } else if (request.action === "REFRESH_ENV_VARS") {
-    if (envVarSourceTabId) {
-      chrome.tabs.sendMessage(envVarSourceTabId, { message: "refreshEnvVars" });
+    var refreshTabId = envVarSourceTabId || sender.tab?.id;
+    if (refreshTabId) {
+      envVarSourceTabId = refreshTabId;
+      chrome.tabs.sendMessage(refreshTabId, { message: "refreshEnvVars" });
     }
   } else if (request.action === "CREATE_ENV_VAR") {
-    if (envVarSourceTabId) {
-      chrome.tabs.sendMessage(envVarSourceTabId, {
+    var createTabId = envVarSourceTabId || sender.tab?.id;
+    if (createTabId) {
+      envVarSourceTabId = createTabId;
+      chrome.tabs.sendMessage(createTabId, {
         message: "createEnvVar",
         displayName: request.displayName,
         schemaName: request.schemaName,
