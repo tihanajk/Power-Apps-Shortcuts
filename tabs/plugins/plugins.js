@@ -65,7 +65,7 @@ function getPlugins() {
 
       document.getElementById("assembly-name").innerHTML = assemblyName;
 
-      plugins = response?.plugins;
+      plugins = (response?.plugins || []).sort((a, b) => (a?.name || "").localeCompare(b?.name || ""));
 
       renderPlugins(plugins);
 

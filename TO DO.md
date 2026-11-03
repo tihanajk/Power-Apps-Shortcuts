@@ -5,4 +5,5 @@
 - [x] dependency check -> add plugin triggers
 - [x] list plugin steps?
 - [x] list all script events on form
-- [ ] webhooks in plugin step view
+- [x] webhooks in plugin step view
+- [ ] disable form handlers
