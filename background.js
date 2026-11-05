@@ -9,6 +9,9 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 var optionsetsData = [];
+var optionsEntityName = "";
+var optionsRecordId = "";
+var optionsPrimaryName = "";
 var securityData = [];
 var doneFetchingSecurity = false;
 var fetchData = [];
@@ -29,6 +32,8 @@ var fields = [];
 var fieldsUrl = "";
 var fieldsEntityMetadataId = null;
 var fieldsSolutionId = null;
+var fieldsRecordId = "";
+var fieldsPrimaryName = "";
 var fieldName = "";
 var processes = [];
 var url = "";
@@ -81,9 +86,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     handleCommand(request.command);
   } else if (request.action === "showOptions") {
     optionsetsData = request.options;
+    optionsEntityName = request.entityName || "";
+    optionsRecordId = request.recordId || "";
+    optionsPrimaryName = request.primaryName || "";
     openView("tabs/options/options.html");
   } else if (request.action === "LOAD_OPTIONS") {
-    sendResponse({ options: optionsetsData });
+    sendResponse({ options: optionsetsData, entityName: optionsEntityName, recordId: optionsRecordId, primaryName: optionsPrimaryName });
   } else if (request.action == "showSecurity") {
     securityData = request.roles;
     doneFetchingSecurity = request.last;
@@ -159,6 +167,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     allFields = request.result;
     fields = request.fields;
     entityName = request.entityName;
+    fieldsRecordId = request.recordId;
+    fieldsPrimaryName = request.primaryName || "";
     fieldsUrl = request.url;
     fieldsEntityMetadataId = request.entityMetadataId;
     fieldsSolutionId = request.solutionId;
@@ -167,6 +177,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({
       allFields: allFields,
       entityName: entityName,
+      recordId: fieldsRecordId,
+      primaryName: fieldsPrimaryName,
       fields: fields,
       url: fieldsUrl,
       entityMetadataId: fieldsEntityMetadataId,

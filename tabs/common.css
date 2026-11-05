@@ -17,6 +17,100 @@
 }
 
 /* ---------- Layout ---------- */
+.record-id {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.record-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.record-header .record-primary {
+  font-size: 1.45rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.record-header .record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.record-header .record-logical,
+.record-header .record-extra,
+.record-header .record-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-row-alt);
+  line-height: 1.6;
+}
+
+.record-header .record-logical {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.record-header .record-pill-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  opacity: 0.75;
+}
+
+.record-header .record-extra {
+  color: var(--color-text);
+}
+
+.record-header .record-id {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.record-header .record-id:hover {
+  background: var(--color-row-hover);
+  color: var(--color-text);
+}
+
+.record-header .record-id .record-copy {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.record-header .record-id.copied {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.record-header .record-id.copied .record-copy {
+  opacity: 1;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 16px;

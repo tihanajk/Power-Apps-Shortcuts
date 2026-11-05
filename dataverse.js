@@ -564,12 +564,17 @@ async function getOptions() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var url = Xrm.Page.context.getClientUrl();
     var entityName = Xrm.Page.data.entity.getEntityName();
+    var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+    var primaryName = typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "";
     options = await getOptionSetsMetadata(url, entityName);
 
     window.postMessage(
       {
         type: "GIVE_ME_OPTIONS",
         options: options,
+        entityName: entityName,
+        recordId: entityId,
+        primaryName: primaryName,
       },
       "*",
     );
@@ -1264,6 +1269,7 @@ function applyFetchPaging(fetchXml, page) {
 async function getAllFields() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+  var primaryName = typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "";
 
   var result = await Xrm.WebApi.retrieveRecord(entityName, entityId);
 
@@ -1360,6 +1366,8 @@ async function getAllFields() {
       result: result,
       fields: fields,
       entityName: entityName,
+      recordId: entityId,
+      primaryName: primaryName,
       url: url,
       entityMetadataId: entityMetadataId,
       solutionId: solutionId,
@@ -2004,6 +2012,10 @@ async function listEvents() {
       libraries: libraries,
       events: events,
       name: entity + " - " + formName,
+      entityName: Xrm.Page.data.entity.getEntityName(),
+      recordId: Xrm.Page.data.entity.getId().slice(1, -1),
+      primaryName: typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "",
+      formName: formName,
     },
     "*",
   );
@@ -2107,6 +2119,8 @@ function listFormLayout() {
   var formId = Xrm.Page.ui.formSelector._formId.guid;
   var formName = Xrm.Page.ui.formSelector.getCurrentItem()?.getLabel() || "";
   var entityName = Xrm.Page.data.entity.getEntityName();
+  var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
+  var primaryName = typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "";
 
   var tabs = [];
 
@@ -2159,6 +2173,8 @@ function listFormLayout() {
       tabs: tabs,
       formName: formName,
       entityName: entityName,
+      entityId: entityId,
+      primaryName: primaryName,
     },
     "*",
   );
@@ -2178,6 +2194,7 @@ function formatAuditValue(rawVal, formattedVal) {
 async function listAuditHistory() {
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().replace("{", "").replace("}", "");
+  var primaryName = typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "";
   var url = Xrm.Page.context.getClientUrl();
 
   var objectTypeCode;
@@ -2237,6 +2254,7 @@ async function listAuditHistory() {
       records: auditRecords,
       entityName: entityName,
       entityId: entityId,
+      primaryName: primaryName,
       url: url,
       first: true,
       last: result.value.length === 0,
@@ -2317,6 +2335,7 @@ async function listAuditHistory() {
         records: auditRecords,
         entityName: entityName,
         entityId: entityId,
+        primaryName: primaryName,
         url: url,
         first: false,
         last: i === result.value.length - 1,

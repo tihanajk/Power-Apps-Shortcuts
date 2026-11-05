@@ -63,7 +63,13 @@ function getFormLayoutResults() {
     },
     function (response) {
       var data = response.data;
-      document.getElementById("form-name").innerHTML = data.entityName + " - " + data.formName;
+      renderRecordHeader(document.getElementById("form-name"), {
+        primaryName: data.primaryName,
+        entityName: data.entityName,
+        recordId: data.entityId,
+        extra: data.formName,
+        extraLabel: "form",
+      });
       allTabs = data.tabs;
       renderLayout(allTabs);
     },

@@ -47,7 +47,11 @@ function getFieldsResults() {
       action: "GET_ALL_FIELDS",
     },
     function (response) {
-      document.getElementById("entity-name").innerHTML = response.entityName.toUpperCase();
+      renderRecordHeader(document.getElementById("entity-name"), {
+        primaryName: response.primaryName,
+        entityName: response.entityName,
+        recordId: response.recordId,
+      });
 
       orgUrl = response.url || "";
       entityMetadataId = response.entityMetadataId || null;

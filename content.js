@@ -310,6 +310,9 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showOptions",
       options: event.data.options,
+      entityName: event.data.entityName,
+      recordId: event.data.recordId,
+      primaryName: event.data.primaryName,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_SECURITY") {
     chrome.runtime.sendMessage({
@@ -348,6 +351,8 @@ window.addEventListener("message", (event) => {
       result: event.data.result,
       fields: event.data.fields,
       entityName: event.data.entityName,
+      recordId: event.data.recordId,
+      primaryName: event.data.primaryName,
       url: event.data.url,
       entityMetadataId: event.data.entityMetadataId,
       solutionId: event.data.solutionId,

@@ -93,9 +93,13 @@ function getEventsResults() {
     function (response) {
       var data = response.data;
 
-      console.log(data);
-
-      document.getElementById("form-name").innerHTML = data.name;
+      renderRecordHeader(document.getElementById("form-name"), {
+        primaryName: data.primaryName,
+        entityName: data.entityName,
+        recordId: data.recordId,
+        extra: data.formName,
+        extraLabel: "form",
+      });
 
       libraries = data.libraries;
       events = data.events;

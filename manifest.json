@@ -137,6 +137,7 @@
       "js": [
         "modal.js",
         "content.js",
+        "tabs/common.js",
         "popup/info.js",
         "tabs/options/options.js",
         "tabs/security/security.js",

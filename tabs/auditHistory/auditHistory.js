@@ -98,7 +98,12 @@ function getAuditResults() {
     function (response) {
       var data = response.data;
       baseUrl = data.url;
-      document.getElementById("record-name").innerHTML = data.entityName + " - Audit History";
+      renderRecordHeader(document.getElementById("record-name"), {
+        primaryName: data.primaryName,
+        entityName: data.entityName,
+        recordId: data.entityId,
+        extra: "Audit History",
+      });
       allRecords = data.records;
       buildEventFilters();
       renderResults(allRecords);

@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", function () {
     function (response) {
       allOptions = response.options;
 
+      renderRecordHeader(document.getElementById("entity-name"), {
+        primaryName: response.primaryName,
+        entityName: response.entityName,
+        recordId: response.recordId,
+      });
+
       renderTable(allOptions);
     },
   );
