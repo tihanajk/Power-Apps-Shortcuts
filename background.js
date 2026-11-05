@@ -364,6 +364,9 @@ function handleCommand(command) {
     case "list_script_events":
       sendMessageToTab("listEvents");
       break;
+    case "disable_form_handlers":
+      sendMessageToTab("disableFormHandlers");
+      break;
     case "list_environment_variables":
       sendMessageToTab("listEnvironmentVariables");
       break;

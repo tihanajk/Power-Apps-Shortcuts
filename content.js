@@ -141,6 +141,39 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_EVENTS");
       break;
 
+    case "disableFormHandlers": {
+      (async () => {
+        const res = await paModal.form("Disable form event handlers", [
+          {
+            name: "handler",
+            label: "Which handlers to disable?",
+            type: "select",
+            options: [
+              { value: "true", label: "All handlers" },
+              { value: "onload", label: "OnLoad" },
+              { value: "onsave", label: "OnSave" },
+              { value: "onchange", label: "OnChange" },
+              { value: "businessrule", label: "Business rules" },
+              { value: "", label: "Enable all (remove flag)" },
+            ],
+            defaultValue: "true",
+          },
+        ]);
+        if (!res || res.handler == null) return;
+        // Remove any flag variant we previously added (literal toggle, like ribbondebug).
+        let url = location.href;
+        ["true", "onload", "onsave", "onchange", "businessrule"].forEach((v) => {
+          url = url.replace("&flags=DisableFormHandlers=" + v, "").replace("?flags=DisableFormHandlers=" + v, "");
+        });
+        if (res.handler !== "") {
+          const sep = url.includes("?") ? "&" : "?";
+          url = `${url}${sep}flags=DisableFormHandlers=${res.handler}`;
+        }
+        window.location.href = url;
+      })();
+      break;
+    }
+
     case "listEnvironmentVariables":
       execute("LIST_ENV_VARIABLES");
       break;

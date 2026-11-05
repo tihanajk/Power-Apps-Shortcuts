@@ -58,6 +58,12 @@ document.addEventListener("DOMContentLoaded", function () {
           label: "List script events on the form",
           desc: "List registered form/field event handlers and their libraries.",
         },
+        {
+          command: "disable_form_handlers",
+          label: "Disable form event handlers",
+          desc: "Add the DisableFormHandlers flag to disable all handlers or a specific OnLoad/OnSave/OnChange/business rule.",
+          isNew: true,
+        },
         { command: "ribbon_debug", label: "Toggle ribbon debug", desc: "Turn Dataverse ribbon debugging on or off for this page." },
         {
           command: "list_ribbon",

@@ -88,6 +88,9 @@
     "list_script_events": {
       "description": "List all script events on the form"
     },
+    "disable_form_handlers": {
+      "description": "Disable form event handlers (all, OnLoad, OnSave, OnChange or business rules)"
+    },
     "list_environment_variables": {
       "description": "List and edit all environment variables"
     },
