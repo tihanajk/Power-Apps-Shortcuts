@@ -25,12 +25,15 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 | `Alt+Shift+A` | Add Web Resource to a Solution |
 | `Alt+Shift+S` | List Plugin Steps |
 | `Alt+Shift+E` | List Script Events on the Form |
+| `Alt+Shift+B` | Disable Form Event Handlers (all, OnLoad, OnSave, OnChange or business rules) |
 | `Alt+Shift+V` | List Environment Variables (view, edit & create values) |
 | `Alt+Shift+T` | List Form Layout (tabs, sections & controls) |
 | `Alt+Shift+Y` | Display Audit History for the Record |
 | `Alt+Shift+W` | Show Unsaved (Dirty) Fields |
 | `Alt+Shift+K` | Open Maker Portal for the Current Environment |
 | `Alt+Shift+N` | Open Power Platform Admin Center for the Current Environment |
+| `Alt+Shift+J` | Show Environment & Form Info |
+| `Alt+Shift+Q` | Open Solution in Power Apps |
 
 ---
 
@@ -59,14 +62,14 @@ Your choice is remembered across sessions.
 - **Open Record** — Prompts for an entity name and record GUID, then opens that specific record in a new tab.
 - **Quick Field Update** — Lets you update a field value on the current record directly, without opening the full editor.
 - **Touch a Field** — Re-saves a field with its current value (no data change) to trigger plugins, workflows, or flows registered on the record's update.
-- **Toggle Ribbon Debug** — Adds or removes `&ribbondebug=true` from the URL to turn command-bar (ribbon) debugging on or off.
+- **Toggle Ribbon Debug** — Opens a dashboard showing whether command-bar (ribbon) debugging is On or Off, with a switch to flip it. Applying adds or removes `&ribbondebug=true` from the URL and reloads.
 - **Inspect Ribbon Buttons** — Lists every ribbon (command bar) button for the current table and, for each one, the JavaScript function it calls, a link to open that web resource code, and its visibility logic (enable and display rules). Reads the classic ribbon definitions via `RetrieveEntityRibbon`.
 - **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.
 
   ![Option sets](img/screenshots/optionsets.png)
 
 - **Execute Retrieve with FetchXML** — Runs a FetchXML query against the environment and shows the returned records.
-- **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form. Each field is tagged with symbols (hover for a tooltip): 🟢 on form, 🔑 alternate key, ©️ calculated, ®️ rollup, and 🌀 Power Fx (pfx). Clicking ©️ or ®️ opens the field's native formula editor; clicking 🌀 shows its Power Fx formula.
+- **Display All Fields** — Lists every field on the current record along with its values, including those not shown on the form. Each field is tagged with symbols (hover for a tooltip): 🟢 on form, 🔑 alternate key, ©️ calculated, ®️ rollup, and 🌀 Power Fx (pfx). Clicking ©️ or ®️ opens the field's native formula editor; clicking 🌀 shows its Power Fx formula. Results can be exported to Excel.
 - **List Field Dependencies** — Shows components that reference the keyword (e.g. a field logical name): Flows, Plugins, Workflows, Business Rules, BPFs, Actions, and Environment Variables. You can also opt in to scan unmanaged JavaScript/HTML **web resource files** (a longer-running operation, with an optional name filter to narrow the scan); matching web resources open in an in-app code viewer with the keyword highlighted, match-to-match navigation (Enter / Shift+Enter), and a button to download the file. Results show the search execution time and can be filtered by type, active state, and text.
 
   ![Field dependencies](img/screenshots/dependencies.png)
@@ -76,11 +79,14 @@ Your choice is remembered across sessions.
   ![Web resource code viewer](img/screenshots/webresource-viewer.png)
 
 - **Copy Record GUID to Clipboard** — Copies the current record's GUID to your clipboard (reads it from the URL or the form).
+- **Show Environment & Form Info** — Shows context details for the current page: app, environment, org, and user, plus the current form and record information.
 - **Add Web Resource to a Solution** — Adds a web resource to a chosen solution.
+- **Open Solution in Power Apps** — Prompts for a solution and opens it in the maker portal.
 - **List Plugin Steps** — Lists the registered plugin steps for a chosen plugin assembly, service endpoint, or webhook. The picker can be filtered by managed or unmanaged, and service endpoints show their URL, contract, and message format alongside each step.
 - **List Script Events on the Form** — Lists the JavaScript event handlers (OnLoad, OnChange, OnSave, etc.) wired up on the current form. Script libraries open in an in-app, resizable code viewer (with a download button) instead of a new tab.
+- **Disable Form Event Handlers** — Opens a dashboard with a status pill (Enabled/Disabled) and toggle for each handler type — all handlers, OnLoad, OnSave, OnChange, and business rules — so you can see what's currently suppressed and switch it. Applying sets the `flags=DisableFormHandlers` URL flag accordingly and reloads; turning everything back on removes the flag.
 - **List Environment Variables** — Lists all environment variables and lets you view and edit their current and default values, or create a new environment variable (name, type, default and current value).
-- **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls.
+- **List Form Layout** — Displays the structure of the current form: tabs, sections, and controls. Results can be exported to Excel.
 - **Display Audit History for the Record** — Shows the audit history (changes over time) for the current record.
 
   ![Audit history](img/screenshots/audit.png)
