@@ -21,12 +21,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       openViewInModal(request.url);
       break;
 
-    case "ribbonDebug": {
-      let url = location.href;
-      url = url.includes("&ribbondebug=true") ? url.replace("&ribbondebug=true", "") : url + "&ribbondebug=true";
-      window.location.href = url;
+    case "ribbonDebug":
+      openRibbonDebugDashboard();
       break;
-    }
 
     case "advancedFind":
       window.open(`${baseUrl()}&pagetype=advancedfind`, "_blank");
@@ -141,38 +138,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_EVENTS");
       break;
 
-    case "disableFormHandlers": {
-      (async () => {
-        const res = await paModal.form("Disable form event handlers", [
-          {
-            name: "handler",
-            label: "Which handlers to disable?",
-            type: "select",
-            options: [
-              { value: "true", label: "All handlers" },
-              { value: "onload", label: "OnLoad" },
-              { value: "onsave", label: "OnSave" },
-              { value: "onchange", label: "OnChange" },
-              { value: "businessrule", label: "Business rules" },
-              { value: "", label: "Enable all (remove flag)" },
-            ],
-            defaultValue: "true",
-          },
-        ]);
-        if (!res || res.handler == null) return;
-        // Remove any flag variant we previously added (literal toggle, like ribbondebug).
-        let url = location.href;
-        ["true", "onload", "onsave", "onchange", "businessrule"].forEach((v) => {
-          url = url.replace("&flags=DisableFormHandlers=" + v, "").replace("?flags=DisableFormHandlers=" + v, "");
-        });
-        if (res.handler !== "") {
-          const sep = url.includes("?") ? "&" : "?";
-          url = `${url}${sep}flags=DisableFormHandlers=${res.handler}`;
-        }
-        window.location.href = url;
-      })();
+    case "disableFormHandlers":
+      openDisableFormHandlersDashboard();
       break;
-    }
 
     case "listEnvironmentVariables":
       execute("LIST_ENV_VARIABLES");
@@ -235,6 +203,261 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
   }
 });
+
+// Reusable toggle dashboard: shows a list of rows, each with a status pill and
+// an on/off switch, plus an Apply button. Callers own the draft state via each
+// row's get()/set() and provide onApply() to persist (usually a URL + reload).
+//
+// config: {
+//   title, note?, applyText?, onText?, offText?,
+//   rows: [{ label, sub?, master?, get():bool, set(v), locked?():bool, onText?, offText? }],
+//   onApply(close)
+// }
+function openFlagDashboard(config) {
+  const existing = document.getElementById("pa-fdash-overlay");
+  if (existing) existing.remove();
+
+  if (!document.getElementById("pa-fdash-style")) {
+    const style = document.createElement("style");
+    style.id = "pa-fdash-style";
+    style.textContent = `
+      #pa-fdash-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif}
+      .pa-fdash-card{background:#fff;color:#1f2937;width:min(460px,calc(100vw - 40px));border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column}
+      .pa-fdash-header{display:flex;align-items:center;gap:8px;padding:16px 18px;border-bottom:1px solid #eef0f3}
+      .pa-fdash-title{flex:1;font-weight:600;font-size:15px}
+      .pa-fdash-close{width:26px;height:26px;border:none;border-radius:6px;background:transparent;color:#6b7280;cursor:pointer;font-size:18px;line-height:1}
+      .pa-fdash-close:hover{background:#f3f4f6;color:#1f2937}
+      .pa-fdash-body{padding:8px 18px 14px}
+      .pa-fdash-row{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid #f1f3f5}
+      .pa-fdash-row:last-child{border-bottom:none}
+      .pa-fdash-row-master{margin:6px -18px 4px;padding:12px 18px;background:#f8fafc;border-bottom:1px solid #eef0f3}
+      .pa-fdash-name{flex:1;font-size:14px;font-weight:500}
+      .pa-fdash-row-master .pa-fdash-name{font-weight:600}
+      .pa-fdash-sub{display:block;font-size:11.5px;font-weight:400;color:#9ca3af;margin-top:2px}
+      .pa-fdash-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.2px}
+      .pa-fdash-pill.on{background:#fde8e8;color:#c0392b}
+      .pa-fdash-pill.off{background:#e6f6ec;color:#1e874b}
+      .pa-fdash-switch{position:relative;width:40px;height:22px;flex:none;cursor:pointer}
+      .pa-fdash-switch input{opacity:0;width:0;height:0;position:absolute}
+      .pa-fdash-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.15s}
+      .pa-fdash-slider::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+      .pa-fdash-switch input:checked + .pa-fdash-slider{background:#c0392b}
+      .pa-fdash-switch input:checked + .pa-fdash-slider::before{transform:translateX(18px)}
+      .pa-fdash-switch input:disabled + .pa-fdash-slider{opacity:.5;cursor:not-allowed}
+      .pa-fdash-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #eef0f3;background:#fafbfc}
+      .pa-fdash-note{margin-right:auto;align-self:center;font-size:11.5px;color:#9ca3af}
+      .pa-fdash-btn{padding:7px 16px;border-radius:6px;border:1px solid transparent;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+      .pa-fdash-btn-primary{background:#6a7e9d;color:#fff}
+      .pa-fdash-btn-primary:hover{background:#5a6d8a}
+      .pa-fdash-btn-secondary{background:#fff;color:#374151;border-color:#d1d5db}
+      .pa-fdash-btn-secondary:hover{background:#f3f4f6}
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  const overlay = document.createElement("div");
+  overlay.id = "pa-fdash-overlay";
+
+  const card = document.createElement("div");
+  card.className = "pa-fdash-card";
+
+  const header = document.createElement("div");
+  header.className = "pa-fdash-header";
+  const title = document.createElement("div");
+  title.className = "pa-fdash-title";
+  title.textContent = config.title || "Flags";
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "pa-fdash-close";
+  closeBtn.innerHTML = "&times;";
+  closeBtn.title = "Close";
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "pa-fdash-body";
+
+  const rows = [];
+  const refreshAll = () => rows.forEach((r) => r.sync());
+
+  // Builds one toggle row and keeps its pill/switch in sync with the row state.
+  function makeRow(cfg) {
+    const row = document.createElement("div");
+    row.className = "pa-fdash-row" + (cfg.master ? " pa-fdash-row-master" : "");
+
+    const name = document.createElement("div");
+    name.className = "pa-fdash-name";
+    name.textContent = cfg.label;
+    if (cfg.sub) {
+      const sub = document.createElement("span");
+      sub.className = "pa-fdash-sub";
+      sub.textContent = cfg.sub;
+      name.appendChild(sub);
+    }
+
+    const pill = document.createElement("span");
+    pill.className = "pa-fdash-pill";
+
+    const sw = document.createElement("label");
+    sw.className = "pa-fdash-switch";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    const slider = document.createElement("span");
+    slider.className = "pa-fdash-slider";
+    sw.appendChild(input);
+    sw.appendChild(slider);
+
+    row.appendChild(name);
+    row.appendChild(pill);
+    row.appendChild(sw);
+
+    const onText = cfg.onText || config.onText || "Disabled";
+    const offText = cfg.offText || config.offText || "Enabled";
+
+    const sync = () => {
+      const on = cfg.get();
+      input.checked = on;
+      input.disabled = typeof cfg.locked === "function" ? cfg.locked() : false;
+      pill.textContent = on ? onText : offText;
+      pill.className = "pa-fdash-pill " + (on ? "on" : "off");
+    };
+
+    input.addEventListener("change", () => {
+      cfg.set(input.checked);
+      refreshAll();
+    });
+
+    sync();
+    bodyEl.appendChild(row);
+    rows.push({ sync });
+  }
+
+  (config.rows || []).forEach(makeRow);
+
+  const footer = document.createElement("div");
+  footer.className = "pa-fdash-footer";
+  const note = document.createElement("span");
+  note.className = "pa-fdash-note";
+  note.textContent = config.note != null ? config.note : "Applies on reload";
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "pa-fdash-btn pa-fdash-btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  const applyBtn = document.createElement("button");
+  applyBtn.className = "pa-fdash-btn pa-fdash-btn-primary";
+  applyBtn.textContent = config.applyText || "Apply & reload";
+  footer.appendChild(note);
+  footer.appendChild(cancelBtn);
+  footer.appendChild(applyBtn);
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener("keydown", onKey);
+  }
+  function onKey(e) {
+    if (e.key === "Escape") close();
+  }
+
+  closeBtn.addEventListener("click", close);
+  cancelBtn.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+  applyBtn.addEventListener("click", () => {
+    if (typeof config.onApply === "function") config.onApply(close);
+    else close();
+  });
+  document.addEventListener("keydown", onKey);
+
+  card.appendChild(header);
+  card.appendChild(bodyEl);
+  card.appendChild(footer);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+// Removes a URL query flag (e.g. "ribbondebug=true") and tidies separators.
+function stripUrlFlag(url, pattern) {
+  return url
+    .replace(pattern, (_m, p1) => (p1 === "?" ? "?" : ""))
+    .replace(/\?&/, "?")
+    .replace(/&&+/g, "&")
+    .replace(/[?&]$/, "");
+}
+
+// Dashboard for the flags=DisableFormHandlers URL flag.
+function openDisableFormHandlersDashboard() {
+  const HANDLERS = [
+    { key: "onload", label: "OnLoad" },
+    { key: "onsave", label: "OnSave" },
+    { key: "onchange", label: "OnChange" },
+    { key: "businessrule", label: "Business rules" },
+  ];
+
+  // Read the current flag from the URL.
+  const m = location.href.match(/[?&]flags=DisableFormHandlers=([^&]*)/i);
+  const raw = m ? decodeURIComponent(m[1] || "").toLowerCase() : "";
+  const draft = { all: raw === "true", handlers: { onload: false, onsave: false, onchange: false, businessrule: false } };
+  if (raw && raw !== "true") {
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((h) => (draft.handlers[h] = true));
+  }
+
+  openFlagDashboard({
+    title: "Form event handlers",
+    rows: [
+      {
+        master: true,
+        label: "Disable all handlers",
+        sub: "flags=DisableFormHandlers=true",
+        get: () => draft.all,
+        set: (v) => {
+          draft.all = v;
+          if (!v) HANDLERS.forEach((h) => (draft.handlers[h.key] = false));
+        },
+      },
+      ...HANDLERS.map((h) => ({
+        label: h.label,
+        locked: () => draft.all,
+        get: () => draft.all || !!draft.handlers[h.key],
+        set: (v) => (draft.handlers[h.key] = v),
+      })),
+    ],
+    onApply: () => {
+      let url = stripUrlFlag(location.href, /([?&])flags=DisableFormHandlers=[^&]*/i);
+      const selected = HANDLERS.filter((h) => draft.handlers[h.key]).map((h) => h.key);
+      let value = "";
+      if (draft.all || selected.length === HANDLERS.length) value = "true";
+      else if (selected.length) value = selected.join(",");
+      if (value) url += `${url.includes("?") ? "&" : "?"}flags=DisableFormHandlers=${value}`;
+      window.location.href = url;
+    },
+  });
+}
+
+// Dashboard for the ribbondebug URL flag (command-bar debugging).
+function openRibbonDebugDashboard() {
+  const draft = { on: /[?&]ribbondebug=true/i.test(location.href) };
+  openFlagDashboard({
+    title: "Ribbon debug",
+    onText: "On",
+    offText: "Off",
+    rows: [
+      {
+        label: "Ribbon debug",
+        sub: "ribbondebug=true",
+        get: () => draft.on,
+        set: (v) => (draft.on = v),
+      },
+    ],
+    onApply: () => {
+      let url = stripUrlFlag(location.href, /([?&])ribbondebug=true/i);
+      if (draft.on) url += `${url.includes("?") ? "&" : "?"}ribbondebug=true`;
+      window.location.href = url;
+    },
+  });
+}
 
 // Opens one of the extension's view pages inside an in-page modal overlay
 // (an iframe) so the results are shown in the current tab instead of a new one.

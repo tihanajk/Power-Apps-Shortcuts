@@ -242,6 +242,13 @@ document.addEventListener("DOMContentLoaded", function () {
 // something major ships; only the most recent 5 versions are displayed.
 const CHANGELOG = [
   {
+    version: "2.0.0.35",
+    notes: [
+      "🧯 New shortcut — disable form event handlers (all, OnLoad, OnSave, OnChange or business rules) and re-enable them again.",
+      "🪪 Richer headers across Display all fields, Optionset values, Audit history, Form layout and Script events — record name, entity and click-to-copy record id.",
+    ],
+  },
+  {
     version: "2.0.0.34",
     notes: [
       "🧭 New Environment & form info view — app, environment, org, user and current record details at a glance.",
