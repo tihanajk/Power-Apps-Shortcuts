@@ -299,8 +299,13 @@ function openWebResourceViewer(wr) {
     body.innerHTML = "";
     var pre = document.createElement("pre");
     pre.className = "wr-viewer-code";
-    pre.textContent = content || "";
+    if (window.paRenderCode) pre.innerHTML = window.paRenderCode(content || "", wr.name, "", false);
+    else pre.textContent = content || "";
     body.appendChild(pre);
+
+    if (window.paAttachCodeSearch) {
+      window.paAttachCodeSearch({ modal: modal, head: head, pre: pre, content: content || "", fileName: wr.name });
+    }
 
     var dl = head.querySelector(".wr-viewer-download");
     dl.disabled = false;

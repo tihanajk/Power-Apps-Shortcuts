@@ -384,11 +384,6 @@ function openWebResourceViewer(wr) {
   if (existing) existing.remove();
 
   var keyword = searchKeyword || "";
-  var matchCount = 0;
-  if (keyword && wr.content) {
-    var re = new RegExp(escapeRegExp(keyword), "gi");
-    matchCount = (wr.content.match(re) || []).length;
-  }
 
   var overlay = document.createElement("div");
   overlay.id = "wr-viewer-overlay";
@@ -400,11 +395,6 @@ function openWebResourceViewer(wr) {
   var head = document.createElement("div");
   head.className = "wr-viewer-head";
   head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
-    <div class="wr-viewer-nav">
-      <span class="wr-viewer-counter">${matchCount ? "1" : "0"} / ${matchCount}</span>
-      <button type="button" class="wr-viewer-prev" title="Previous match (Shift+Enter)" ${matchCount ? "" : "disabled"}>‹</button>
-      <button type="button" class="wr-viewer-next" title="Next match (Enter)" ${matchCount ? "" : "disabled"}>›</button>
-    </div>
     <button type="button" class="wr-viewer-download" title="Download file">⬇ Download</button>
     <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
 
@@ -412,16 +402,18 @@ function openWebResourceViewer(wr) {
   body.className = "wr-viewer-body";
   var pre = document.createElement("pre");
   pre.className = "wr-viewer-code";
-  pre.innerHTML = highlightKeyword(wr.content || "", keyword);
+  if (window.paRenderCode) pre.innerHTML = window.paRenderCode(wr.content || "", wr.name, keyword, false);
+  else pre.textContent = wr.content || "";
   body.appendChild(pre);
-
-  var marks = pre.querySelectorAll("mark.wr-highlight");
-  var currentIndex = 0;
 
   modal.appendChild(head);
   modal.appendChild(body);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+
+  if (window.paAttachCodeSearch) {
+    window.paAttachCodeSearch({ modal: modal, head: head, pre: pre, content: wr.content || "", fileName: wr.name, initialTerm: keyword });
+  }
 
   function close() {
     overlay.remove();
@@ -431,9 +423,6 @@ function openWebResourceViewer(wr) {
     if (e.key === "Escape") {
       e.preventDefault();
       close();
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (marks.length) gotoMatch(currentIndex + (e.shiftKey ? -1 : 1));
     }
   }
   head.querySelector(".wr-viewer-close").addEventListener("click", close);
@@ -453,29 +442,6 @@ function openWebResourceViewer(wr) {
     if (e.target === overlay) close();
   });
   document.addEventListener("keydown", onKey, true);
-
-  head.querySelector(".wr-viewer-prev").addEventListener("click", function () {
-    if (marks.length) gotoMatch(currentIndex - 1);
-  });
-  head.querySelector(".wr-viewer-next").addEventListener("click", function () {
-    if (marks.length) gotoMatch(currentIndex + 1);
-  });
-
-  function gotoMatch(index) {
-    if (!marks.length) return;
-    currentIndex = ((index % marks.length) + marks.length) % marks.length;
-    marks.forEach(function (m) {
-      m.classList.remove("wr-highlight-active");
-    });
-    var mark = marks[currentIndex];
-    mark.classList.add("wr-highlight-active");
-    mark.scrollIntoView({ block: "center" });
-    var counter = head.querySelector(".wr-viewer-counter");
-    if (counter) counter.textContent = `${currentIndex + 1} / ${marks.length}`;
-  }
-
-  // Jump to the first highlighted match
-  if (marks.length) gotoMatch(0);
 }
 
 function makeColumnsResizable() {

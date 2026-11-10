@@ -345,11 +345,6 @@ function openWebResourceViewer(wr) {
   var head = document.createElement("div");
   head.className = "wr-viewer-head";
   head.innerHTML = `<div class="wr-viewer-title">${escapeHtml(wr.name)}</div>
-    <div class="wr-viewer-nav">
-      <span class="wr-viewer-counter">0 / 0</span>
-      <button type="button" class="wr-viewer-prev" title="Previous match (Shift+Enter)" disabled>‹</button>
-      <button type="button" class="wr-viewer-next" title="Next match (Enter)" disabled>›</button>
-    </div>
     <button type="button" class="wr-viewer-download" title="Download file" disabled>⬇ Download</button>
     <button type="button" class="wr-viewer-close" title="Close">✕</button>`;
 
@@ -362,9 +357,6 @@ function openWebResourceViewer(wr) {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  var marks = [];
-  var currentIndex = 0;
-
   function close() {
     overlay.remove();
     document.removeEventListener("keydown", onKey, true);
@@ -373,20 +365,7 @@ function openWebResourceViewer(wr) {
     if (e.key === "Escape") {
       e.preventDefault();
       close();
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (marks.length) gotoMatch(currentIndex + (e.shiftKey ? -1 : 1));
     }
-  }
-  function gotoMatch(index) {
-    if (!marks.length) return;
-    currentIndex = ((index % marks.length) + marks.length) % marks.length;
-    marks.forEach((m) => m.classList.remove("wr-highlight-active"));
-    var mark = marks[currentIndex];
-    mark.classList.add("wr-highlight-active");
-    mark.scrollIntoView({ block: "center" });
-    var counter = head.querySelector(".wr-viewer-counter");
-    if (counter) counter.textContent = `${currentIndex + 1} / ${marks.length}`;
   }
 
   head.querySelector(".wr-viewer-close").addEventListener("click", close);
@@ -405,34 +384,23 @@ function openWebResourceViewer(wr) {
       }
     }
 
-    var matchCount = 0;
-    if (keyword && content) {
-      var re = keywordBoundaryRegex(keyword, "gi");
-      matchCount = (content.match(re) || []).length;
-    }
-
     body.innerHTML = "";
     var pre = document.createElement("pre");
     pre.className = "wr-viewer-code";
-    pre.innerHTML = highlightKeyword(content || "", keyword);
+    if (window.paRenderCode) pre.innerHTML = window.paRenderCode(content || "", wr.name, keyword, false);
+    else pre.textContent = content || "";
     body.appendChild(pre);
 
-    marks = Array.prototype.slice.call(pre.querySelectorAll("mark.wr-highlight"));
-    currentIndex = 0;
-
-    var counter = head.querySelector(".wr-viewer-counter");
-    if (counter) counter.textContent = `${matchCount ? 1 : 0} / ${matchCount}`;
-
-    var prevBtn = head.querySelector(".wr-viewer-prev");
-    var nextBtn = head.querySelector(".wr-viewer-next");
-    prevBtn.disabled = !matchCount;
-    nextBtn.disabled = !matchCount;
-    prevBtn.addEventListener("click", function () {
-      if (marks.length) gotoMatch(currentIndex - 1);
-    });
-    nextBtn.addEventListener("click", function () {
-      if (marks.length) gotoMatch(currentIndex + 1);
-    });
+    if (window.paAttachCodeSearch) {
+      window.paAttachCodeSearch({
+        modal: modal,
+        head: head,
+        pre: pre,
+        content: content || "",
+        fileName: wr.name,
+        initialTerm: keyword,
+      });
+    }
 
     var dl = head.querySelector(".wr-viewer-download");
     dl.disabled = false;
@@ -448,8 +416,6 @@ function openWebResourceViewer(wr) {
       a.remove();
       URL.revokeObjectURL(downloadUrl);
     });
-
-    if (marks.length) gotoMatch(0);
   }
 
   requestWrContent(wr.name, function (content) {
