@@ -315,11 +315,10 @@ const CHANGELOG = [
   {
     version: "2.0.0.35",
     notes: [
+      "\ud83d\udcd0 New shortcut \u2014 while a business rule designer is open, view the definition behind it (clientdata JSON or xaml) in the syntax-highlighted viewer.",
       "\u2728 Maker portal shortcuts (Power Apps & Power Automate) \u2014 go to a maker area, open an app, open a solution, or open a cloud flow in Power Automate, all from searchable pickers.",
       "\ud83e\uddfe Open a cloud flow's definition JSON in a syntax-highlighted viewer \u2014 and edit & save it back to the flow.",
-      "\ud83c\udfa8 The in-app code viewer now has syntax highlighting plus a live find-in-file search with match navigation.",
       "🧯 New shortcut — disable form event handlers (all, OnLoad, OnSave, OnChange or business rules) and re-enable them again.",
-      "🪪 Richer headers across Display all fields, Optionset values, Audit history, Form layout and Script events — record name, entity and click-to-copy record id.",
     ],
   },
   {
