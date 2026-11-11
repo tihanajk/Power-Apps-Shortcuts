@@ -440,3 +440,122 @@ function renderRecordHeader(el, info) {
     };
   };
 })();
+
+// Self-contained, read-only code viewer overlay with syntax highlighting + search.
+// Exposed as window.paShowCode(title, content, fileName).
+(function () {
+  if (window.paShowCode) return;
+
+  function ensureStyles() {
+    if (document.getElementById("pa-cv-style")) return;
+    var style = document.createElement("style");
+    style.id = "pa-cv-style";
+    style.textContent = [
+      ".pa-cv-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;isolation:isolate}",
+      ".pa-cv-modal{background:#1e1e1e;color:#d4d4d4;width:min(900px,calc(100vw - 40px));height:min(640px,calc(100vh - 60px));border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;transform:translateZ(0);backface-visibility:hidden}",
+      ".pa-cv-head{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#252526;border-bottom:1px solid #333}",
+      ".pa-cv-title{flex:1;font-weight:600;font-size:.9rem;color:#fff;word-break:break-all}",
+      ".pa-cv-btn{background:#3a3a3a;border:none;color:#d4d4d4;font-size:.78rem;font-weight:500;cursor:pointer;padding:5px 10px;border-radius:4px}",
+      ".pa-cv-btn:hover{background:#4a4a4a}",
+      ".pa-cv-body{flex:1;overflow:auto;padding:0;min-height:0;background:#1e1e1e;scrollbar-width:thin;scrollbar-color:#4a4a4a #1e1e1e}",
+      ".pa-cv-body::-webkit-scrollbar{width:12px;height:12px}",
+      ".pa-cv-body::-webkit-scrollbar-track{background:#1e1e1e}",
+      ".pa-cv-body::-webkit-scrollbar-thumb{background:#4a4a4a;border-radius:6px}",
+      ".pa-cv-body::-webkit-scrollbar-thumb:hover{background:#5a5a5a}",
+      ".pa-cv-body::-webkit-scrollbar-corner{background:#1e1e1e}",
+      ".pa-cv-body .wr-viewer-code{margin:0;padding:14px 16px;border:none !important;outline:none;background:#1e1e1e;color:#d4d4d4;font-family:ui-monospace,'Cascadia Code',Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;tab-size:2;box-shadow:none}",
+      ".pa-cv-body .wr-highlight{background:#f6e05e;color:#1a1a1a;border-radius:2px;padding:0 1px}",
+      ".pa-cv-body .wr-highlight-active{background:#fb923c;outline:2px solid #f97316}",
+      ".pa-cv-modal ::selection{background:rgba(88,130,180,.45);color:inherit}",
+      ".pa-cv-modal ::-moz-selection{background:rgba(88,130,180,.45);color:inherit}",
+    ].join("");
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  window.paShowCode = function (title, content, fileName) {
+    ensureStyles();
+    var existing = document.getElementById("pa-cv-overlay");
+    if (existing) existing.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "pa-cv-overlay";
+    overlay.className = "pa-cv-overlay";
+    var modal = document.createElement("div");
+    modal.className = "pa-cv-modal";
+
+    var head = document.createElement("div");
+    head.className = "pa-cv-head";
+    var titleEl = document.createElement("div");
+    titleEl.className = "pa-cv-title";
+    titleEl.textContent = title || "Code";
+    var copyBtn = document.createElement("button");
+    copyBtn.className = "pa-cv-btn";
+    copyBtn.textContent = "Copy";
+    var closeBtn = document.createElement("button");
+    closeBtn.className = "pa-cv-btn";
+    closeBtn.textContent = "✕";
+    head.appendChild(titleEl);
+    head.appendChild(copyBtn);
+    head.appendChild(closeBtn);
+
+    var body = document.createElement("div");
+    body.className = "pa-cv-body";
+    var pre = document.createElement("pre");
+    pre.className = "wr-viewer-code";
+    if (window.paRenderCode) pre.innerHTML = window.paRenderCode(content, fileName || "code.txt", "", false);
+    else pre.textContent = content;
+    body.appendChild(pre);
+
+    modal.appendChild(head);
+    modal.appendChild(body);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    if (window.paAttachCodeSearch) {
+      window.paAttachCodeSearch({ modal: modal, head: head, pre: pre, content: content, fileName: fileName || "code.txt" });
+    }
+
+    function close() {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey, true);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+      }
+    }
+    copyBtn.addEventListener("click", function () {
+      var flash = function () {
+        copyBtn.textContent = "Copied";
+        setTimeout(function () {
+          copyBtn.textContent = "Copy";
+        }, 1200);
+      };
+      var fallback = function () {
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = content;
+          ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        } catch (e) {
+          /* ignore */
+        }
+        flash();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(content).then(flash, fallback);
+      } else {
+        fallback();
+      }
+    });
+    closeBtn.addEventListener("click", close);
+    overlay.addEventListener("mousedown", function (e) {
+      if (e.target === overlay) close();
+    });
+    document.addEventListener("keydown", onKey, true);
+  };
+})();

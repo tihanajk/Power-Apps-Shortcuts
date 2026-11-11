@@ -218,7 +218,12 @@
       ".pa-fv-btn-primary{background:#0e639c;color:#fff}",
       ".pa-fv-btn-primary:hover{background:#1177bb}",
       ".pa-fv-btn[hidden]{display:none}",
-      ".pa-fv-body{flex:1;overflow:auto;padding:0;min-height:0}",
+      ".pa-fv-body{flex:1;overflow:auto;padding:0;min-height:0;scrollbar-width:thin;scrollbar-color:#4a4a4a #1e1e1e}",
+      ".pa-fv-body::-webkit-scrollbar{width:12px;height:12px}",
+      ".pa-fv-body::-webkit-scrollbar-track{background:#1e1e1e}",
+      ".pa-fv-body::-webkit-scrollbar-thumb{background:#4a4a4a;border-radius:6px}",
+      ".pa-fv-body::-webkit-scrollbar-thumb:hover{background:#5a5a5a}",
+      ".pa-fv-body::-webkit-scrollbar-corner{background:#1e1e1e}",
       ".pa-fv-body.editing{display:flex}",
       ".pa-fv-body .wr-viewer-code{margin:0;padding:14px 16px;font-family:ui-monospace,'Cascadia Code',Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre;tab-size:2}",
       ".pa-fv-body .wr-highlight{background:#f6e05e;color:#1a1a1a;border-radius:2px;padding:0 1px}",
@@ -232,7 +237,8 @@
 
   // Self-contained dark code viewer with syntax highlighting + find-in-file search.
   // When `saveCtx` is set, the content can be edited and saved back to the flow.
-  function showJsonViewer(title, content, saveCtx) {
+  function showJsonViewer(title, content, saveCtx, fileName) {
+    fileName = fileName || "flow.json";
     ensureViewerStyles();
     const existing = document.getElementById("pa-fv-overlay");
     if (existing) existing.remove();
@@ -275,7 +281,7 @@
     body.className = "pa-fv-body";
     const pre = document.createElement("pre");
     pre.className = "wr-viewer-code";
-    if (window.paRenderCode) pre.innerHTML = window.paRenderCode(content, "flow.json", "", false);
+    if (window.paRenderCode) pre.innerHTML = window.paRenderCode(content, fileName, "", false);
     else pre.textContent = content;
     body.appendChild(pre);
 
@@ -285,7 +291,7 @@
     document.body.appendChild(overlay);
 
     if (window.paAttachCodeSearch) {
-      window.paAttachCodeSearch({ modal: modal, head: head, pre: pre, content: content, fileName: "flow.json" });
+      window.paAttachCodeSearch({ modal: modal, head: head, pre: pre, content: content, fileName: fileName });
     }
     const searchBar = modal.querySelector(".wr-search");
 

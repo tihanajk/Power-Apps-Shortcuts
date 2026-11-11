@@ -154,6 +154,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_RIBBON");
       break;
 
+    case "showBusinessRule":
+      openBusinessRuleCode();
+      break;
+
     case "showAuditHistory":
       execute("SHOW_AUDIT_HISTORY");
       break;
@@ -456,6 +460,110 @@ function openRibbonDebugDashboard() {
       if (draft.on) url += `${url.includes("?") ? "&" : "?"}ribbondebug=true`;
       window.location.href = url;
     },
+  });
+}
+
+// Shows the definition behind the business rule open in the designer (its
+// workflow clientdata JSON, or xaml) in the shared code viewer.
+function openBusinessRuleCode() {
+  var GUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+  function findWorkflowId() {
+    // 1. ?id=<guid> in the URL (braces may be URL-encoded).
+    var m = location.href.match(/[?&]id=([^&]+)/i);
+    if (m) {
+      var g = decodeURIComponent(m[1]).replace(/[{}]/g, "").trim();
+      if (GUID.test(g)) return g.match(GUID)[0];
+    }
+    // 2. A workflows(<id>) Web API call the page already made.
+    var reApi = /\/api\/data\/v9\.\d+\/workflows\(([0-9a-f-]{36})\)/i;
+    try {
+      var entries = performance.getEntriesByType("resource") || [];
+      for (var i = 0; i < entries.length; i++) {
+        var h = (entries[i].name || "").match(reApi);
+        if (h) return h[1];
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    var h2 = document.documentElement.outerHTML.match(reApi);
+    return h2 ? h2[1] : "";
+  }
+
+  function formatXml(xml) {
+    var PAD = "  ";
+    // Break only between adjacent tags so text content stays with its element.
+    var normalized = String(xml)
+      .replace(/\r?\n/g, "")
+      .replace(/>\s+</g, "><")
+      .replace(/(>)(<)/g, "$1\n$2")
+      .trim();
+    var pad = 0;
+    return normalized
+      .split("\n")
+      .map(function (raw) {
+        var node = raw.trim();
+        if (!node) return "";
+        var indentChange = 0;
+        if (/^<\/[^>]+>$/.test(node)) {
+          // closing tag
+          pad = Math.max(pad - 1, 0);
+        } else if (/^<[?!]/.test(node) || /\/>$/.test(node)) {
+          // declaration, comment, or self-closing: no change
+        } else if (/^<[^/][^>]*>.*<\/[^>]+>$/.test(node)) {
+          // element opened and closed on the same line: no change
+        } else if (/^<[^/][^>]*>$/.test(node)) {
+          // opening tag only
+          indentChange = 1;
+        }
+        var out = PAD.repeat(pad) + node;
+        pad += indentChange;
+        return out;
+      })
+      .filter(function (l) {
+        return l.length;
+      })
+      .join("\n");
+  }
+
+  var id = findWorkflowId();
+  if (!id) {
+    paModal.alert("Couldn't find a business rule id. Open the business rule in its designer first, then try again.", { title: "Business rule code" });
+    return;
+  }
+
+  var url = location.origin + "/api/data/v9.2/workflows(" + id + ")?$select=name,clientdata,xaml";
+
+  function show(resText) {
+    var title = "Business rule";
+    var text = resText;
+    var file = "businessrule.json";
+    try {
+      var data = JSON.parse(resText);
+      if (data.name) title = "Business rule: " + data.name;
+      if (data.xaml) {
+        text = formatXml(data.xaml);
+        file = "businessrule.xml";
+      } else if (data.clientdata) {
+        text = JSON.stringify(JSON.parse(data.clientdata), null, 2);
+      } else {
+        text = JSON.stringify(data, null, 2);
+      }
+    } catch (e) {
+      /* show raw text */
+    }
+    if (window.paShowCode) window.paShowCode(title, text, file);
+    else window.open(url, "_blank");
+  }
+
+  // Fetch via the background worker (host permissions + org cookies) so it isn't
+  // rejected the way a plain same-origin Web API fetch can be.
+  chrome.runtime.sendMessage({ action: "makerFetchJson", url: url }, function (res) {
+    if (chrome.runtime.lastError || !res || !res.ok || !res.text) {
+      window.open(url, "_blank");
+      return;
+    }
+    show(res.text);
   });
 }
 

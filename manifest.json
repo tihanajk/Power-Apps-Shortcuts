@@ -103,6 +103,9 @@
     "list_ribbon": {
       "description": "Inspect ribbon (command bar) buttons"
     },
+    "show_business_rule": {
+      "description": "Show the open business rule's definition (JSON/XML)"
+    },
     "show_context_info": {
       "description": "Display app, environment and form info"
     },

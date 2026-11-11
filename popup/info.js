@@ -73,6 +73,12 @@ document.addEventListener("DOMContentLoaded", function () {
           desc: "Browse ribbon/command bar buttons with rules and web resource sources.",
           isNew: true,
         },
+        {
+          command: "show_business_rule",
+          label: "Open business rule code",
+          desc: "When a business rule designer is open, show its definition (clientdata JSON or xaml).",
+          isNew: true,
+        },
       ],
     },
     {

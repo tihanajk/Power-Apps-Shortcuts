@@ -64,6 +64,7 @@ Your choice is remembered across sessions.
 - **Touch a Field** — Re-saves a field with its current value (no data change) to trigger plugins, workflows, or flows registered on the record's update.
 - **Toggle Ribbon Debug** — Opens a dashboard showing whether command-bar (ribbon) debugging is On or Off, with a switch to flip it. Applying adds or removes `&ribbondebug=true` from the URL and reloads.
 - **Inspect Ribbon Buttons** — Lists every ribbon (command bar) button for the current table and, for each one, the JavaScript function it calls, a link to open that web resource code, and its visibility logic (enable and display rules). Reads the classic ribbon definitions via `RetrieveEntityRibbon`.
+- **Open Business Rule Code** — While a business rule designer is open, shows the definition behind it (the `workflows` record's `clientdata` JSON, or the `xaml`) in the syntax-highlighted viewer with find-in-file search.
 - **View Option Sets** — Displays the option set values (including multiselect and boolean fields) available on the current form.
 
   ![Option sets](img/screenshots/optionsets.png)

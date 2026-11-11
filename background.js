@@ -424,6 +424,9 @@ function handleCommand(command) {
     case "list_ribbon":
       sendMessageToTab("listRibbon");
       break;
+    case "show_business_rule":
+      sendMessageToTab("showBusinessRule");
+      break;
     case "show_audit_history":
       sendMessageToTab("showAuditHistory");
       break;
