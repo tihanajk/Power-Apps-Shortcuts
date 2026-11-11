@@ -105,6 +105,21 @@
     },
     "show_context_info": {
       "description": "Display app, environment and form info"
+    },
+    "maker_navigate": {
+      "description": "Maker portal: go to a maker area (solutions, tables, flows, …)"
+    },
+    "maker_open_app_host": {
+      "description": "Maker portal: pick and open a model-driven app in this environment"
+    },
+    "maker_open_flow_json": {
+      "description": "Maker portal: open the current cloud flow's definition JSON"
+    },
+    "maker_open_solution": {
+      "description": "Maker portal: pick and open a solution"
+    },
+    "maker_open_flow": {
+      "description": "Maker portal: pick and open a cloud flow in Power Automate"
     }
   },
   "web_accessible_resources": [
@@ -131,6 +146,7 @@
     }
   ],
   "permissions": ["tabs", "activeTab", "scripting", "clipboardWrite", "storage"],
+  "host_permissions": ["*://*.dynamics.com/*"],
   "content_scripts": [
     {
       "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"],
@@ -152,6 +168,11 @@
         "tabs/ribbon/ribbon.js",
         "tabs/contextInfo/contextInfo.js"
       ]
+    },
+    {
+      "matches": ["*://make.powerapps.com/*", "*://make.powerautomate.com/*"],
+      "js": ["modal.js", "tabs/common.js", "maker.js"],
+      "css": ["maker.css"]
     }
   ]
 }

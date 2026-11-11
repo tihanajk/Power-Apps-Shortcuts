@@ -307,6 +307,42 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Fetches a URL from the background worker so it can use host permissions and the
+// user's org cookies (content-script fetches are blocked by the page's CORS).
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "makerFetchJson") {
+    fetch(request.url, { credentials: "include", headers: { Accept: "application/json" } })
+      .then(async function (r) {
+        sendResponse({ ok: r.ok, status: r.status, text: await r.text() });
+      })
+      .catch(function (e) {
+        sendResponse({ ok: false, status: 0, error: String(e) });
+      });
+    return true;
+  }
+  if (request.action === "makerPatchJson") {
+    fetch(request.url, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Accept: "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0",
+        "If-Match": "*",
+      },
+      body: request.body,
+    })
+      .then(async function (r) {
+        sendResponse({ ok: r.ok, status: r.status, text: await r.text() });
+      })
+      .catch(function (e) {
+        sendResponse({ ok: false, status: 0, error: String(e) });
+      });
+    return true;
+  }
+});
+
 chrome.commands.onCommand.addListener(function (command) {
   handleCommand(command);
 });
@@ -393,6 +429,21 @@ function handleCommand(command) {
       break;
     case "show_context_info":
       sendMessageToTab("showContextInfo");
+      break;
+    case "maker_navigate":
+      sendMessageToTab("makerNavigate");
+      break;
+    case "maker_open_app_host":
+      sendMessageToTab("makerOpenAppHost");
+      break;
+    case "maker_open_flow_json":
+      sendMessageToTab("makerOpenFlowJson");
+      break;
+    case "maker_open_solution":
+      sendMessageToTab("makerOpenSolution");
+      break;
+    case "maker_open_flow":
+      sendMessageToTab("makerOpenFlow");
       break;
     default:
       break;

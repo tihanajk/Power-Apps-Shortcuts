@@ -329,12 +329,15 @@ function renderRecordHeader(el, info) {
     if (keyword) {
       re = wholeWord ? new RegExp("(?<![\\w$])" + escRe(keyword) + "(?![\\w$])", "gi") : new RegExp(escRe(keyword), "gi");
     }
+    // Tokens carry a type; only some get an explicit cls, so fall back to the type.
+    var TYPE_CLASS = { comment: "tok-comment", string: "tok-string", number: "tok-number" };
     var tokens = tokenize(code || "", fileName);
     var html = "";
     for (var i = 0; i < tokens.length; i++) {
       var t = tokens[i];
+      var cls = t.cls || TYPE_CLASS[t.type];
       var piece = escapeAndMark(t.text, re);
-      html += t.cls ? '<span class="' + t.cls + '">' + piece + "</span>" : piece;
+      html += cls ? '<span class="' + cls + '">' + piece + "</span>" : piece;
     }
     return html;
   };

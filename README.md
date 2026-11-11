@@ -97,6 +97,18 @@ Your choice is remembered across sessions.
 
 ---
 
+### Maker Portal shortcuts (make.powerapps.com / make.powerautomate.com)
+
+These work on the **Maker Portal** (make.powerapps.com) and **Power Automate** (make.powerautomate.com), which don't expose the model-driven form API — so they're URL/navigation based. They have no default keys; assign your own from your browser's extension shortcuts page.
+
+- **Go to Maker Area** — Jumps to Solutions, Tables, Apps, Cloud flows, Connections, connection references or custom connectors for the current environment.
+- **Open App** — Detects this environment's runtime org URL (`…crm.dynamics.com`) from the page, lists its model-driven apps and opens the one you pick (falls back to the org root if the list can't be fetched).
+- **Open Flow JSON** — With a cloud flow open, opens its definition JSON (the `workflows` record's `clientdata`, unwrapped and formatted) in a syntax-highlighted viewer with find-in-file search. You can **Edit** the definition and **Save** it back to the flow (it re-wraps the JSON and PATCHes `clientdata` in Dataverse after a confirmation). Finds the flow's workflow id and org URL from the portal's own network calls, falling back to the URL; if the authenticated fetch fails it opens the raw Web API response in a new tab.
+- **Open Solution** — Lists the environment's solutions and opens the one you pick in the maker portal.
+- **Open Flow in Power Automate** — Lists the environment's cloud flows and opens the one you pick in Power Automate.
+
+---
+
 ### 💬 Feedback & Support
 
 Have a suggestion, found a bug, or hit an error? Please open an issue on GitHub:

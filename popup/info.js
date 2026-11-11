@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const groups = [
     {
       title: "Navigate",
+      context: "model",
       items: [
         { command: "advanced_find", label: "Open advanced find", desc: "Open the Advanced Find window for the current environment." },
         { command: "open_list", label: "Open entity list", desc: "Prompt for a table name and open its list view." },
@@ -38,6 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       title: "Form & inspect",
+      context: "model",
       items: [
         { command: "god_mode", label: "Enable god mode", desc: "Make hidden fields visible, enable disabled fields and reveal all tabs/sections." },
         { command: "locate_on_form", label: "Locate field on the form", desc: "Find a field by name and highlight it on the form." },
@@ -75,6 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       title: "Data",
+      context: "model",
       items: [
         { command: "quick_field_update", label: "Quick field update", desc: "Set a field's value on the current record without opening the form." },
         {
@@ -99,6 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     {
       title: "Solutions & dev",
+      context: "model",
       items: [
         { command: "flow_dependency_check", label: "List process dependencies", desc: "Find flows and processes that depend on this table/field." },
         { command: "list_plugins", label: "List plugin steps", desc: "Show registered plugin steps in a tree with sync/async mode." },
@@ -111,6 +115,42 @@ document.addEventListener("DOMContentLoaded", function () {
         { command: "list_securityroles", label: "List security roles", desc: "List the current user's and teams' security roles." },
       ],
     },
+    {
+      title: "Maker portal (Power Apps / Power Automate)",
+      context: "maker",
+      items: [
+        {
+          command: "maker_navigate",
+          label: "Go to maker area",
+          desc: "Jump to Solutions, Tables, Apps, Cloud flows or Connections for this environment.",
+          isNew: true,
+        },
+        {
+          command: "maker_open_app_host",
+          label: "Open app",
+          desc: "Pick a model-driven app in this environment and open it (detects the org URL from the page).",
+          isNew: true,
+        },
+        {
+          command: "maker_open_flow_json",
+          label: "Open flow JSON",
+          desc: "When a cloud flow is open (Power Apps or Power Automate), open its definition JSON from the org Web API.",
+          isNew: true,
+        },
+        {
+          command: "maker_open_solution",
+          label: "Open solution",
+          desc: "Pick a solution in this environment and open it in the maker portal.",
+          isNew: true,
+        },
+        {
+          command: "maker_open_flow",
+          label: "Open flow in Power Automate",
+          desc: "Pick a cloud flow in this environment and open it in Power Automate.",
+          isNew: true,
+        },
+      ],
+    },
   ];
 
   const container = document.getElementById("action-buttons");
@@ -118,61 +158,67 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("action-search");
 
   let activeIndex = -1;
+  let shortcutMap = {};
+  let activeContext = "model";
 
-  function render(shortcutMap) {
+  function render() {
     container.innerHTML = "";
-    groups.forEach(function (group) {
-      const section = document.createElement("div");
-      section.className = "action-group";
+    groups
+      .filter(function (group) {
+        return group.context === activeContext;
+      })
+      .forEach(function (group) {
+        const section = document.createElement("div");
+        section.className = "action-group";
 
-      const heading = document.createElement("div");
-      heading.className = "group-title";
-      heading.textContent = group.title;
-      section.appendChild(heading);
+        const heading = document.createElement("div");
+        heading.className = "group-title";
+        heading.textContent = group.title;
+        section.appendChild(heading);
 
-      group.items.forEach(function (c) {
-        const btn = document.createElement("button");
-        btn.className = "action-btn";
-        btn.dataset.label = c.label.toLowerCase();
-        if (c.desc) btn.title = c.desc;
+        group.items.forEach(function (c) {
+          const btn = document.createElement("button");
+          btn.className = "action-btn";
+          btn.dataset.label = c.label.toLowerCase();
+          if (c.desc) btn.title = c.desc;
 
-        const label = document.createElement("span");
-        label.className = "action-label";
-        label.textContent = c.label;
+          const label = document.createElement("span");
+          label.className = "action-label";
+          label.textContent = c.label;
 
-        btn.appendChild(label);
+          btn.appendChild(label);
 
-        if (c.isNew) {
-          const badge = document.createElement("span");
-          badge.className = "action-new";
-          badge.textContent = "NEW";
-          btn.appendChild(badge);
-        }
+          if (c.isNew) {
+            const badge = document.createElement("span");
+            badge.className = "action-new";
+            badge.textContent = "NEW";
+            btn.appendChild(badge);
+          }
 
-        const shortcut = shortcutMap[c.command];
-        if (shortcut) {
-          const kbd = document.createElement("kbd");
-          kbd.className = "action-kbd";
-          kbd.textContent = shortcut;
-          btn.appendChild(kbd);
-        }
+          const shortcut = shortcutMap[c.command];
+          if (shortcut) {
+            const kbd = document.createElement("kbd");
+            kbd.className = "action-kbd";
+            kbd.textContent = shortcut;
+            btn.appendChild(kbd);
+          }
 
-        btn.addEventListener("click", function () {
-          chrome.runtime.sendMessage({ action: "triggerCommand", command: c.command });
-          window.close();
+          btn.addEventListener("click", function () {
+            chrome.runtime.sendMessage({ action: "triggerCommand", command: c.command });
+            window.close();
+          });
+
+          btn.addEventListener("mousemove", function () {
+            const btns = visibleButtons();
+            const idx = btns.indexOf(btn);
+            if (idx !== -1) setActive(idx);
+          });
+
+          section.appendChild(btn);
         });
 
-        btn.addEventListener("mousemove", function () {
-          const btns = visibleButtons();
-          const idx = btns.indexOf(btn);
-          if (idx !== -1) setActive(idx);
-        });
-
-        section.appendChild(btn);
+        container.appendChild(section);
       });
-
-      container.appendChild(section);
-    });
   }
 
   function visibleButtons() {
@@ -206,17 +252,36 @@ document.addEventListener("DOMContentLoaded", function () {
     setActive(-1);
   }
 
-  if (chrome.commands && chrome.commands.getAll) {
-    chrome.commands.getAll(function (cmds) {
-      const map = {};
-      (cmds || []).forEach(function (c) {
-        if (c.shortcut) map[c.name] = c.shortcut;
-      });
-      render(map);
-    });
-  } else {
-    render({});
+  function init() {
+    render();
+    applyFilter();
   }
+
+  // Default to the tab matching the active page (maker portal vs model-driven).
+  function detectContext(cb) {
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const tabUrl = (tabs && tabs[0] && tabs[0].url) || "";
+        activeContext = /:\/\/make\.power(apps|automate)\.com/i.test(tabUrl) ? "maker" : "model";
+        cb();
+      });
+    } catch (e) {
+      cb();
+    }
+  }
+
+  detectContext(function () {
+    if (chrome.commands && chrome.commands.getAll) {
+      chrome.commands.getAll(function (cmds) {
+        (cmds || []).forEach(function (c) {
+          if (c.shortcut) shortcutMap[c.name] = c.shortcut;
+        });
+        init();
+      });
+    } else {
+      init();
+    }
+  });
 
   if (searchInput) {
     searchInput.focus();
@@ -244,6 +309,9 @@ const CHANGELOG = [
   {
     version: "2.0.0.35",
     notes: [
+      "\u2728 Maker portal shortcuts (Power Apps & Power Automate) \u2014 go to a maker area, open an app, open a solution, or open a cloud flow in Power Automate, all from searchable pickers.",
+      "\ud83e\uddfe Open a cloud flow's definition JSON in a syntax-highlighted viewer \u2014 and edit & save it back to the flow.",
+      "\ud83c\udfa8 The in-app code viewer now has syntax highlighting plus a live find-in-file search with match navigation.",
       "🧯 New shortcut — disable form event handlers (all, OnLoad, OnSave, OnChange or business rules) and re-enable them again.",
       "🪪 Richer headers across Display all fields, Optionset values, Audit history, Form layout and Script events — record name, entity and click-to-copy record id.",
     ],
