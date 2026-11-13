@@ -3,6 +3,7 @@ var allRecords = [];
 var baseUrl = "";
 var sortDir = "desc";
 var lastRecords = [];
+var columnWasResized = false;
 
 // Maps Dataverse operation numeric value -> CSS class suffix.
 // Using the number keeps colors working regardless of the UI language.
@@ -234,6 +235,10 @@ function renderResults(records) {
   var dateHeader = document.getElementById("sortDateHeader");
   if (dateHeader) {
     dateHeader.addEventListener("click", function () {
+      if (columnWasResized) {
+        columnWasResized = false;
+        return;
+      }
       sortDir = sortDir === "asc" ? "desc" : "asc";
       renderResults(lastRecords);
     });
@@ -252,19 +257,29 @@ function makeColumnsResizable() {
     handle.className = "col-resizer";
     th.appendChild(handle);
 
-    var startX, startWidth;
+    var startX, startWidth, startTableWidth;
 
     handle.addEventListener("mousedown", function (e) {
+      // Pin every column to its current width so resizing one column grows the
+      // table (horizontal scroll) and leaves the other columns unchanged.
+      headers.forEach(function (h) {
+        h.style.width = h.offsetWidth + "px";
+      });
+      table.style.width = table.offsetWidth + "px";
+
       startX = e.pageX;
       startWidth = th.offsetWidth;
+      startTableWidth = table.offsetWidth;
       handle.classList.add("resizing");
       e.preventDefault();
       e.stopPropagation();
 
       function onMouseMove(ev) {
-        var newWidth = startWidth + (ev.pageX - startX);
-        if (newWidth < 40) newWidth = 40;
-        th.style.width = newWidth + "px";
+        columnWasResized = true;
+        var delta = ev.pageX - startX;
+        if (startWidth + delta < 40) delta = 40 - startWidth;
+        th.style.width = startWidth + delta + "px";
+        table.style.width = startTableWidth + delta + "px";
       }
 
       function onMouseUp() {

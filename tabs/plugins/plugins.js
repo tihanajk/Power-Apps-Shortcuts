@@ -49,8 +49,8 @@ function initialize() {
 
   document.querySelectorAll(".step").forEach((step) => {
     step.addEventListener("click", () => {
-      const images = step.nextElementSibling;
-      images.classList.toggle("visible");
+      const images = step.parentElement.querySelector(".images");
+      if (images) images.classList.toggle("visible");
     });
   });
 }
@@ -94,44 +94,58 @@ function filterResults() {
 }
 
 function renderPlugins(plugins) {
-  var content = "";
-  content += `<div class="count" style="margin-left:10px">count: ${plugins.length}</div>`;
+  var list = plugins || [];
+  var content = `<div class="count">count: ${list.length}</div>`;
 
-  var tree =
-    plugins &&
-    plugins
-      .map(
-        (p) =>
-          `<div class="plugin-block">
-            <h2 class="plugin-title">${p?.isServiceEndpoint ? '<span title="Service Endpoint">🔌</span> ' : ""}${p?.name}</h2>
-              ${p?.isServiceEndpoint && p.endpointInfo ? renderEndpointInfo(p.endpointInfo) : ""}
-              <ul class="steps">
-              ${
-                p.steps.length > 0
-                  ? p.steps
-                      .map(
-                        (s) =>
-                          `<li>
-                            <h3 class="step"><span title="Step">⚡</span> ${s.name} ${s.status == 1 ? `<span title="Enabled">🟢</span>` : `<span title="Disabled">🟡</span>`}
-                            ${s.mode == 0 ? '<div style="margin-left:10px; overflow-wrap: break-word;" ><span title="Synchronous">🔀</span> Synchronous</div>' : s.mode == 1 ? '<div style="margin-left:10px; overflow-wrap: break-word;"><span title="Asynchronous">⏱️</span> Asynchronous</div>' : s.mode}            
-                            ${s.filter ? `<div style="margin-left:20px; margin-top:10px; overflow-wrap: break-word;"><span title="Filters">🔍</span> ${s.filter}</div>` : ""}
-                            </h3>
-                            <ul class="images">
-                            ${s.image.name ? `<li><h3><span title="Image">🖼️</span> ${s.image.name} - ${s.image.attributes}</h3></li>` : ""}
-                            </ul>
-                          </li>`,
-                      )
-                      .join("")
-                  : "no steps found"
-              }    
-              </ul>
-          </div>`,
-      )
-      .join("");
+  var tree = list
+    .map(function (p) {
+      var steps = p.steps || [];
+      var stepsHtml = steps.length ? steps.map(renderStep).join("") : `<li class="no-steps">No steps found</li>`;
 
-  content += tree;
+      return `<div class="plugin-block">
+            <div class="plugin-title" role="button" tabindex="0">
+              <span class="plugin-chevron" aria-hidden="true">▸</span>
+              <span class="plugin-name">${p?.isServiceEndpoint ? '<span class="plugin-icon" title="Service Endpoint">🔌</span>' : ""}${escapeHtml(p?.name)}</span>
+              <span class="plugin-meta">${steps.length} ${steps.length === 1 ? "step" : "steps"}</span>
+            </div>
+            ${p?.isServiceEndpoint && p.endpointInfo ? renderEndpointInfo(p.endpointInfo) : ""}
+            <ul class="steps">${stepsHtml}</ul>
+          </div>`;
+    })
+    .join("");
 
-  document.getElementById("tree").innerHTML = content;
+  document.getElementById("tree").innerHTML = content + tree;
+}
+
+function renderStep(s) {
+  var enabled = s.status == 1;
+  var statusBadge = enabled
+    ? `<span class="badge badge-on" title="Enabled">Enabled</span>`
+    : `<span class="badge badge-off" title="Disabled">Disabled</span>`;
+  var modeBadge =
+    s.mode == 0
+      ? `<span class="badge badge-sync" title="Synchronous">Sync</span>`
+      : s.mode == 1
+        ? `<span class="badge badge-async" title="Asynchronous">Async</span>`
+        : "";
+  var hasImage = !!(s.image && s.image.name);
+  var filterHtml = s.filter
+    ? `<div class="step-detail"><span class="detail-label">🔍 Filters</span><code class="detail-val">${escapeHtml(s.filter)}</code></div>`
+    : "";
+  var imageHtml = hasImage
+    ? `<li class="image-row"><span title="Image">🖼️</span><span class="img-name">${escapeHtml(s.image.name)}</span>${s.image.attributes ? `<code class="detail-val">${escapeHtml(s.image.attributes)}</code>` : ""}</li>`
+    : "";
+
+  return `<li class="step-item${hasImage ? " has-image" : ""}">
+            <div class="step" role="button" tabindex="0">
+              ${hasImage ? '<span class="step-chevron" aria-hidden="true">▸</span>' : '<span class="step-bullet" title="Step" aria-hidden="true">⚡</span>'}
+              <span class="step-name">${escapeHtml(s.name)}</span>
+              ${statusBadge}
+              ${modeBadge}
+              ${filterHtml}
+            </div>
+            <ul class="images">${imageHtml}</ul>
+          </li>`;
 }
 
 function escapeHtml(text) {

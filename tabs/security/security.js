@@ -78,14 +78,14 @@ function handleContent(allRoles, link, url) {
   var users = allRoles.filter((a) => a.user);
   var teams = allRoles.filter((a) => a.team);
 
-  if (users.length > 0) content += "<h2 id='users'>User roles:</h2>";
+  if (users.length > 0) content += "<h2 class='sec-section'>User roles</h2>";
   users.forEach((a) => {
     var userLink = url && a.userId ? `${url}/main.aspx?pagetype=entityrecord&etn=systemuser&id=${a.userId}` : null;
-    content += `<div id="user">
-        <h3>${userLink ? `<a href="${userLink}" target="_blank">${a.user}</a>` : a.user}</h3>`;
+    content += `<div class="sec-card">
+        <div class="sec-card-head"><span class="sec-icon" title="User">\uD83D\uDC64</span>${userLink ? `<a href="${userLink}" target="_blank">${a.user}</a>` : a.user}</div>`;
     content +=
       a.roles.length > 0
-        ? `<table id="main">                        
+        ? `<div class="table-container"><table id="main">
                         <thead>
                         <tr>
                             <th>Role Name</th>
@@ -98,28 +98,28 @@ function handleContent(allRoles, link, url) {
                         ${a.roles
                           .map(
                             (r) =>
-                              `<tr id="main-row">
+                              `<tr>
                                 <td><a href="${link}/${r.id}/roleeditor" target="_blank">${r.name}</a></td>
-                                <td>${r.id}</td>
+                                <td class="mono">${r.id}</td>
                                 <td>${r?.teamName ? (url && r?.teamId ? `<a href="${url}/main.aspx?pagetype=entityrecord&etn=team&id=${r.teamId}" target="_blank">${r.teamName}</a>` : r.teamName) : ""}</td>
-                                <td>${r?.teamId ? r.teamId : ""}</td>
+                                <td class="mono">${r?.teamId ? r.teamId : ""}</td>
                             </tr>`,
                           )
                           .join("")}
                         </tbody>
-                    </table>`
-        : "<div>no roles</div>";
+                    </table></div>`
+        : '<div class="sec-empty">No roles</div>';
     content += "</div>";
   });
 
-  if (teams.length > 0) content += '<h2 id="teams">Team roles:</h2>';
+  if (teams.length > 0) content += '<h2 class="sec-section">Team roles</h2>';
   teams.forEach((a) => {
     var teamLink = url && a.teamId ? `${url}/main.aspx?pagetype=entityrecord&etn=team&id=${a.teamId}` : null;
-    content += `<div id="team">
-        <h3>Team: ${teamLink ? `<a href="${teamLink}" target="_blank">${a.team}</a>` : a.team}</h3>`;
+    content += `<div class="sec-card">
+        <div class="sec-card-head"><span class="sec-icon" title="Team">\uD83D\uDC65</span>${teamLink ? `<a href="${teamLink}" target="_blank">${a.team}</a>` : a.team}</div>`;
     content +=
       a.roles.length > 0
-        ? `<table id="main">                        
+        ? `<div class="table-container"><table id="main">
                         <thead>
                         <tr>
                             <th>Role Name</th>
@@ -130,15 +130,15 @@ function handleContent(allRoles, link, url) {
                         ${a.roles
                           .map(
                             (r) =>
-                              `<tr id="main-row">
+                              `<tr>
                                 <td><a href="${link}/${r.id}/roleeditor" target="_blank">${r.name}</a></td>
-                                <td>${r.id}</td>
+                                <td class="mono">${r.id}</td>
                             </tr>`,
                           )
                           .join("")}
                         </tbody>
-                    </table>`
-        : "<div>no roles</div>";
+                    </table></div>`
+        : '<div class="sec-empty">No roles</div>';
     content += "</div>";
   });
   return content;

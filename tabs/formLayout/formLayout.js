@@ -173,7 +173,7 @@ function renderLayout(tabs) {
           html += `<tr>
             <td>${c.name}</td>
             <td>${c.attribute || ""}</td>
-            <td>${c.type}</td>
+            <td><span class="ctrl-type">${c.type}</span></td>
             <td>${c.visible ? `<span title="Visible">✅</span>` : `<span title="Hidden">❌</span>`}</td>
             <td>${c.disabled === null ? "-" : c.disabled ? `<span title="Disabled">🔒</span>` : `<span title="Editable">✏️</span>`}</td>
             <td>${c.required === "required" ? `<span title="Required">🔴</span> Required` : c.required === "recommended" ? `<span title="Recommended">🔵</span> Recommended` : "-"}</td>

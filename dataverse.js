@@ -2199,12 +2199,29 @@ async function listAuditHistory() {
 
   var objectTypeCode;
   try {
-    var metaResult = await fetch(url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=ObjectTypeCode`, {
-      method: "GET",
-      headers: header,
-    });
+    var metaResult = await fetch(
+      url + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')?$select=ObjectTypeCode,PrimaryNameAttribute,EntitySetName`,
+      {
+        method: "GET",
+        headers: header,
+      },
+    );
     var metaResp = await metaResult.json();
     objectTypeCode = metaResp.ObjectTypeCode;
+
+    // The form API often returns an empty primary name; fall back to the Web API.
+    if (!primaryName && metaResp.PrimaryNameAttribute && metaResp.EntitySetName) {
+      try {
+        var recResult = await fetch(url + `/api/data/v9.2/${metaResp.EntitySetName}(${entityId})?$select=${metaResp.PrimaryNameAttribute}`, {
+          method: "GET",
+          headers: header,
+        });
+        var recJson = await recResult.json();
+        primaryName = recJson[metaResp.PrimaryNameAttribute] || primaryName;
+      } catch (e) {
+        /* keep existing primaryName */
+      }
+    }
   } catch (e) {
     paModal.alert("Error fetching entity metadata: " + e.message);
     return;

@@ -163,15 +163,15 @@ function makeMiniTable(handlers) {
               ${handlers
                 .map(
                   (v) =>
-                    `<tr id="mini-row">
-                      <td>${v?.libraryName}</td>
-                      <td>${v?.functionName}</td>
-                      <td>${v?.enabled}</td>
+                    `<tr>
+                      <td>${v?.libraryName ?? ""}</td>
+                      <td>${v?.functionName ?? ""}</td>
+                      <td><span class="ev-pill ${v?.enabled ? "on" : "off"}">${v?.enabled ? "Enabled" : "Disabled"}</span></td>
                       <td>${v?.parameters || "-"}</td>
-                  </tr>
-                </tbody>`,
+                  </tr>`,
                 )
                 .join("")}
+              </tbody>
             </table>`;
   return mini;
 }
@@ -198,7 +198,7 @@ function handleLibraries(libraries) {
             <td>
               <a href='#' class='wr-code-link' data-name='${escapeHtml(l.name)}'>${escapeHtml(l.name)}</a>
             </td>            
-            <td>${l.libraryUniqueId}</td></tr>`,
+            <td class="mono">${l.libraryUniqueId}</td></tr>`,
             )
             .join("")}
         </tbody>

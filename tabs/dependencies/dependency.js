@@ -10,6 +10,7 @@ var searchKeyword = "";
 
 var currentRows = [];
 var sortState = { key: null, dir: 1 };
+var columnWasResized = false;
 
 const CATEGORIES = {
   PLUGIN: -1,
@@ -315,10 +316,10 @@ function renderDependencies(processes) {
                           : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
                     }
                     </td>
-                    <td id="category" style="color:${handleColor(e.category)}">${e.category_display}</td>
+                    <td id="category"><span class="cat-pill" style="--cat:${handleColor(e.category)}">${e.category_display}</span></td>
                     <td id="primary-entity" style="color:#5d699a">${e.primary_entity != "none" ? e.primary_entity : ""}</td>
-                    <td style="color:${e.status == 1 ? "" : "grey"}">
-                    ${e.status == 1 ? `<span title="Active">🟢</span>` : `<span title="Inactive">🟡</span>`} ${e.status_display}
+                    <td>
+                    <span class="status-pill ${e.status == 1 ? "on" : "off"}" title="${e.status == 1 ? "Active" : "Inactive"}">${e.status_display}</span>
                     </td>
                 </tr>`,
             )
@@ -345,6 +346,10 @@ function renderDependencies(processes) {
 
   document.querySelectorAll("th.sortable").forEach(function (th) {
     th.addEventListener("click", function () {
+      if (columnWasResized) {
+        columnWasResized = false;
+        return;
+      }
       var key = th.getAttribute("data-sort");
       if (sortState.key === key) {
         sortState.dir = -sortState.dir;
@@ -453,19 +458,29 @@ function makeColumnsResizable() {
     handle.className = "col-resizer";
     th.appendChild(handle);
 
-    var startX, startWidth;
+    var startX, startWidth, startTableWidth;
 
     handle.addEventListener("mousedown", function (e) {
+      // Pin every column to its current width so resizing one column grows the
+      // table (horizontal scroll) and leaves the other columns unchanged.
+      headers.forEach(function (h) {
+        h.style.width = h.offsetWidth + "px";
+      });
+      table.style.width = table.offsetWidth + "px";
+
       startX = e.pageX;
       startWidth = th.offsetWidth;
+      startTableWidth = table.offsetWidth;
       handle.classList.add("resizing");
       e.preventDefault();
       e.stopPropagation();
 
       function onMouseMove(ev) {
-        var newWidth = startWidth + (ev.pageX - startX);
-        if (newWidth < 40) newWidth = 40;
-        th.style.width = newWidth + "px";
+        columnWasResized = true;
+        var delta = ev.pageX - startX;
+        if (startWidth + delta < 40) delta = 40 - startWidth;
+        th.style.width = startWidth + delta + "px";
+        table.style.width = startTableWidth + delta + "px";
       }
 
       function onMouseUp() {

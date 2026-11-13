@@ -1,5 +1,84 @@
 /* Fields tab — all base styles inherited from ../common.css */
 
+/* ---------- Modern table container ---------- */
+.table-container {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 10px 28px rgba(42, 54, 77, 0.08);
+}
+
+#main {
+  border: none;
+  border-radius: 0;
+}
+
+#main thead th {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+#main tbody td {
+  vertical-align: middle;
+}
+
+.field-name {
+  font-weight: 500;
+}
+
+/* ---------- Field pills ---------- */
+.field-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.pill-onform {
+  background: #e6f6ec;
+  color: #1e874b;
+}
+
+.pill-key {
+  background: #fef3c7;
+  color: #92610a;
+}
+
+.pill-calc {
+  background: #e7effb;
+  color: #2b5fab;
+}
+
+.pill-rollup {
+  background: #f3e8fb;
+  color: #7b3fb0;
+}
+
+.pill-pfx {
+  background: #d9f3f1;
+  color: #0a7c74;
+}
+
+.field-pill.formula-link {
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.field-pill.formula-link:hover {
+  filter: brightness(0.96);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.15);
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;

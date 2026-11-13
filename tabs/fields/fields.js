@@ -123,21 +123,21 @@ function renderResults(data) {
           ${data
             .map(
               (d) =>
-                `<tr><td>${d.name}${d.onForm ? ` <span class="field-symbol" title="On form">🟢</span>` : ""}${
-                  d.isAltKey ? ` <span class="field-symbol" title="Alternate key">🔑</span>` : ""
+                `<tr><td><span class="field-name">${d.name}</span>${d.onForm ? ` <span class="field-pill pill-onform" title="On form">🟢 On form</span>` : ""}${
+                  d.isAltKey ? ` <span class="field-pill pill-key" title="Alternate key">🔑 Key</span>` : ""
                 }${
                   d?.behavior == 1
-                    ? ` <span class="field-symbol formula-link" data-metadataid="${escapeAttr(
+                    ? ` <span class="field-pill pill-calc formula-link" data-metadataid="${escapeAttr(
                         d.metadataId || "",
-                      )}" data-behavior="1" title="Calculated — click to open the formula editor" style="cursor:pointer">©️</span>`
+                      )}" data-behavior="1" title="Calculated — click to open the formula editor">©️ Calculated</span>`
                     : d?.behavior == 2
-                      ? ` <span class="field-symbol formula-link" data-metadataid="${escapeAttr(
+                      ? ` <span class="field-pill pill-rollup formula-link" data-metadataid="${escapeAttr(
                           d.metadataId || "",
-                        )}" data-behavior="2" title="Rollup — click to open the formula editor" style="cursor:pointer">®️</span>`
+                        )}" data-behavior="2" title="Rollup — click to open the formula editor">®️ Rollup</span>`
                       : d?.behavior == 3
-                        ? ` <span class="field-symbol formula-link" data-field="${escapeAttr(d.name)}" data-behavior="3" data-formula="${escapeAttr(
+                        ? ` <span class="field-pill pill-pfx formula-link" data-field="${escapeAttr(d.name)}" data-behavior="3" data-formula="${escapeAttr(
                             d.formula || "",
-                          )}" title="Power Fx formula — click to view" style="cursor:pointer">🌀</span>`
+                          )}" title="Power Fx formula — click to view">🌀 Power Fx</span>`
                         : ""
                 }</td><td>${d.value == null ? "" : d.value}</td></tr>`,
             )
