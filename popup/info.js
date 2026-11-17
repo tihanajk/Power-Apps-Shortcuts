@@ -71,7 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
           command: "list_ribbon",
           label: "Inspect ribbon buttons",
           desc: "Browse ribbon/command bar buttons with rules and web resource sources.",
-          isNew: true,
         },
         {
           command: "show_business_rule",
@@ -90,13 +89,11 @@ document.addEventListener("DOMContentLoaded", function () {
           command: "touch_field",
           label: "Touch a field (trigger processes)",
           desc: "Re-save a field with its current value to fire background processes.",
-          isNew: true,
         },
         {
           command: "execute_fetchxml",
           label: "Execute fetchXML",
           desc: "Run a FetchXML query and browse the results (paged 5000 at a time).",
-          isNew: true,
         },
         {
           command: "show_audit_history",
@@ -111,13 +108,18 @@ document.addEventListener("DOMContentLoaded", function () {
       context: "model",
       items: [
         { command: "flow_dependency_check", label: "List process dependencies", desc: "Find flows and processes that depend on this table/field." },
-        { command: "list_plugins", label: "List plugin steps", desc: "Show registered plugin steps in a tree with sync/async mode." },
+        {
+          command: "list_plugins",
+          label: "List plugin steps",
+          desc: "Show registered plugin steps, service endpoints and webhooks in a tree.",
+          isNew: true,
+        },
         {
           command: "add_wr_to_solution",
           label: "Add web resource to a solution",
           desc: "Search web resources and add a match to a chosen solution.",
         },
-        { command: "open_solution", label: "Open solution in Power Apps", desc: "Pick a solution and open it in the maker portal.", isNew: true },
+        { command: "open_solution", label: "Open solution in Power Apps", desc: "Pick a solution and open it in the maker portal." },
         { command: "list_securityroles", label: "List security roles", desc: "List the current user's and teams' security roles." },
       ],
     },
@@ -312,6 +314,16 @@ document.addEventListener("DOMContentLoaded", function () {
 // Changelog shown in the "What's new" popup. Add a new entry at the top whenever
 // something major ships; only the most recent 5 versions are displayed.
 const CHANGELOG = [
+  {
+    version: "2.0.0.36",
+    notes: [
+      "🧭 Open Entity List and Open Record now use searchable entity pickers with display and logical names.",
+      "🧩 Form Layout compares default and current visibility, disabled, and required states; differences may indicate form logic such as a business rule or script.",
+      "⌨️ Modal comboboxes support Up/Down keyboard navigation and Enter selection.",
+      "📗 Refreshed the Excel export buttons across tabs with a compact green style.",
+      "🛡️ Open Business Rule Code now checks that a Business Rule is open in the current tab.",
+    ],
+  },
   {
     version: "2.0.0.35",
     notes: [
