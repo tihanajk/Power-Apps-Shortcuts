@@ -11,6 +11,47 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("downloadBtn").addEventListener("click", () => downloadData());
 });
 
+function normalizeRequired(value) {
+  if (value == null || value === "") return null;
+  var str = String(value).toLowerCase();
+  if (str === "optional" || str === "none" || str === "0") return "none";
+  if (str.indexOf("recommend") !== -1 || str === "3") return "recommended";
+  if (str.indexOf("require") !== -1 || str === "1" || str === "2") return "required";
+  return str;
+}
+
+function renderStateComparison(defaultHtml, currentHtml) {
+  return `<div class="state-compare">
+    <div class="state-row"><span class="state-label">Default:</span> ${defaultHtml}</div>
+    <div class="state-row"><span class="state-label">Current:</span> ${currentHtml}</div>
+  </div>`;
+}
+
+function renderVisibleState(defaultValue, currentValue) {
+  var defaultHtml = defaultValue ? '<span title="Visible">✅</span> Visible' : '<span title="Hidden">❌</span> Hidden';
+  var currentHtml = currentValue ? '<span title="Visible">✅</span> Visible' : '<span title="Hidden">❌</span> Hidden';
+  return renderStateComparison(defaultHtml, currentHtml);
+}
+
+function renderDisabledState(defaultValue, currentValue) {
+  if (currentValue == null) {
+    return renderStateComparison("-", "-");
+  }
+  var defaultHtml = defaultValue ? '<span title="Disabled">🔒</span> Disabled' : '<span title="Editable">✏️</span> Editable';
+  var currentHtml = currentValue ? '<span title="Disabled">🔒</span> Disabled' : '<span title="Editable">✏️</span> Editable';
+  return renderStateComparison(defaultHtml, currentHtml);
+}
+
+function renderRequiredState(defaultValue, currentValue) {
+  var reqToHtml = function (value) {
+    if (value === "required") return '<span title="Required">🔴</span> Required';
+    if (value === "recommended") return '<span title="Recommended">🔵</span> Recommended';
+    if (value === "none") return "Optional";
+    return "-";
+  };
+  return renderStateComparison(reqToHtml(defaultValue), reqToHtml(currentValue));
+}
+
 function downloadData() {
   var rows = [];
   allTabs.forEach(function (tab) {
@@ -19,32 +60,54 @@ function downloadData() {
         rows.push({
           "Tab Label": tab.label,
           "Tab Name": tab.name,
-          "Tab Visible": tab.visible,
+          "Tab Visible Default": tab.defaultVisible,
+          "Tab Visible Current": tab.visible,
+          "Tab Visibility Changed": tab.visibleChanged,
           "Section Label": section.label,
           "Section Name": section.name,
-          "Section Visible": section.visible,
+          "Section Visible Default": section.defaultVisible,
+          "Section Visible Current": section.visible,
+          "Section Visibility Changed": section.visibleChanged,
           "Control Name": "",
           Attribute: "",
           "Control Type": "",
-          Visible: "",
-          Disabled: "",
-          Required: "",
+          "Visible Default": "",
+          "Visible Current": "",
+          "Visible Changed": "",
+          "Disabled Default": "",
+          "Disabled Current": "",
+          "Disabled Changed": "",
+          "Required Default": "",
+          "Required Current": "",
+          "Required Changed": "",
+          "State Differs From Default": "",
         });
       }
       section.controls.forEach(function (control) {
         rows.push({
           "Tab Label": tab.label,
           "Tab Name": tab.name,
-          "Tab Visible": tab.visible,
+          "Tab Visible Default": tab.defaultVisible,
+          "Tab Visible Current": tab.visible,
+          "Tab Visibility Changed": tab.visibleChanged,
           "Section Label": section.label,
           "Section Name": section.name,
-          "Section Visible": section.visible,
+          "Section Visible Default": section.defaultVisible,
+          "Section Visible Current": section.visible,
+          "Section Visibility Changed": section.visibleChanged,
           "Control Name": control.name,
           Attribute: control.attribute || "",
           "Control Type": control.type,
-          Visible: control.visible,
-          Disabled: control.disabled,
-          Required: control.required || "",
+          "Visible Default": control.defaultVisible,
+          "Visible Current": control.visible,
+          "Visible Changed": control.visibleChanged,
+          "Disabled Default": control.defaultDisabled,
+          "Disabled Current": control.disabled,
+          "Disabled Changed": control.disabledChanged,
+          "Required Default": control.defaultRequired || "",
+          "Required Current": control.required || "",
+          "Required Changed": control.requiredChanged,
+          "State Differs From Default": control.automationChanged,
         });
       });
     });
@@ -97,9 +160,7 @@ function filterData() {
 
       if (tabMatch || sectionMatch || filteredControls.length > 0) {
         filteredSections.push({
-          label: section.label,
-          name: section.name,
-          visible: section.visible,
+          ...section,
           controls: sectionMatch || tabMatch ? section.controls : filteredControls,
         });
       }
@@ -107,9 +168,7 @@ function filterData() {
 
     if (tabMatch || filteredSections.length > 0) {
       filtered.push({
-        label: tab.label,
-        name: tab.name,
-        visible: tab.visible,
+        ...tab,
         sections: tabMatch && filteredSections.length === 0 ? tab.sections : filteredSections,
       });
     }
@@ -139,18 +198,22 @@ function renderLayout(tabs) {
     </div>`;
 
   tabs.forEach(function (tab) {
+    var tabDefaultVisible = typeof tab.defaultVisible === "boolean" ? tab.defaultVisible : tab.visible;
     html += `<div class="tab-block">
       <div class="tab-header">
         <span class="tab-label">${tab.label}</span>
         <span class="tab-name">${tab.name}</span>
+        <span class="state-inline">Visible: ${tabDefaultVisible ? "default ✅" : "default ❌"} → ${tab.visible ? "current ✅" : "current ❌"}</span>
         ${!tab.visible ? '<span class="hidden-badge">hidden</span>' : ""}
       </div>`;
 
     tab.sections.forEach(function (section) {
+      var sectionDefaultVisible = typeof section.defaultVisible === "boolean" ? section.defaultVisible : section.visible;
       html += `<div class="section-block">
         <div class="section-header">
           <span class="section-label">${section.label || "(no label)"}</span>
           <span class="section-name">${section.name}</span>
+          <span class="state-inline">Visible: ${sectionDefaultVisible ? "default ✅" : "default ❌"} → ${section.visible ? "current ✅" : "current ❌"}</span>
           ${!section.visible ? '<span class="hidden-badge">hidden</span>' : ""}
         </div>`;
 
@@ -170,13 +233,21 @@ function renderLayout(tabs) {
             <tbody>`;
 
         section.controls.forEach(function (c) {
+          var defaultVisible = typeof c.defaultVisible === "boolean" ? c.defaultVisible : c.visible;
+          var defaultDisabled = c.defaultDisabled;
+          if (defaultDisabled == null) defaultDisabled = c.disabled;
+
+          var currentRequired = normalizeRequired(c.required);
+          var defaultRequired = normalizeRequired(c.defaultRequired);
+          if (defaultRequired == null) defaultRequired = currentRequired;
+
           html += `<tr>
             <td>${c.name}</td>
             <td>${c.attribute || ""}</td>
             <td><span class="ctrl-type">${c.type}</span></td>
-            <td>${c.visible ? `<span title="Visible">✅</span>` : `<span title="Hidden">❌</span>`}</td>
-            <td>${c.disabled === null ? "-" : c.disabled ? `<span title="Disabled">🔒</span>` : `<span title="Editable">✏️</span>`}</td>
-            <td>${c.required === "required" ? `<span title="Required">🔴</span> Required` : c.required === "recommended" ? `<span title="Recommended">🔵</span> Recommended` : "-"}</td>
+            <td>${renderVisibleState(defaultVisible, c.visible)}</td>
+            <td>${renderDisabledState(defaultDisabled, c.disabled)}</td>
+            <td>${renderRequiredState(defaultRequired, currentRequired)}</td>
           </tr>`;
         });
 

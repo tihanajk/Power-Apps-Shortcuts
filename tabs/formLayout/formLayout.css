@@ -93,6 +93,12 @@
   opacity: 0.8;
 }
 
+.state-inline {
+  font-weight: 500;
+  font-size: 0.72rem;
+  opacity: 0.95;
+}
+
 .section-block {
   border-top: 1px solid var(--color-border);
 }
@@ -128,6 +134,12 @@
   font-weight: 600;
 }
 
+.state-note {
+  margin: 4px 0 10px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
 .no-controls {
   padding: 8px 16px;
   color: #9ca3af;
@@ -153,6 +165,26 @@ thead th {
 
 tbody td {
   padding: 8px 16px;
+}
+
+.state-compare {
+  display: grid;
+  gap: 3px;
+  min-width: 220px;
+}
+
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.25;
+}
+
+.state-label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 52px;
 }
 
 tbody tr {

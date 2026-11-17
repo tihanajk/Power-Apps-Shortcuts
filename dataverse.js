@@ -407,6 +407,104 @@ async function openSolution() {
   window.open(`https://make.powerapps.com/environments/${envId}/solutions/${solutionId}`, "_blank");
 }
 
+async function getEntityPickerOptions() {
+  var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+  var nextUrl = clientUrl + "/api/data/v9.2/EntityDefinitions?$select=LogicalName,DisplayName";
+  var entities = [];
+
+  while (nextUrl) {
+    var res = await fetch(nextUrl, { method: "GET", headers: header });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var json = await res.json();
+    entities.push.apply(entities, json.value || []);
+    nextUrl = json["@odata.nextLink"] || "";
+  }
+
+  return entities
+    .filter(function (entity) {
+      return entity.LogicalName;
+    })
+    .map(function (entity) {
+      var label = (entity.DisplayName && entity.DisplayName.UserLocalizedLabel && entity.DisplayName.UserLocalizedLabel.Label) || entity.LogicalName;
+      return { value: entity.LogicalName, label: label + " (" + entity.LogicalName + ")" };
+    })
+    .sort(function (a, b) {
+      return a.label.localeCompare(b.label);
+    });
+}
+
+function buildEntityPageUrl(pageType, entityName, recordId) {
+  var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+  var targetUrl = new URL(clientUrl.replace(/\/+$/, "") + "/main.aspx");
+  new URL(location.href).searchParams.forEach(function (value, key) {
+    if (key.toLowerCase() !== "pagetype" && key.toLowerCase() !== "etn" && key.toLowerCase() !== "id") {
+      targetUrl.searchParams.set(key, value);
+    }
+  });
+  targetUrl.searchParams.set("pagetype", pageType);
+  targetUrl.searchParams.set("etn", entityName);
+  if (recordId) targetUrl.searchParams.set("id", recordId.replace(/[{}]/g, "").trim());
+  return targetUrl.toString();
+}
+
+async function openEntityList() {
+  var options;
+  try {
+    options = await getEntityPickerOptions();
+  } catch (e) {
+    paModal.alert("Could not load the entity list: " + e.message);
+    return;
+  }
+  if (!options.length) {
+    paModal.alert("No entities were returned for this environment.");
+    return;
+  }
+
+  var selection = await paModal.form("Open entity list", [
+    {
+      name: "entity",
+      label: "Entity",
+      type: "combobox",
+      options: options,
+      defaultValue: options[0].value,
+      placeholder: "Type to search...",
+    },
+  ]);
+  if (selection == null) return;
+  var entityName = selection.entity || "";
+  if (!entityName) return;
+  window.open(buildEntityPageUrl("entitylist", entityName), "_blank");
+}
+
+async function openRecord() {
+  var options;
+  try {
+    options = await getEntityPickerOptions();
+  } catch (e) {
+    paModal.alert("Could not load the entity list: " + e.message);
+    return;
+  }
+  if (!options.length) {
+    paModal.alert("No entities were returned for this environment.");
+    return;
+  }
+
+  var fields = [
+    {
+      name: "entityName",
+      label: "Entity",
+      type: "combobox",
+      options: options,
+      defaultValue: options[0].value,
+      placeholder: "Type to search...",
+    },
+    { name: "recordId", label: "Record id (GUID)", placeholder: "e.g. 00000000-0000-0000-0000-000000000000" },
+  ];
+  var selection = await paModal.form("Open record", fields);
+  if (!selection || !selection.entityName || !selection.recordId) return;
+  window.open(buildEntityPageUrl("entityrecord", selection.entityName, selection.recordId), "_blank");
+}
+
 async function loc() {
   if (typeof Xrm !== "undefined" && Xrm.Page) {
     var field = await paModal.prompt("Locate field by name");
@@ -2115,48 +2213,229 @@ function refreshVariables() {
   listEnvironmentVariables({ refresh: true });
 }
 
-function listFormLayout() {
+function normalizeRequirementState(value) {
+  if (value == null || value === "") return null;
+
+  var raw = value;
+  if (typeof raw === "object" && raw.Value != null) raw = raw.Value;
+
+  var str = String(raw).toLowerCase();
+  if (str === "0" || str === "none" || str === "optional") return "none";
+  if (str === "3" || str.indexOf("recommended") !== -1) return "recommended";
+  if (str === "1" || str === "2" || str.indexOf("required") !== -1) return "required";
+  return str;
+}
+
+function parseFormBoolean(value, fallback) {
+  if (value == null || value === "") return fallback;
+  var str = String(value).toLowerCase();
+  if (str === "true" || str === "1" || str === "yes") return true;
+  if (str === "false" || str === "0" || str === "no") return false;
+  return fallback;
+}
+
+function parseFormLayoutDefaults(formXml) {
+  var defaults = {
+    tabs: {},
+    sections: {},
+    controlsByKey: {},
+    controlsByName: {},
+    requiredByAttribute: {},
+  };
+
+  if (!formXml) return defaults;
+
+  try {
+    var xml = new DOMParser().parseFromString(formXml, "text/xml");
+    if (!xml || xml.getElementsByTagName("parsererror").length) return defaults;
+
+    xml.querySelectorAll("tab").forEach(function (tabNode) {
+      var tabName = tabNode.getAttribute("name");
+      if (tabName) {
+        defaults.tabs[tabName] = parseFormBoolean(tabNode.getAttribute("visible"), true);
+      }
+
+      tabNode.querySelectorAll("section").forEach(function (sectionNode) {
+        var sectionName = sectionNode.getAttribute("name");
+        if (tabName && sectionName) {
+          defaults.sections[tabName + "|" + sectionName] = parseFormBoolean(sectionNode.getAttribute("visible"), true);
+        }
+
+        sectionNode.querySelectorAll("control").forEach(function (controlNode) {
+          var controlName =
+            controlNode.getAttribute("id") ||
+            controlNode.getAttribute("name") ||
+            controlNode.getAttribute("datafieldname") ||
+            controlNode.getAttribute("attributename") ||
+            "";
+          if (!controlName) return;
+
+          var requiredState = normalizeRequirementState(
+            controlNode.getAttribute("requiredlevel") ||
+              controlNode.getAttribute("requirementlevel") ||
+              controlNode.getAttribute("required") ||
+              controlNode.getAttribute("isrequired"),
+          );
+
+          var controlDefaults = {
+            visible: parseFormBoolean(controlNode.getAttribute("visible"), true),
+            disabled: parseFormBoolean(controlNode.getAttribute("disabled"), false),
+            required: requiredState,
+          };
+
+          if (tabName && sectionName) {
+            defaults.controlsByKey[tabName + "|" + sectionName + "|" + controlName] = controlDefaults;
+          }
+
+          if (!defaults.controlsByName[controlName]) defaults.controlsByName[controlName] = [];
+          defaults.controlsByName[controlName].push(controlDefaults);
+
+          var attrName = controlNode.getAttribute("datafieldname") || controlNode.getAttribute("attributename") || "";
+          if (attrName && requiredState != null && !Object.prototype.hasOwnProperty.call(defaults.requiredByAttribute, attrName)) {
+            defaults.requiredByAttribute[attrName] = requiredState;
+          }
+        });
+      });
+    });
+  } catch (e) {
+    // Ignore parse issues and fall back to current runtime values.
+  }
+
+  return defaults;
+}
+
+async function getAttributeRequiredDefaults(clientUrl, entityName) {
+  var requiredDefaults = {};
+  try {
+    var res = await fetch(clientUrl + `/api/data/v9.2/EntityDefinitions(LogicalName='${entityName}')/Attributes?$select=LogicalName,RequiredLevel`, {
+      method: "GET",
+      headers: header,
+    });
+    var json = await res.json();
+    (json.value || []).forEach(function (attr) {
+      var req = normalizeRequirementState(attr.RequiredLevel);
+      if (attr.LogicalName && req != null) {
+        requiredDefaults[attr.LogicalName] = req;
+      }
+    });
+  } catch (e) {
+    // Keep defaults empty when metadata lookup fails.
+  }
+  return requiredDefaults;
+}
+
+async function listFormLayout() {
   var formId = Xrm.Page.ui.formSelector._formId.guid;
   var formName = Xrm.Page.ui.formSelector.getCurrentItem()?.getLabel() || "";
   var entityName = Xrm.Page.data.entity.getEntityName();
   var entityId = Xrm.Page.data.entity.getId().slice(1, -1);
   var primaryName = typeof Xrm.Page.data.entity.getPrimaryAttributeValue === "function" ? Xrm.Page.data.entity.getPrimaryAttributeValue() : "";
 
+  var clientUrl = Xrm.Page.context.getClientUrl();
+  var formDefaults = {
+    tabs: {},
+    sections: {},
+    controlsByKey: {},
+    controlsByName: {},
+    requiredByAttribute: {},
+  };
+  try {
+    var formRecord = await Xrm.WebApi.retrieveRecord("systemform", formId, "?$select=formxml");
+    formDefaults = parseFormLayoutDefaults(formRecord.formxml);
+  } catch (e) {
+    // Keep empty defaults if the form XML cannot be retrieved.
+  }
+
+  var metadataRequiredDefaults = await getAttributeRequiredDefaults(clientUrl, entityName);
+
   var tabs = [];
 
   Xrm.Page.ui.tabs.forEach(function (tab) {
+    var tabName = tab.getName();
+    var currentTabVisible = tab.getVisible();
+    var defaultTabVisible = Object.prototype.hasOwnProperty.call(formDefaults.tabs, tabName) ? formDefaults.tabs[tabName] : true;
+
     var tabInfo = {
       label: tab.getLabel(),
-      name: tab.getName(),
-      visible: tab.getVisible(),
+      name: tabName,
+      visible: currentTabVisible,
+      defaultVisible: defaultTabVisible,
+      visibleChanged: currentTabVisible !== defaultTabVisible,
       sections: [],
     };
 
     tab.sections.forEach(function (section) {
+      var sectionName = section.getName();
+      var currentSectionVisible = section.getVisible();
+      var sectionDefaultKey = tabName + "|" + sectionName;
+      var defaultSectionVisible = Object.prototype.hasOwnProperty.call(formDefaults.sections, sectionDefaultKey)
+        ? formDefaults.sections[sectionDefaultKey]
+        : true;
+
       var sectionInfo = {
         label: section.getLabel(),
-        name: section.getName(),
-        visible: section.getVisible(),
+        name: sectionName,
+        visible: currentSectionVisible,
+        defaultVisible: defaultSectionVisible,
+        visibleChanged: currentSectionVisible !== defaultSectionVisible,
         controls: [],
       };
 
       section.controls.forEach(function (control) {
+        var controlName = control.getName();
+        var currentVisible = control.getVisible();
+        var currentDisabled = typeof control.getDisabled === "function" ? control.getDisabled() : null;
+        var controlDefaults = formDefaults.controlsByKey[tabName + "|" + sectionName + "|" + controlName] || null;
+        if (!controlDefaults && formDefaults.controlsByName[controlName] && formDefaults.controlsByName[controlName].length > 0) {
+          controlDefaults = formDefaults.controlsByName[controlName][0];
+        }
+
+        var defaultVisible = controlDefaults ? controlDefaults.visible : true;
+        var defaultDisabled = currentDisabled === null ? null : controlDefaults ? controlDefaults.disabled : false;
+
         var controlInfo = {
-          name: control.getName(),
+          name: controlName,
           type: control.getControlType(),
-          visible: control.getVisible(),
-          disabled: typeof control.getDisabled === "function" ? control.getDisabled() : null,
+          visible: currentVisible,
+          defaultVisible: defaultVisible,
+          visibleChanged: currentVisible !== defaultVisible,
+          disabled: currentDisabled,
+          defaultDisabled: defaultDisabled,
+          disabledChanged: currentDisabled !== null && defaultDisabled !== null ? currentDisabled !== defaultDisabled : false,
           attribute: null,
           required: null,
+          defaultRequired: null,
+          requiredChanged: false,
+          automationChanged: false,
         };
 
         if (typeof control.getAttribute === "function" && control.getAttribute()) {
           var attr = control.getAttribute();
           controlInfo.attribute = attr.getName();
+
           if (typeof attr.getRequiredLevel === "function") {
-            controlInfo.required = attr.getRequiredLevel();
+            controlInfo.required = normalizeRequirementState(attr.getRequiredLevel());
           }
+
+          if (controlInfo.attribute) {
+            if (controlDefaults && controlDefaults.required != null) {
+              controlInfo.defaultRequired = controlDefaults.required;
+            } else if (Object.prototype.hasOwnProperty.call(formDefaults.requiredByAttribute, controlInfo.attribute)) {
+              controlInfo.defaultRequired = formDefaults.requiredByAttribute[controlInfo.attribute];
+            } else if (Object.prototype.hasOwnProperty.call(metadataRequiredDefaults, controlInfo.attribute)) {
+              controlInfo.defaultRequired = metadataRequiredDefaults[controlInfo.attribute];
+            }
+          }
+
+          if (controlInfo.defaultRequired == null) {
+            controlInfo.defaultRequired = controlInfo.required;
+          }
+
+          controlInfo.requiredChanged =
+            controlInfo.required != null && controlInfo.defaultRequired != null ? controlInfo.required !== controlInfo.defaultRequired : false;
         }
+
+        controlInfo.automationChanged = controlInfo.visibleChanged || controlInfo.disabledChanged || controlInfo.requiredChanged;
 
         sectionInfo.controls.push(controlInfo);
       });
@@ -2884,6 +3163,8 @@ if (!window.__paDataverseListenerAdded) {
       OPEN_MAKER: openMaker,
       OPEN_ADMIN: openAdminCenter,
       OPEN_SOLUTION: openSolution,
+      OPEN_ENTITY_LIST: openEntityList,
+      OPEN_RECORD: openRecord,
       SHOW_CONTEXT_INFO: showContextInfo,
       SHOW_DIRTY_FIELDS: showDirtyFields,
       SHOW_OPTIONS: getOptions,

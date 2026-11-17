@@ -37,26 +37,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("SHOW_DIRTY_FIELDS");
       break;
 
-    case "openList": {
-      (async () => {
-        const entityName = await paModal.prompt("Entity name for view?");
-        if (!entityName) return;
-        window.open(`${baseUrl()}&pagetype=entitylist&etn=${entityName}`, "_blank");
-      })();
+    case "openList":
+      execute("OPEN_ENTITY_LIST");
       break;
-    }
 
-    case "openRecord": {
-      (async () => {
-        const res = await paModal.form("Open record", [
-          { name: "entityName", label: "Entity name", placeholder: "e.g. account" },
-          { name: "recordId", label: "Record id (GUID)", placeholder: "e.g. 00000000-0000-0000-0000-000000000000" },
-        ]);
-        if (!res || !res.entityName || !res.recordId) return;
-        window.open(`${baseUrl()}&pagetype=entityrecord&etn=${res.entityName}&id=${res.recordId}`, "_blank");
-      })();
+    case "openRecord":
+      execute("OPEN_RECORD");
       break;
-    }
 
     case "seeOptions":
       execute("SHOW_OPTIONS");
@@ -532,7 +519,7 @@ function openBusinessRuleCode() {
     return;
   }
 
-  var url = location.origin + "/api/data/v9.2/workflows(" + id + ")?$select=name,clientdata,xaml";
+  var url = location.origin + "/api/data/v9.2/workflows(" + id + ")?$select=name,clientdata,xaml,category,type";
 
   function show(resText) {
     var title = "Business rule";
@@ -560,7 +547,21 @@ function openBusinessRuleCode() {
   // rejected the way a plain same-origin Web API fetch can be.
   chrome.runtime.sendMessage({ action: "makerFetchJson", url: url }, function (res) {
     if (chrome.runtime.lastError || !res || !res.ok || !res.text) {
-      window.open(url, "_blank");
+      paModal.alert("Open a Business Rule in this tab, then run Open Business Rule Code again.", { title: "Business rule code" });
+      return;
+    }
+    try {
+      var workflow = JSON.parse(res.text);
+      if (workflow.category !== 2 || workflow.type !== 1) {
+        paModal.alert("The workflow open in this tab is not a Business Rule. Open a Business Rule in this tab, then try again.", {
+          title: "Business rule code",
+        });
+        return;
+      }
+    } catch (e) {
+      paModal.alert("Couldn't verify that a Business Rule is open in this tab. Open the Business Rule designer and try again.", {
+        title: "Business rule code",
+      });
       return;
     }
     show(res.text);
