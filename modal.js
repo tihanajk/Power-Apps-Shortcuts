@@ -54,6 +54,7 @@
         ";display:none}",
       ".pa-modal-combobox-list.open{display:block}",
       ".pa-modal-combobox-item{padding:7px 10px;font-size:13px;cursor:pointer}",
+      ".pa-modal-combobox-item.active,.pa-modal-combobox-item.active:hover{background:#e8eef6}",
       ".pa-modal-combobox-item:hover{background:#eef2f8}",
       ".pa-modal-combobox-empty{padding:7px 10px;font-size:12.5px;color:#9ca3af}",
       ".pa-modal-textarea{width:100%;box-sizing:border-box;margin-top:12px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:ui-monospace,'Cascadia Code',Consolas,monospace;line-height:1.45;color:#1f2937;resize:vertical;min-height:160px;white-space:pre}",
@@ -274,9 +275,13 @@
             comboInput.className = "pa-modal-input";
             comboInput.type = "text";
             comboInput.autocomplete = "off";
+            comboInput.setAttribute("role", "combobox");
+            comboInput.setAttribute("aria-autocomplete", "list");
+            comboInput.setAttribute("aria-expanded", "false");
             if (field.placeholder) comboInput.placeholder = field.placeholder;
             var comboList = document.createElement("div");
             comboList.className = "pa-modal-combobox-list";
+            comboList.setAttribute("role", "listbox");
             comboWrap.appendChild(comboInput);
             overlay.appendChild(comboList);
             body.appendChild(comboWrap);
@@ -289,7 +294,17 @@
               };
             });
 
-            var comboEntry = { name: field.name, input: comboInput, label: lbl, field: field, type: "combobox", value: null, group: null };
+            var comboEntry = {
+              name: field.name,
+              input: comboInput,
+              label: lbl,
+              field: field,
+              type: "combobox",
+              value: null,
+              group: null,
+              activeIndex: -1,
+              visibleOptions: [],
+            };
 
             var positionCombo = function () {
               var r = comboInput.getBoundingClientRect();
@@ -309,6 +324,8 @@
                 if (comboEntry.group && o.group && o.group !== comboEntry.group) return false;
                 return o.label.toLowerCase().indexOf(q) !== -1;
               });
+              comboEntry.visibleOptions = matches.slice(0, 200);
+              comboEntry.activeIndex = -1;
               if (matches.length === 0) {
                 var empty = document.createElement("div");
                 empty.className = "pa-modal-combobox-empty";
@@ -316,32 +333,94 @@
                 comboList.appendChild(empty);
                 return;
               }
-              matches.slice(0, 200).forEach(function (o) {
+              comboEntry.visibleOptions.forEach(function (o, index) {
                 var item = document.createElement("div");
                 item.className = "pa-modal-combobox-item";
+                item.setAttribute("role", "option");
+                item.setAttribute("aria-selected", "false");
                 item.textContent = o.label;
+                item.addEventListener("mouseenter", function () {
+                  setActiveComboOption(index);
+                });
                 item.addEventListener("mousedown", function (e) {
                   e.preventDefault();
-                  comboEntry.value = o.value;
-                  comboInput.value = o.label;
-                  closeCombo();
+                  chooseComboOption(index);
                 });
                 comboList.appendChild(item);
               });
+            };
+
+            var setActiveComboOption = function (index) {
+              var items = comboList.querySelectorAll(".pa-modal-combobox-item");
+              if (!items.length) {
+                comboEntry.activeIndex = -1;
+                comboInput.removeAttribute("aria-activedescendant");
+                return;
+              }
+              comboEntry.activeIndex = (index + items.length) % items.length;
+              items.forEach(function (item, itemIndex) {
+                var active = itemIndex === comboEntry.activeIndex;
+                item.classList.toggle("active", active);
+                item.setAttribute("aria-selected", active ? "true" : "false");
+              });
+              items[comboEntry.activeIndex].scrollIntoView({ block: "nearest" });
+            };
+
+            var chooseComboOption = function (index) {
+              var option = comboEntry.visibleOptions[index];
+              if (!option) return false;
+              comboEntry.value = option.value;
+              comboInput.value = option.label;
+              closeCombo();
+              return true;
             };
 
             var openCombo = function (query) {
               renderCombo(query);
               positionCombo();
               comboList.classList.add("open");
+              comboInput.setAttribute("aria-expanded", "true");
               window.addEventListener("scroll", reposition, true);
               window.addEventListener("resize", reposition);
             };
 
             var closeCombo = function () {
               comboList.classList.remove("open");
+              comboInput.setAttribute("aria-expanded", "false");
+              comboInput.removeAttribute("aria-activedescendant");
               window.removeEventListener("scroll", reposition, true);
               window.removeEventListener("resize", reposition);
+            };
+
+            comboEntry.handleKeyDown = function (e) {
+              var isOpen = comboList.classList.contains("open");
+              if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isOpen) openCombo(comboInput.value);
+                if (comboEntry.visibleOptions.length) {
+                  var nextIndex = comboEntry.activeIndex;
+                  if (nextIndex < 0) nextIndex = e.key === "ArrowDown" ? 0 : comboEntry.visibleOptions.length - 1;
+                  else nextIndex += e.key === "ArrowDown" ? 1 : -1;
+                  setActiveComboOption(nextIndex);
+                }
+                return true;
+              }
+              if (e.key === "Enter" && isOpen) {
+                var typed = comboInput.value.toLowerCase();
+                var exactIndex = comboEntry.visibleOptions.findIndex(function (option) {
+                  return option.label.toLowerCase() === typed;
+                });
+                var targetIndex = comboEntry.activeIndex >= 0 ? comboEntry.activeIndex : exactIndex;
+                if (targetIndex < 0 && comboEntry.visibleOptions.length) targetIndex = 0;
+                if (targetIndex >= 0) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  chooseComboOption(targetIndex);
+                  return true;
+                }
+              }
+              return false;
             };
 
             comboInput.addEventListener("focus", function () {
@@ -556,12 +635,21 @@
           e.stopPropagation();
           cleanup(cancelValue);
         } else if (e.key === "Enter") {
+          var focusedCombo = formInputs.find(function (field) {
+            return field.type === "combobox" && field.input === e.target;
+          });
+          if (focusedCombo && focusedCombo.handleKeyDown(e)) return;
           // In a multiline textarea, plain Enter inserts a newline; require Ctrl/Cmd+Enter to submit.
           var inTextarea = e.target && e.target.tagName === "TEXTAREA";
           if (inTextarea && !(e.ctrlKey || e.metaKey)) return;
           e.preventDefault();
           e.stopPropagation();
           okBtn.click();
+        } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          var focusedCombo = formInputs.find(function (field) {
+            return field.type === "combobox" && field.input === e.target;
+          });
+          if (focusedCombo) focusedCombo.handleKeyDown(e);
         }
       }
       document.addEventListener("keydown", onKey, true);
