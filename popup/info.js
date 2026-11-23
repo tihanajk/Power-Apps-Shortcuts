@@ -317,11 +317,10 @@ const CHANGELOG = [
   {
     version: "2.0.0.36",
     notes: [
+      "🔌 List Plugin Steps now shows toggle controls to enable/disable steps directly (applies immediately upon confirmation).",
+      "🔗 Dependency detection includes operation types and execution modes for plugin steps.",
       "🧭 Open Entity List and Open Record now use searchable entity pickers with display and logical names.",
       "🧩 Form Layout compares default and current visibility, disabled, and required states; differences may indicate form logic such as a business rule or script.",
-      "⌨️ Modal comboboxes support Up/Down keyboard navigation and Enter selection.",
-      "📗 Refreshed the Excel export buttons across tabs with a compact green style.",
-      "🛡️ Open Business Rule Code now checks that a Business Rule is open in the current tab.",
     ],
   },
   {
