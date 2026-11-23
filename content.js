@@ -22,7 +22,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       break;
 
     case "ribbonDebug":
-      openRibbonDebugDashboard();
+      let url = location.href;
+      url = url.includes("&ribbondebug=true") ? url.replace("&ribbondebug=true", "") : url + "&ribbondebug=true";
+      window.location.href = url;
       break;
 
     case "advancedFind":
