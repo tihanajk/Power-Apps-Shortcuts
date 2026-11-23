@@ -2084,6 +2084,47 @@ async function listWebhookSteps(webhooks) {
   return blocks;
 }
 
+async function togglePluginStep(data) {
+  if (!data || !data.stepId) {
+    window.postMessage({ type: "TOGGLE_STEP_RESPONSE", success: false, error: "Missing step ID", callbackId: data?.callbackId }, "*");
+    return;
+  }
+
+  try {
+    var stepId = data.stepId;
+    var newState = data.enable ? 0 : 1;
+    var newStatus = data.enable ? 1 : 2;
+
+    var updateRequest = {
+      statecode: newState,
+      statuscode: newStatus,
+    };
+
+    await Xrm.WebApi.updateRecord("sdkmessageprocessingstep", stepId, updateRequest);
+
+    window.postMessage(
+      {
+        type: "TOGGLE_STEP_RESPONSE",
+        success: true,
+        stepId: stepId,
+        enable: data.enable,
+        callbackId: data.callbackId,
+      },
+      "*",
+    );
+  } catch (e) {
+    window.postMessage(
+      {
+        type: "TOGGLE_STEP_RESPONSE",
+        success: false,
+        error: e.message || "Failed to toggle plugin step",
+        callbackId: data.callbackId,
+      },
+      "*",
+    );
+  }
+}
+
 async function listEvents() {
   var formId = Xrm.Page.ui.formSelector._formId.guid;
 
@@ -3193,6 +3234,7 @@ if (!window.__paDataverseListenerAdded) {
       GET_FLOW_DEPENDENCIES: listFlowDependencies,
       ADD_WR_TO_SOL: addWebresourceToSolution,
       LIST_PLUGINS: listPlugins,
+      TOGGLE_PLUGIN_STEP: togglePluginStep,
       LIST_EVENTS: listEvents,
       LIST_ENV_VARIABLES: listEnvironmentVariables,
       UPDATE_ENV_VARIABLE: updateEnvironmentVariable,

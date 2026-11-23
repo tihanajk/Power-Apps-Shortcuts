@@ -42,6 +42,9 @@ var dependencyWrNameFilter = "";
 
 var plugins = [];
 var assemblyName = "";
+var pluginSourceTabId = null;
+
+var pluginStepToggleCallbacks = {};
 
 var eventData;
 var eventSourceTabId = null;
@@ -205,9 +208,49 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === "showPlugins") {
     plugins = request.data.plugins;
     assemblyName = request.data.assemblyName;
+    pluginSourceTabId = sender.tab?.id ?? null;
     openView("tabs/plugins/plugins.html");
   } else if (request.action === "GET_PLUGINS") {
     sendResponse({ plugins: plugins, assemblyName: assemblyName });
+  } else if (request.action === "TOGGLE_PLUGIN_STEP") {
+    var toggleTabId = pluginSourceTabId;
+    if (toggleTabId != null) {
+      var callbackId = Date.now() + "_" + Math.random();
+      pluginStepToggleCallbacks[callbackId] = sendResponse;
+      chrome.tabs.sendMessage(
+        toggleTabId,
+        {
+          message: "togglePluginStep",
+          stepId: request.stepId,
+          stepName: request.stepName,
+          enable: request.enable,
+          callbackId: callbackId,
+        },
+        function () {
+          if (chrome.runtime.lastError && pluginStepToggleCallbacks[callbackId]) {
+            delete pluginStepToggleCallbacks[callbackId];
+            sendResponse({ success: false, error: chrome.runtime.lastError.message });
+          }
+        },
+      );
+      return true;
+    } else {
+      sendResponse({ success: false, error: "The source Dataverse tab is unavailable. Reopen the plugin view." });
+    }
+  } else if (request.action === "togglePluginStepResponse") {
+    var callbackId = request.callbackId;
+    if (callbackId && pluginStepToggleCallbacks[callbackId]) {
+      var callback = pluginStepToggleCallbacks[callbackId];
+      delete pluginStepToggleCallbacks[callbackId];
+      if (request.success) {
+        plugins.forEach((plugin) => {
+          (plugin.steps || []).forEach((step) => {
+            if (step.id === request.stepId) step.status = request.enable ? 1 : 2;
+          });
+        });
+      }
+      callback({ success: request.success, error: request.error });
+    }
   } else if (request.action == "showEvents") {
     eventData = request.data;
     eventSourceTabId = sender.tab?.id;

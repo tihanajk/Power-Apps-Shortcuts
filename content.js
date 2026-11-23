@@ -123,6 +123,16 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("LIST_PLUGINS");
       break;
 
+    case "togglePluginStep":
+      execute("TOGGLE_PLUGIN_STEP", {
+        stepId: request.stepId,
+        stepName: request.stepName,
+        enable: request.enable,
+        callbackId: request.callbackId,
+      });
+      sendResponse({ received: true });
+      break;
+
     case "listEvents":
       execute("LIST_EVENTS");
       break;
@@ -700,6 +710,15 @@ window.addEventListener("message", (event) => {
     chrome.runtime.sendMessage({
       action: "showPlugins",
       data: event.data,
+    });
+  } else if (event.source === window && event.data.type === "TOGGLE_STEP_RESPONSE") {
+    chrome.runtime.sendMessage({
+      action: "togglePluginStepResponse",
+      success: event.data.success,
+      error: event.data.error,
+      stepId: event.data.stepId,
+      enable: event.data.enable,
+      callbackId: event.data.callbackId,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_EVENTS") {
     chrome.runtime.sendMessage({

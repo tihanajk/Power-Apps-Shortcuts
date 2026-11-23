@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 var search;
 var plugins = [];
+var pendingSteps = new Set();
 
 function downloadData() {
   var rows = [["Plugin", "Step", "Mode", "Status", "Filters", "Image", "Image Attributes"]];
@@ -48,10 +49,87 @@ function initialize() {
   });
 
   document.querySelectorAll(".step").forEach((step) => {
-    step.addEventListener("click", () => {
+    step.addEventListener("click", (e) => {
+      // Don't toggle step details if the toggle button was clicked
+      if (e.target.closest(".toggle-step-btn")) {
+        e.stopPropagation();
+        return;
+      }
       const images = step.parentElement.querySelector(".images");
       if (images) images.classList.toggle("visible");
     });
+  });
+
+  document.querySelectorAll(".toggle-step-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleToggleStep(btn);
+    });
+  });
+}
+
+function handleToggleStep(btn) {
+  const stepId = btn.getAttribute("data-step-id");
+  if (pendingSteps.has(stepId)) return;
+  const stepName = btn.getAttribute("data-step-name");
+  const isCurrentlyEnabled = btn.getAttribute("data-enabled") === "true";
+  const newState = isCurrentlyEnabled ? "disable" : "enable";
+  pendingSteps.add(stepId);
+  btn.disabled = true;
+
+  paModal.confirm(`${newState === "enable" ? "Enable" : "Disable"} step "${stepName}"?`, {
+    okText: newState === "enable" ? "Enable" : "Disable",
+    cancelText: "Cancel",
+  }).then(function (confirmed) {
+    if (!confirmed) {
+      finishToggleStep(stepId);
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      {
+        action: "TOGGLE_PLUGIN_STEP",
+        stepId: stepId,
+        stepName: stepName,
+        enable: newState === "enable",
+      },
+      function (response) {
+        const runtimeError = chrome.runtime.lastError;
+        finishToggleStep(stepId);
+        if (response && response.success) {
+          const isNowEnabled = newState === "enable";
+          plugins.forEach((plugin) => {
+            (plugin.steps || []).forEach((step) => {
+              if (step.id === stepId) step.status = isNowEnabled ? 1 : 2;
+            });
+          });
+          document.querySelectorAll(".toggle-step-btn").forEach((currentBtn) => {
+            if (currentBtn.getAttribute("data-step-id") !== stepId) return;
+            const statusBadge = currentBtn.previousElementSibling;
+            currentBtn.setAttribute("data-enabled", isNowEnabled ? "true" : "false");
+            currentBtn.textContent = isNowEnabled ? "turn off" : "turn on";
+            currentBtn.title = `Toggle step ${isNowEnabled ? "off" : "on"}`;
+            currentBtn.setAttribute("aria-label", `Toggle step ${isNowEnabled ? "off" : "on"}`);
+            if (statusBadge && statusBadge.classList.contains("badge")) {
+              statusBadge.classList.remove("badge-on", "badge-off");
+              statusBadge.classList.add(isNowEnabled ? "badge-on" : "badge-off");
+              statusBadge.textContent = isNowEnabled ? "Enabled" : "Disabled";
+              statusBadge.title = isNowEnabled ? "Enabled" : "Disabled";
+            }
+          });
+        } else {
+          const errorMsg = response?.error || runtimeError?.message || "Failed to toggle step";
+          paModal.alert(`Error: ${errorMsg}`);
+        }
+      },
+    );
+  });
+}
+
+function finishToggleStep(stepId) {
+  pendingSteps.delete(stepId);
+  document.querySelectorAll(".toggle-step-btn").forEach((btn) => {
+    if (btn.getAttribute("data-step-id") === stepId) btn.disabled = false;
   });
 }
 
@@ -128,6 +206,9 @@ function renderStep(s) {
       : s.mode == 1
         ? `<span class="badge badge-async" title="Asynchronous">Async</span>`
         : "";
+  var toggleButton = `<button class="toggle-step-btn" data-step-id="${escapeHtml(s.id)}" data-step-name="${escapeHtml(s.name)}" data-enabled="${enabled ? 'true' : 'false'}" title="Toggle step ${enabled ? 'off' : 'on'}" aria-label="Toggle step ${enabled ? 'off' : 'on'}"${pendingSteps.has(s.id) ? " disabled" : ""}>
+    ${enabled ? 'turn off' : 'turn on'}
+  </button>`;
   var hasImage = !!(s.image && s.image.name);
   var filterHtml = s.filter
     ? `<div class="step-detail"><span class="detail-label">🔍 Filters</span><code class="detail-val">${escapeHtml(s.filter)}</code></div>`
@@ -140,8 +221,9 @@ function renderStep(s) {
             <div class="step" role="button" tabindex="0">
               ${hasImage ? '<span class="step-chevron" aria-hidden="true">▸</span>' : '<span class="step-bullet" title="Step" aria-hidden="true">⚡</span>'}
               <span class="step-name">${escapeHtml(s.name)}</span>
-              ${statusBadge}
               ${modeBadge}
+              ${statusBadge}
+              ${toggleButton}
               ${filterHtml}
             </div>
             <ul class="images">${imageHtml}</ul>
@@ -152,7 +234,8 @@ function escapeHtml(text) {
   return String(text == null ? "" : text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function renderEndpointInfo(info) {
