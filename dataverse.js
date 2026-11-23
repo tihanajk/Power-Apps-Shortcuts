@@ -1539,6 +1539,10 @@ async function listFlowDependencies() {
     <attribute name="statuscode" />
     <attribute name="workflowid" />
     <attribute name="primaryentity" />
+    <attribute name="mode" />
+    <attribute name="triggeroncreate" />
+    <attribute name="triggerondelete" />
+    <attribute name="triggeronupdateattributelist" />
     <filter>       
       <condition attribute="type" operator="eq" value="1" />
       <condition attribute="category" operator="in">
@@ -1568,6 +1572,13 @@ async function listFlowDependencies() {
     result.entities.forEach((e) => {
       if (!selectedTypes.includes(e["category"])) return;
 
+      var operations = [];
+      if (e["category"] === 0) {
+        if (e["triggeroncreate"] === true) operations.push("Create");
+        if (e["triggeronupdateattributelist"]) operations.push("Update");
+        if (e["triggerondelete"] === true) operations.push("Delete");
+      }
+
       processes.push({
         id: e["workflowid"],
         name: e["name"],
@@ -1576,6 +1587,8 @@ async function listFlowDependencies() {
         category_display: e["category@OData.Community.Display.V1.FormattedValue"],
         category: e["category"],
         primary_entity: e["primaryentity"],
+        operation: operations.join(", "),
+        execution_mode: e["category"] === 0 ? (e["mode"] === 0 ? "Async" : e["mode"] === 1 ? "Sync" : "") : "",
       });
     });
   }
@@ -1587,6 +1600,7 @@ async function listFlowDependencies() {
     <attribute name='filteringattributes' />
     <attribute name='plugintypeid' />
     <attribute name='statuscode' />
+    <attribute name='mode' />
     <link-entity name='plugintype' from='plugintypeid' to='plugintypeid' alias='p'>
       <attribute name='name' />
     </link-entity>
@@ -1622,6 +1636,8 @@ async function listFlowDependencies() {
         category_display: "Plugin",
         category: -1,
         message: e["m.name"],
+        operation: e["m.name"] || "",
+        execution_mode: e["mode"] === 0 ? "Sync" : e["mode"] === 1 ? "Async" : "",
         primary_entity: e["f.primaryobjecttypecode"],
         pl_image: !e["filteringattributes"]?.includes(term),
       });
