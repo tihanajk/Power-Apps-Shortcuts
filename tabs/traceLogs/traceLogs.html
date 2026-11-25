@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Plugin trace logs</title>
+    <link rel="stylesheet" href="../common.css" />
+    <link rel="stylesheet" href="traceLogs.css" />
+  </head>
+
+  <body>
+    <div id="header">
+      <div class="title-row">
+        <div>
+          <h1>Plugin trace logs</h1>
+          <div id="scope" class="scope"></div>
+        </div>
+        <button type="button" id="downloadBtn">Export to Excel</button>
+      </div>
+      <input id="search" placeholder="Search plugin, message, entity, correlation id or log text" name="filter" type="text" />
+    </div>
+
+    <div id="filters">
+      <div class="range">
+        <label>From <input type="datetime-local" id="range-from" /></label>
+        <label>To <input type="datetime-local" id="range-to" title="Leave empty for now" /></label>
+        <button type="button" id="range-apply" class="range-apply">Apply</button>
+      </div>
+      <label class="toggle"
+        ><input type="checkbox" name="exceptionsOnly" /><span class="toggle-switch"></span
+        ><span class="toggle-label">Exceptions only</span></label
+      >
+      <label class="toggle"
+        ><input type="checkbox" name="syncOnly" /><span class="toggle-switch"></span
+        ><span class="toggle-label">Sync only</span></label
+      >
+      <span id="correlation-filter" class="correlation-filter hidden"></span>
+    </div>
+
+    <div id="setting-banner" class="setting-banner hidden"></div>
+
+    <div class="count-row">
+      <div id="count" class="count"></div>
+      <div class="paging">
+        <span id="loaded" class="loaded"></span>
+        <button type="button" id="load-more" class="load-more hidden">Load next 250</button>
+      </div>
+    </div>
+
+    <div id="trace-content">
+      <div class="loading"><span class="spinner"></span><span>Loading trace logs...</span></div>
+    </div>
+
+    <script src="../../xlsx.full.min.js"></script>
+    <script src="../common.js"></script>
+    <script src="traceLogs.js"></script>
+  </body>
+</html>

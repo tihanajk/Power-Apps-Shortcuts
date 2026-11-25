@@ -115,6 +115,9 @@
     "toggle_logical_names": {
       "description": "Toggle logical names on form labels, tabs and sections"
     },
+    "list_trace_logs": {
+      "description": "Show plugin trace logs"
+    },
     "maker_navigate": {
       "description": "Maker portal: go to a maker area (solutions, tables, flows, …)"
     },
@@ -149,7 +152,8 @@
         "tabs/formLayout/formLayout.html",
         "tabs/auditHistory/auditHistory.html",
         "tabs/ribbon/ribbon.html",
-        "tabs/contextInfo/contextInfo.html"
+        "tabs/contextInfo/contextInfo.html",
+        "tabs/traceLogs/traceLogs.html"
       ],
       "matches": ["*://*.dynamics.com/*", "*://*.dynamics.com.mcas.ms/*"]
     }

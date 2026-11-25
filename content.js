@@ -119,6 +119,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("TOGGLE_LOGICAL_NAMES");
       break;
 
+    case "listTraceLogs":
+      execute("LIST_TRACE_LOGS");
+      break;
+
+    case "traceLogsNext":
+      execute("LIST_TRACE_LOGS_NEXT", { nextLink: request.nextLink });
+      break;
+
+    case "traceLogsReload":
+      execute("LIST_TRACE_LOGS_RELOAD", request.filters);
+      break;
+
     case "openSolution":
       execute("OPEN_SOLUTION");
       break;
@@ -748,6 +760,11 @@ window.addEventListener("message", (event) => {
   } else if (event.source === window && event.data.type === "GIVE_ME_CONTEXT_INFO") {
     chrome.runtime.sendMessage({
       action: "showContextInfo",
+      data: event.data.data,
+    });
+  } else if (event.source === window && event.data.type === "GIVE_ME_TRACE_LOGS") {
+    chrome.runtime.sendMessage({
+      action: "showTraceLogs",
       data: event.data.data,
     });
   } else if (event.source === window && event.data.type === "GIVE_ME_RIBBON") {

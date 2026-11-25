@@ -127,6 +127,12 @@ document.addEventListener("DOMContentLoaded", function () {
           isNew: true,
         },
         {
+          command: "list_trace_logs",
+          label: "Plugin trace logs",
+          desc: "Browse plugin trace logs for this table: exceptions, duration, depth and correlation.",
+          isNew: true,
+        },
+        {
           command: "add_wr_to_solution",
           label: "Add web resource to a solution",
           desc: "Search web resources and add a match to a chosen solution.",

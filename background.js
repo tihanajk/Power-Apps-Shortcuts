@@ -62,6 +62,9 @@ var doneFetchingAudit = false;
 
 var contextInfoData = null;
 
+var traceLogData = null;
+var traceLogSourceTabId = null;
+
 // Opens one of the extension's view pages either as a new browser tab or as an
 // in-page modal (iframe overlay) in the current tab, based on the user's
 // preference saved from the popup toggle.
@@ -347,6 +350,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     openView("tabs/contextInfo/contextInfo.html");
   } else if (request.action == "GET_CONTEXT_INFO") {
     sendResponse({ data: contextInfoData });
+  } else if (request.action == "showTraceLogs") {
+    var traceData = request.data || {};
+    if (traceData.append) {
+      // A "Load next" page: merge into the stored result so GET_TRACE_LOGS stays complete.
+      if (traceLogData && !traceData.error) {
+        traceLogData.logs = (traceLogData.logs || []).concat(traceData.logs || []);
+        traceLogData.nextLink = traceData.nextLink;
+      }
+      chrome.runtime.sendMessage({ action: "TRACE_LOGS_PAGE", data: traceData });
+    } else {
+      traceLogData = traceData;
+      traceLogSourceTabId = sender.tab?.id ?? traceLogSourceTabId;
+      if (traceData.loading) openView("tabs/traceLogs/traceLogs.html");
+      else chrome.runtime.sendMessage({ action: "TRACE_LOGS_READY", data: traceData });
+    }
+  } else if (request.action == "TRACE_LOGS_NEXT") {
+    if (traceLogSourceTabId != null) {
+      chrome.tabs.sendMessage(traceLogSourceTabId, { message: "traceLogsNext", nextLink: request.nextLink });
+    }
+  } else if (request.action == "TRACE_LOGS_RELOAD") {
+    if (traceLogSourceTabId != null) {
+      chrome.tabs.sendMessage(traceLogSourceTabId, { message: "traceLogsReload", filters: request.filters });
+    }
+  } else if (request.action == "GET_TRACE_LOGS") {
+    sendResponse({ data: traceLogData });
   }
 });
 
@@ -397,6 +425,9 @@ function handleCommand(command) {
       break;
     case "toggle_logical_names":
       sendMessageToTab("toggleLogicalNames");
+      break;
+    case "list_trace_logs":
+      sendMessageToTab("listTraceLogs");
       break;
     case "god_mode":
       sendMessageToTab("triggerGM");

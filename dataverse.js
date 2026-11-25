@@ -3442,6 +3442,240 @@ function toggleLogicalNames() {
   schedule();
 }
 
+// Registered plugin types (custom code + workflow activities), excluding Microsoft's own.
+async function getPluginTypePickerOptions() {
+  var result = await Xrm.WebApi.retrieveMultipleRecords(
+    "plugintype",
+    "?$select=typename,name,isworkflowactivity&$filter=not startswith(typename,'Microsoft.')&$orderby=typename asc",
+  );
+  var seen = {};
+  return result.entities
+    .filter(function (p) {
+      if (!p.typename || seen[p.typename]) return false;
+      seen[p.typename] = true;
+      return true;
+    })
+    .map(function (p) {
+      return { value: p.typename, label: p.typename + (p.isworkflowactivity ? " (workflow activity)" : "") };
+    });
+}
+
+// Date <-> "YYYY-MM-DDTHH:mm" in local time, the format of <input type="datetime-local">.
+function toLocalDateTimeInput(date) {
+  var pad = (n) => String(n).padStart(2, "0");
+  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
+}
+
+function parseLocalDateTimeInput(value) {
+  if (!value) return null;
+  var d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+var TRACE_LOG_PAGE_SIZE = 250;
+
+function mapTraceLog(e) {
+  return {
+    id: e.plugintracelogid,
+    typeName: e.typename || "",
+    message: e.messagename || "",
+    entity: e.primaryentity || "",
+    createdOn: e.createdon,
+    createdOnDisplay: e["createdon@OData.Community.Display.V1.FormattedValue"] || e.createdon,
+    operation: e.operationtype === 2 ? "Workflow activity" : e.operationtype === 1 ? "Plugin" : "",
+    mode: e.mode === 0 ? "Sync" : e.mode === 1 ? "Async" : "",
+    depth: e.depth,
+    duration: e.performanceexecutionduration,
+    exception: e.exceptiondetails || "",
+    messageBlock: e.messageblock || "",
+    correlationId: e.correlationid || "",
+    requestId: e.requestid || "",
+    stepId: e.pluginstepid || "",
+  };
+}
+
+async function listTraceLogs() {
+  if (typeof Xrm === "undefined" || !Xrm.WebApi) {
+    paModal.alert("⚠️ Open a Dynamics 365 / model-driven app page first");
+    return;
+  }
+
+  var entity = "";
+  try {
+    entity = Xrm.Page?.data?.entity?.getEntityName?.() || "";
+  } catch (e) {
+    entity = "";
+  }
+  if (!entity) {
+    try {
+      entity = Xrm.Utility.getPageContext()?.input?.entityName || "";
+    } catch (e) {
+      entity = "";
+    }
+  }
+
+  // Pickers load in parallel; a failure just falls back to "All" + free text.
+  var pickers = await Promise.all([
+    getEntityPickerOptions().catch(function () {
+      return [];
+    }),
+    getPluginTypePickerOptions().catch(function () {
+      return [];
+    }),
+  ]);
+  var entityOptions = [{ value: "", label: "All entities" }].concat(pickers[0]);
+  var pluginOptions = [{ value: "", label: "All plugins & workflow activities" }].concat(pickers[1]);
+  if (entity && !pickers[0].some((o) => o.value === entity)) entityOptions.push({ value: entity, label: entity });
+
+  var res = await paModal.form("Plugin trace logs", [
+    { name: "entity", label: "Primary entity", type: "combobox", options: entityOptions, defaultValue: entity, placeholder: "Type to search..." },
+    {
+      name: "plugin",
+      label: "Plugin / workflow activity (pick one, or type a pattern like *Account*)",
+      type: "combobox",
+      options: pluginOptions,
+      defaultValue: "",
+      placeholder: "Type to search, or *part_of_name*",
+      allowCustom: true,
+    },
+    { name: "from", label: "From", inputType: "datetime-local", defaultValue: toLocalDateTimeInput(new Date(Date.now() - 24 * 3600 * 1000)) },
+    { name: "to", label: "To (leave empty for now)", inputType: "datetime-local", defaultValue: "" },
+    { name: "exceptionsOnly", label: "Exceptions only", type: "checkbox", defaultValue: false },
+  ]);
+  if (res == null) return;
+
+  var entityFilter = String(res.entity || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+  var pluginFilter = String(res.plugin || "").trim();
+  var from = parseLocalDateTimeInput(res.from);
+  var to = parseLocalDateTimeInput(res.to);
+  if (from && to && from > to) {
+    var swap = from;
+    from = to;
+    to = swap;
+  }
+  var meta = {
+    entity: entityFilter,
+    plugin: pluginFilter,
+    from: from ? from.toISOString() : "",
+    to: to ? to.toISOString() : "",
+    exceptionsOnly: !!res.exceptionsOnly,
+    pageSize: TRACE_LOG_PAGE_SIZE,
+    url: getOrgBaseUrl(),
+  };
+
+  window.postMessage({ type: "GIVE_ME_TRACE_LOGS", data: Object.assign({ loading: true }, meta) }, "*");
+  await runTraceLogQuery(meta);
+}
+
+// OData filter on plugintracelog.typename. A picked plugin matches by prefix
+// (typename may be assembly-qualified). A pattern with * is a wildcard:
+// *part* = contains, part* = starts with, *part = ends with, a*b = both.
+function buildTypeNameFilter(pattern) {
+  pattern = String(pattern || "").trim();
+  if (!pattern) return "";
+  var q = (v) => "'" + v.replace(/'/g, "''") + "'";
+  if (pattern.indexOf("*") === -1) return "startswith(typename," + q(pattern) + ")";
+
+  var parts = pattern.split("*");
+  var conditions = [];
+  parts.forEach(function (part, i) {
+    if (!part) return;
+    if (i === 0) conditions.push("startswith(typename," + q(part) + ")");
+    else if (i === parts.length - 1) conditions.push("endswith(typename," + q(part) + ")");
+    else conditions.push("contains(typename," + q(part) + ")");
+  });
+  return conditions.length ? "(" + conditions.join(" and ") + ")" : "";
+}
+
+// Runs the trace log query for meta (entity, plugin, from, to, exceptionsOnly)
+// and posts the first page plus a nextLink for "Load next".
+async function runTraceLogQuery(meta) {
+  var conditions = [];
+  if (meta.entity) conditions.push(`primaryentity eq '${meta.entity}'`);
+  var typeFilter = buildTypeNameFilter(meta.plugin);
+  if (typeFilter) conditions.push(typeFilter);
+  if (meta.from) conditions.push(`createdon ge ${meta.from}`);
+  if (meta.to) conditions.push(`createdon le ${meta.to}`);
+  if (meta.exceptionsOnly) conditions.push("exceptiondetails ne null");
+
+  // No $top: paging via maxPageSize so Dataverse returns a nextLink for "Load next".
+  var query =
+    "?$select=plugintracelogid,typename,messagename,primaryentity,createdon,operationtype,mode,depth,performanceexecutionduration,exceptiondetails,messageblock,correlationid,requestid,pluginstepid" +
+    (conditions.length ? "&$filter=" + conditions.join(" and ") : "") +
+    "&$orderby=createdon desc";
+
+  try {
+    var result = await Xrm.WebApi.retrieveMultipleRecords("plugintracelog", query, TRACE_LOG_PAGE_SIZE);
+
+    var setting = null;
+    try {
+      var org = await Xrm.WebApi.retrieveMultipleRecords("organization", "?$select=plugintracelogsetting");
+      setting = org.entities[0]?.plugintracelogsetting ?? null;
+    } catch (e) {
+      setting = null;
+    }
+
+    window.postMessage(
+      {
+        type: "GIVE_ME_TRACE_LOGS",
+        data: Object.assign({ loading: false, logs: result.entities.map(mapTraceLog), nextLink: result.nextLink || "", setting: setting }, meta),
+      },
+      "*",
+    );
+  } catch (err) {
+    window.postMessage(
+      { type: "GIVE_ME_TRACE_LOGS", data: Object.assign({ loading: false, logs: [], error: err?.message || String(err) }, meta) },
+      "*",
+    );
+  }
+}
+
+// Re-runs the query from the trace log view (e.g. a new From/To range).
+async function reloadTraceLogs(data) {
+  data = data || {};
+  var isoOrEmpty = function (v) {
+    var d = v ? new Date(v) : null;
+    return d && !isNaN(d.getTime()) ? d.toISOString() : "";
+  };
+  var from = isoOrEmpty(data.from);
+  var to = isoOrEmpty(data.to);
+  if (from && to && from > to) {
+    var swap = from;
+    from = to;
+    to = swap;
+  }
+  await runTraceLogQuery({
+    entity: String(data.entity || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, ""),
+    plugin: String(data.plugin || "").trim(),
+    from: from,
+    to: to,
+    exceptionsOnly: !!data.exceptionsOnly,
+    pageSize: TRACE_LOG_PAGE_SIZE,
+    url: getOrgBaseUrl(),
+  });
+}
+
+// Loads the page after data.nextLink and posts it for the view to append.
+async function listTraceLogsNext(data) {
+  var nextLink = data && data.nextLink;
+  if (!nextLink) return;
+  try {
+    var query = "?" + nextLink.split("?").slice(1).join("?");
+    var result = await Xrm.WebApi.retrieveMultipleRecords("plugintracelog", query, TRACE_LOG_PAGE_SIZE);
+    window.postMessage(
+      { type: "GIVE_ME_TRACE_LOGS", data: { append: true, logs: result.entities.map(mapTraceLog), nextLink: result.nextLink || "" } },
+      "*",
+    );
+  } catch (err) {
+    window.postMessage({ type: "GIVE_ME_TRACE_LOGS", data: { append: true, logs: [], nextLink: nextLink, error: err?.message || String(err) } }, "*");
+  }
+}
+
 // This script is re-injected on every command, so guard against registering
 // the message listener more than once (duplicate listeners fire handlers multiple times).
 if (!window.__paDataverseListenerAdded) {
@@ -3481,6 +3715,9 @@ if (!window.__paDataverseListenerAdded) {
       LIST_RIBBON: listRibbon,
       FETCH_WR_CONTENT: fetchWrContentOnDemand,
       TOGGLE_LOGICAL_NAMES: toggleLogicalNames,
+      LIST_TRACE_LOGS: listTraceLogs,
+      LIST_TRACE_LOGS_NEXT: listTraceLogsNext,
+      LIST_TRACE_LOGS_RELOAD: reloadTraceLogs,
     };
 
     const handler = handlers[event.data.type];
