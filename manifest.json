@@ -156,20 +156,7 @@
       "js": [
         "modal.js",
         "content.js",
-        "tabs/common.js",
-        "popup/info.js",
-        "tabs/options/options.js",
-        "tabs/security/security.js",
-        "tabs/fetch/fetch.js",
-        "tabs/fields/fields.js",
-        "tabs/dependencies/dependency.js",
-        "tabs/plugins/plugins.js",
-        "tabs/events/events.js",
-        "tabs/variables/variables.js",
-        "tabs/formLayout/formLayout.js",
-        "tabs/auditHistory/auditHistory.js",
-        "tabs/ribbon/ribbon.js",
-        "tabs/contextInfo/contextInfo.js"
+        "tabs/common.js"
       ]
     },
     {
