@@ -559,3 +559,134 @@ function renderRecordHeader(el, info) {
     document.addEventListener("keydown", onKey, true);
   };
 })();
+
+// Shared table helpers for the view tabs: column resizing, sorting and Excel export.
+// Exposed as window.paTable.
+(function () {
+  if (window.paTable) return;
+
+  // Adds drag handles to every header so columns can be resized. Resizing one
+  // column grows the table (horizontal scroll) and leaves the others unchanged.
+  function makeResizable(table) {
+    if (!table) return;
+    var headers = table.querySelectorAll("thead th");
+    headers.forEach(function (th) {
+      var handle = document.createElement("span");
+      handle.className = "col-resizer";
+      th.appendChild(handle);
+
+      handle.addEventListener("mousedown", function (e) {
+        headers.forEach(function (h) {
+          h.style.width = h.offsetWidth + "px";
+        });
+        table.style.width = table.offsetWidth + "px";
+
+        var startX = e.pageX;
+        var startWidth = th.offsetWidth;
+        var startTableWidth = table.offsetWidth;
+        handle.classList.add("resizing");
+        e.preventDefault();
+        e.stopPropagation();
+
+        function onMouseMove(ev) {
+          table.__paResized = true;
+          var delta = ev.pageX - startX;
+          if (startWidth + delta < 40) delta = 40 - startWidth;
+          th.style.width = startWidth + delta + "px";
+          table.style.width = startTableWidth + delta + "px";
+        }
+
+        function onMouseUp() {
+          handle.classList.remove("resizing");
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      // Keep the header's sort click from firing when the resizer is used.
+      handle.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+    });
+  }
+
+  // True (once) if a column drag just finished on this table, so callers can
+  // ignore the click that follows a resize.
+  function consumeResize(table) {
+    if (table && table.__paResized) {
+      table.__paResized = false;
+      return true;
+    }
+    return false;
+  }
+
+  function sortValue(v) {
+    if (v == null || v === "" || v === "none") return null;
+    if (typeof v === "number") return v;
+    if (typeof v === "boolean") return v ? 1 : 0;
+    return String(v).toLowerCase();
+  }
+
+  // Sorts rows in place by state.key / state.dir (1 or -1). Empty values always sort last.
+  function sortRows(rows, state, getValue) {
+    if (!state || !state.key) return rows;
+    var get =
+      getValue ||
+      function (row, key) {
+        return row[key];
+      };
+    return rows.sort(function (a, b) {
+      var av = sortValue(get(a, state.key));
+      var bv = sortValue(get(b, state.key));
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * state.dir;
+      return String(av).localeCompare(String(bv), undefined, { numeric: true }) * state.dir;
+    });
+  }
+
+  function arrow(state, key) {
+    if (!state || state.key !== key) return "";
+    return ` <span class="sort-arrow">${state.dir === 1 ? "▲" : "▼"}</span>`;
+  }
+
+  // Wires th[data-sort] headers to toggle state and call rerender().
+  function bindSortHeaders(table, state, rerender) {
+    if (!table) return;
+    table.querySelectorAll("th[data-sort]").forEach(function (th) {
+      th.addEventListener("click", function () {
+        if (consumeResize(table)) return;
+        var key = th.getAttribute("data-sort");
+        if (state.key === key) state.dir = -state.dir;
+        else {
+          state.key = key;
+          state.dir = 1;
+        }
+        rerender();
+      });
+    });
+  }
+
+  // Exports an HTML table to .xlsx. Cells may set data-v to export plain text.
+  function exportTable(table, sheetName, fileName) {
+    if (!table || typeof XLSX === "undefined") return;
+    var sheet = String(sheetName || "Sheet1")
+      .replace(/[:\\/?*\[\]]/g, " ")
+      .slice(0, 31);
+    var workbook = XLSX.utils.table_to_book(table, { sheet: sheet || "Sheet1" });
+    XLSX.writeFile(workbook, fileName || "export.xlsx");
+  }
+
+  window.paTable = {
+    makeResizable: makeResizable,
+    consumeResize: consumeResize,
+    sortRows: sortRows,
+    arrow: arrow,
+    bindSortHeaders: bindSortHeaders,
+    exportTable: exportTable,
+  };
+})();

@@ -3,7 +3,6 @@ var allRecords = [];
 var baseUrl = "";
 var sortDir = "desc";
 var lastRecords = [];
-var columnWasResized = false;
 
 // Maps Dataverse operation numeric value -> CSS class suffix.
 // Using the number keeps colors working regardless of the UI language.
@@ -84,11 +83,7 @@ function buildEventFilters() {
 }
 
 function downloadData() {
-  var table = document.getElementById("main");
-  var ws = XLSX.utils.table_to_sheet(table);
-  var workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, ws, "Audit History");
-  XLSX.writeFile(workbook, "audit_history.xlsx");
+  paTable.exportTable(document.getElementById("main"), "Audit History", "audit_history.xlsx");
 }
 
 function getAuditResults() {
@@ -235,66 +230,11 @@ function renderResults(records) {
   var dateHeader = document.getElementById("sortDateHeader");
   if (dateHeader) {
     dateHeader.addEventListener("click", function () {
-      if (columnWasResized) {
-        columnWasResized = false;
-        return;
-      }
+      if (paTable.consumeResize(document.getElementById("main"))) return;
       sortDir = sortDir === "asc" ? "desc" : "asc";
       renderResults(lastRecords);
     });
   }
 
-  makeColumnsResizable();
-}
-
-function makeColumnsResizable() {
-  var table = document.getElementById("main");
-  if (!table) return;
-
-  var headers = table.querySelectorAll("thead th");
-  headers.forEach(function (th) {
-    var handle = document.createElement("span");
-    handle.className = "col-resizer";
-    th.appendChild(handle);
-
-    var startX, startWidth, startTableWidth;
-
-    handle.addEventListener("mousedown", function (e) {
-      // Pin every column to its current width so resizing one column grows the
-      // table (horizontal scroll) and leaves the other columns unchanged.
-      headers.forEach(function (h) {
-        h.style.width = h.offsetWidth + "px";
-      });
-      table.style.width = table.offsetWidth + "px";
-
-      startX = e.pageX;
-      startWidth = th.offsetWidth;
-      startTableWidth = table.offsetWidth;
-      handle.classList.add("resizing");
-      e.preventDefault();
-      e.stopPropagation();
-
-      function onMouseMove(ev) {
-        columnWasResized = true;
-        var delta = ev.pageX - startX;
-        if (startWidth + delta < 40) delta = 40 - startWidth;
-        th.style.width = startWidth + delta + "px";
-        table.style.width = startTableWidth + delta + "px";
-      }
-
-      function onMouseUp() {
-        handle.classList.remove("resizing");
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    });
-
-    // Prevent sort toggle when clicking the resizer
-    handle.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-  });
+  paTable.makeResizable(document.getElementById("main"));
 }

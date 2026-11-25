@@ -10,7 +10,6 @@ var searchKeyword = "";
 
 var currentRows = [];
 var sortState = { key: null, dir: 1 };
-var columnWasResized = false;
 
 const CATEGORIES = {
   PLUGIN: -1,
@@ -90,12 +89,8 @@ function initialize() {
 }
 
 function downloadData() {
-  var table = document.getElementById("main");
-
-  var field = document.getElementById("field-name").innerHTML;
-
-  const workbook = XLSX.utils.table_to_book(table, { sheet: field });
-  XLSX.writeFile(workbook, `dependencies.xlsx`);
+  var field = document.getElementById("field-name").textContent;
+  paTable.exportTable(document.getElementById("main"), field || "Dependencies", "dependencies.xlsx");
 }
 
 function getDependencies() {
@@ -279,11 +274,10 @@ function renderDependencies(processes) {
   var content = "";
 
   currentRows = processes.slice();
-  sortRows(currentRows);
+  paTable.sortRows(currentRows, sortState);
 
   function arrow(key) {
-    if (sortState.key !== key) return "";
-    return ` <span class="sort-arrow">${sortState.dir === 1 ? "▲" : "▼"}</span>`;
+    return paTable.arrow(sortState, key);
   }
 
   document.getElementById("count").innerHTML = `count: ${currentRows.length}`;
@@ -352,24 +346,11 @@ function renderDependencies(processes) {
     });
   });
 
-  document.querySelectorAll("th.sortable").forEach(function (th) {
-    th.addEventListener("click", function () {
-      if (columnWasResized) {
-        columnWasResized = false;
-        return;
-      }
-      var key = th.getAttribute("data-sort");
-      if (sortState.key === key) {
-        sortState.dir = -sortState.dir;
-      } else {
-        sortState.key = key;
-        sortState.dir = 1;
-      }
-      renderDependencies(currentRows);
-    });
+  var mainTable = document.getElementById("main");
+  paTable.bindSortHeaders(mainTable, sortState, function () {
+    renderDependencies(currentRows);
   });
-
-  makeColumnsResizable();
+  paTable.makeResizable(mainTable);
 }
 
 // Detail cells render chips on screen; data-v keeps plain text for the Excel export.
@@ -508,76 +489,4 @@ function openWebResourceViewer(wr) {
     if (e.target === overlay) close();
   });
   document.addEventListener("keydown", onKey, true);
-}
-
-function makeColumnsResizable() {
-  var table = document.getElementById("main");
-  if (!table) return;
-  var headers = table.querySelectorAll("thead th");
-  headers.forEach(function (th) {
-    var handle = document.createElement("span");
-    handle.className = "col-resizer";
-    th.appendChild(handle);
-
-    var startX, startWidth, startTableWidth;
-
-    handle.addEventListener("mousedown", function (e) {
-      // Pin every column to its current width so resizing one column grows the
-      // table (horizontal scroll) and leaves the other columns unchanged.
-      headers.forEach(function (h) {
-        h.style.width = h.offsetWidth + "px";
-      });
-      table.style.width = table.offsetWidth + "px";
-
-      startX = e.pageX;
-      startWidth = th.offsetWidth;
-      startTableWidth = table.offsetWidth;
-      handle.classList.add("resizing");
-      e.preventDefault();
-      e.stopPropagation();
-
-      function onMouseMove(ev) {
-        columnWasResized = true;
-        var delta = ev.pageX - startX;
-        if (startWidth + delta < 40) delta = 40 - startWidth;
-        th.style.width = startWidth + delta + "px";
-        table.style.width = startTableWidth + delta + "px";
-      }
-
-      function onMouseUp() {
-        handle.classList.remove("resizing");
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    });
-
-    // Prevent sort toggle when clicking the resizer
-    handle.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-  });
-}
-
-function sortRows(rows) {
-  if (!sortState.key) return;
-
-  rows.sort(function (a, b) {
-    var av = a[sortState.key];
-    var bv = b[sortState.key];
-
-    if (sortState.key === "primary_entity") {
-      av = av === "none" ? "" : av;
-      bv = bv === "none" ? "" : bv;
-    }
-
-    av = (av ?? "").toString().toLowerCase();
-    bv = (bv ?? "").toString().toLowerCase();
-
-    if (av < bv) return -1 * sortState.dir;
-    if (av > bv) return 1 * sortState.dir;
-    return 0;
-  });
 }
