@@ -394,6 +394,15 @@ document.addEventListener("DOMContentLoaded", function () {
 // something major ships; only the most recent 5 versions are displayed.
 const CHANGELOG = [
   {
+    version: "2.0.0.37",
+    notes: [
+      "🚦 Environment color banner: color-code each environment (e.g. red for production) with a banner and a tab-title prefix — also on make.powerapps.com and make.powerautomate.com.",
+      "🏷️ Toggle logical names: show each field, tab and section's logical name as a badge next to its label (click to copy).",
+      "🧵 Plugin trace logs: filter by entity, plugin (or *wildcard*) and date range, page 250 at a time, and inspect exceptions.",
+      "⭐ Pin favorite actions in this popup; recently used actions appear at the top.",
+    ],
+  },
+  {
     version: "2.0.0.36",
     notes: [
       "🔌 List Plugin Steps now shows toggle controls to enable/disable steps directly (applies immediately upon confirmation).",
