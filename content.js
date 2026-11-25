@@ -115,6 +115,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       execute("SHOW_CONTEXT_INFO");
       break;
 
+    case "toggleLogicalNames":
+      execute("TOGGLE_LOGICAL_NAMES");
+      break;
+
     case "openSolution":
       execute("OPEN_SOLUTION");
       break;

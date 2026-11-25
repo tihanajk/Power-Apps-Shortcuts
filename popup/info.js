@@ -49,6 +49,12 @@ document.addEventListener("DOMContentLoaded", function () {
       items: [
         { command: "god_mode", label: "Enable god mode", desc: "Make hidden fields visible, enable disabled fields and reveal all tabs/sections." },
         { command: "locate_on_form", label: "Locate field on the form", desc: "Find a field by name and highlight it on the form." },
+        {
+          command: "toggle_logical_names",
+          label: "Toggle logical names",
+          desc: "Show logical names next to the labels of fields, tabs and sections; run again to restore.",
+          isNew: true,
+        },
         { command: "show_dirty_fields", label: "Show unsaved (dirty) fields", desc: "List the fields changed but not yet saved on the form." },
         {
           command: "all_fields",

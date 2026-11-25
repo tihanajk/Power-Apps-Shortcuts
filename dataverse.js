@@ -3258,6 +3258,190 @@ async function ribbonInflateRaw(compData) {
   return new Uint8Array(buf);
 }
 
+// Toggles a styled logical-name badge next to form labels (fields, tabs and
+// sections). Labels get an invisible zero-width marker via setLabel so the
+// badge can be re-attached whenever Dynamics re-renders (e.g. switching tabs).
+// Running it again restores the original labels.
+var PA_LN_MARK = "\u2063";
+
+function encodeLogicalNameMarker(index) {
+  return (
+    PA_LN_MARK +
+    index
+      .toString(2)
+      .replace(/0/g, "\u200B")
+      .replace(/1/g, "\u200C") +
+    PA_LN_MARK
+  );
+}
+
+function ensureLogicalNameStyles() {
+  if (document.getElementById("pa-ln-style")) return;
+  var style = document.createElement("style");
+  style.id = "pa-ln-style";
+  style.textContent =
+    ".pa-ln-badge{display:inline-block;margin-left:6px;padding:0 6px;border-radius:4px;vertical-align:middle;" +
+    "font:500 11px/16px ui-monospace,'Cascadia Code',Consolas,monospace;letter-spacing:0;text-transform:none;" +
+    "color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;white-space:nowrap;cursor:copy;user-select:all}" +
+    ".pa-ln-badge:hover{background:#e0e7ff;border-color:#a5b4fc}" +
+    ".pa-ln-badge.pa-ln-copied{color:#15803d;background:#dcfce7;border-color:#86efac}" +
+    ".pa-ln-badge-floating{display:table;margin:0 0 3px;border-style:dashed}";
+  (document.head || document.documentElement).appendChild(style);
+}
+
+function createLogicalNameBadge(index, item, floating) {
+  var badge = document.createElement("span");
+  badge.className = "pa-ln-badge" + (floating ? " pa-ln-badge-floating" : "");
+  badge.setAttribute("data-pa-ln", String(index));
+  badge.textContent = item.name;
+  badge.title = floating ? "Logical name (label hidden on the form) — click to copy" : "Logical name — click to copy";
+  badge.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(item.name);
+      badge.classList.add("pa-ln-copied");
+      setTimeout(function () {
+        badge.classList.remove("pa-ln-copied");
+      }, 900);
+    } catch (err) {
+      /* clipboard not available */
+    }
+  });
+  return badge;
+}
+
+// DOM containers Dynamics renders for a control / section / tab, used when the
+// label itself isn't rendered (label hidden on the form, or empty).
+function findLogicalNameContainer(item) {
+  var id = window.CSS && CSS.escape ? CSS.escape(item.domName) : item.domName;
+  var selectors =
+    item.kind === "control"
+      ? ['[data-control-name="' + id + '"]', '[data-id="' + id + '-FieldSectionItemContainer"]', '[data-id="' + id + '"]']
+      : item.kind === "section"
+        ? ['section[data-id="' + id + '"]', '[data-id="' + id + '"]']
+        : ['[data-id="tablist-' + id + '"]'];
+  for (var i = 0; i < selectors.length; i++) {
+    var el = document.querySelector(selectors[i]);
+    if (el && el.offsetParent !== null) return el;
+  }
+  return null;
+}
+
+// Adds a badge next to every rendered label carrying a marker, and a floating
+// badge at the top of the container for items whose label isn't rendered.
+function attachLogicalNameBadges(state) {
+  if (!document.body) return;
+  var re = new RegExp(PA_LN_MARK + "([\u200B\u200C]+)" + PA_LN_MARK);
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      return n.nodeValue.indexOf(PA_LN_MARK) !== -1 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    },
+  });
+  var hits = [];
+  while (walker.nextNode()) hits.push(walker.currentNode);
+
+  var inline = {};
+  hits.forEach(function (node) {
+    var m = node.nodeValue.match(re);
+    var el = node.parentElement;
+    if (!m || !el) return;
+    var index = parseInt(m[1].replace(/\u200B/g, "0").replace(/\u200C/g, "1"), 2);
+    var item = state.items[index];
+    if (!item) return;
+    inline[index] = true;
+    if (el.querySelector(':scope > .pa-ln-badge[data-pa-ln="' + index + '"]')) return;
+    el.appendChild(createLogicalNameBadge(index, item, false));
+  });
+
+  // Prefer the inline badge once a label renders; drop any floating fallback for it.
+  document.querySelectorAll(".pa-ln-badge-floating").forEach(function (b) {
+    if (inline[b.getAttribute("data-pa-ln")]) b.remove();
+  });
+
+  state.items.forEach(function (item, index) {
+    if (inline[index] || !item.domName) return;
+    if (document.querySelector('.pa-ln-badge[data-pa-ln="' + index + '"]')) return;
+    var container = findLogicalNameContainer(item);
+    if (container) container.insertBefore(createLogicalNameBadge(index, item, true), container.firstChild);
+  });
+}
+
+function toggleLogicalNames() {
+  if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.ui || !Xrm.Page.data) {
+    paModal.alert("⚠️ Open a record form to toggle logical names");
+    return;
+  }
+
+  var key = "";
+  try {
+    key = Xrm.Page.data.entity.getEntityName() + "|" + (Xrm.Page.ui.formSelector.getCurrentItem()?.getId() || "");
+  } catch (e) {
+    key = location.href;
+  }
+
+  var state = window.__paLogicalNames;
+
+  if (state) {
+    if (state.observer) state.observer.disconnect();
+    clearTimeout(state.timer);
+    document.querySelectorAll(".pa-ln-badge").forEach(function (b) {
+      b.remove();
+    });
+    state.items.forEach(function (item) {
+      try {
+        item.target.setLabel(item.label);
+      } catch (e) {
+        /* control may have been removed */
+      }
+    });
+    window.__paLogicalNames = null;
+    // Same form: this run was the "off" toggle. Different form: start fresh below.
+    if (state.key === key) return;
+  }
+
+  var items = [];
+  function mark(target, name, kind) {
+    try {
+      if (!target || !target.getLabel || !target.setLabel || !name) return;
+      var label = target.getLabel() || "";
+      var index = items.length;
+      var domName = target.getName ? target.getName() : name;
+      items.push({ target: target, label: label, name: name, kind: kind, domName: domName });
+      target.setLabel(label + encodeLogicalNameMarker(index));
+    } catch (e) {
+      /* some controls don't support labels */
+    }
+  }
+
+  Xrm.Page.ui.controls.forEach(function (c) {
+    var attr = c.getAttribute ? c.getAttribute() : null;
+    mark(c, attr && attr.getName ? attr.getName() : c.getName(), "control");
+  });
+  Xrm.Page.ui.tabs.forEach(function (t) {
+    mark(t, t.getName(), "tab");
+    t.sections.forEach(function (s) {
+      mark(s, s.getName(), "section");
+    });
+  });
+
+  state = { key: key, items: items, timer: null, observer: null };
+  window.__paLogicalNames = state;
+  ensureLogicalNameStyles();
+
+  function schedule() {
+    clearTimeout(state.timer);
+    state.timer = setTimeout(function () {
+      attachLogicalNameBadges(state);
+    }, 120);
+  }
+  if (document.body && typeof MutationObserver !== "undefined") {
+    state.observer = new MutationObserver(schedule);
+    state.observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  schedule();
+}
+
 // This script is re-injected on every command, so guard against registering
 // the message listener more than once (duplicate listeners fire handlers multiple times).
 if (!window.__paDataverseListenerAdded) {
@@ -3296,6 +3480,7 @@ if (!window.__paDataverseListenerAdded) {
       SHOW_AUDIT_HISTORY: listAuditHistory,
       LIST_RIBBON: listRibbon,
       FETCH_WR_CONTENT: fetchWrContentOnDemand,
+      TOGGLE_LOGICAL_NAMES: toggleLogicalNames,
     };
 
     const handler = handlers[event.data.type];

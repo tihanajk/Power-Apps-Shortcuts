@@ -112,6 +112,9 @@
     "env_banner": {
       "description": "Set the environment color banner for this org"
     },
+    "toggle_logical_names": {
+      "description": "Toggle logical names on form labels, tabs and sections"
+    },
     "maker_navigate": {
       "description": "Maker portal: go to a maker area (solutions, tables, flows, …)"
     },

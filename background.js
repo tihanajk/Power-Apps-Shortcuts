@@ -395,6 +395,9 @@ function handleCommand(command) {
     case "env_banner":
       sendMessageToTab("envBanner");
       break;
+    case "toggle_logical_names":
+      sendMessageToTab("toggleLogicalNames");
+      break;
     case "god_mode":
       sendMessageToTab("triggerGM");
       break;

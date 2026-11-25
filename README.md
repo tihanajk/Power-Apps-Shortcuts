@@ -93,6 +93,7 @@ Your choice is remembered across sessions.
   ![Audit history](img/screenshots/audit.png)
 
 - **Show Unsaved (Dirty) Fields** — Lists the fields on the current form that have unsaved changes.
+- **Toggle Logical Names** — Shows each field's, tab's and section's logical name as a small colored badge next to its label on the current form (click a badge to copy the name). Badges stay in place when you switch tabs; run the command again to hide them.
 - **Environment Color Banner** — Color-codes the current org with a thin banner across the top, a small label tab and a `[LABEL]` prefix on the browser tab title. Pick a color from the swatches (red, orange, amber, green, teal, blue, purple, pink, slate), the custom color picker or a hex value, and a label — quick chips (PROD, UAT, TEST, DEV) set the label and a matching color. A live preview shows the result; **Remove banner** clears it. Banners are saved per Power Platform **environment id**, so the same banner also appears on make.powerapps.com and make.powerautomate.com for that environment (it follows environment switches there). Settings sync across your browsers; hover the label tab to see through it.
 - **Open Maker Portal for the Current Environment** — Opens the Power Apps Maker Portal targeted at the current environment.
 - **Open Power Platform Admin Center for the Current Environment** — Opens the Power Platform Admin Center targeted at the current environment.
