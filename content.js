@@ -650,9 +650,12 @@ function openViewInModal(url) {
 }
 
 function executeInScript(message, scriptName, dataForScript) {
+  // Cache-bust so a long-open page never reuses an older copy of the injected scripts.
+  var bust = "?v=" + Date.now();
+
   // Re-inject modal.js first: it no-ops unless the page holds an older revision.
   var modal = document.createElement("script");
-  modal.src = chrome.runtime.getURL("modal.js");
+  modal.src = chrome.runtime.getURL("modal.js") + bust;
   modal.onload = modal.onerror = function () {
     modal.remove();
     injectAndRun();
@@ -663,7 +666,7 @@ function executeInScript(message, scriptName, dataForScript) {
     var script = document.createElement("script");
     script.type = "text/javascript";
 
-    script.src = chrome.runtime.getURL(scriptName);
+    script.src = chrome.runtime.getURL(scriptName) + bust;
     document.head.appendChild(script);
 
     script.onload = function () {

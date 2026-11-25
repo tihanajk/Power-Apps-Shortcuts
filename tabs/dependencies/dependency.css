@@ -280,6 +280,20 @@
 
 .legend-item {
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-item .op-chip,
+.legend-item .field-chip {
+  margin: 0;
+}
+
+.legend-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--color-border);
 }
 
 /* Sortable header */

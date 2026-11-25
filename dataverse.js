@@ -1669,7 +1669,7 @@ async function listFlowDependencies() {
 
     var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
 
-    var PLUGIN_STAGES = { 10: "PreValidation", 20: "PreOperation", 40: "PostOperation" };
+    var PLUGIN_STAGES = { 10: "PreValidation", 20: "PreOperation", 30: "MainOperation", 40: "PostOperation" };
 
     result2.entities.forEach((e) => {
       var mode = e["mode"] === 0 ? "Sync" : e["mode"] === 1 ? "Async" : "";

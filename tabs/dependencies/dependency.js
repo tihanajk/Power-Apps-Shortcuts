@@ -308,7 +308,7 @@ function renderDependencies(processes) {
                     <td>
                     ${
                       e.category == CATEGORIES.PLUGIN
-                        ? `<div style="color:blue">${e.name} ${e.pl_image ? `<span title="Field is used in a plugin step image">🖼️</span>` : `<span title="Field is in the plugin step trigger (filtering attributes)">⚡</span>`}</div>`
+                        ? `<div style="color:blue">${e.pl_image ? `<span title="Field is used in a plugin step image">🖼️</span>` : `<span title="Field is in the plugin step trigger (filtering attributes)">⚡</span>`} ${e.name}</div>`
                         : e.category == CATEGORIES.WEBRESOURCE
                           ? `<a href="#" class="wr-link" data-id="${e.id}">${e.name}</a>`
                           : `<a target='_blank' href=${e.link || handleLink(e.category, e.id)}>${e.name}</a>`
