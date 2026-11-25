@@ -294,15 +294,15 @@ function renderDependencies(processes) {
       <table id="main">                        
           <thead>
             <tr>
-            <th></th>
-            <th class="sortable" data-sort="name">Name${arrow("name")}</th>
-            <th class="sortable" data-sort="category_display">Category${arrow("category_display")}</th>
-            <th class="sortable" data-sort="primary_entity">Primary entity${arrow("primary_entity")}</th>
-            <th class="sortable" data-sort="execution_mode">Mode${arrow("execution_mode")}</th>
-            <th class="sortable" data-sort="operation">Trigger${arrow("operation")}</th>
-            <th class="sortable" data-sort="trigger_fields">Trigger fields${arrow("trigger_fields")}</th>
-            <th class="sortable" data-sort="scope">Scope${arrow("scope")}</th>
-            <th class="sortable" data-sort="status_display">Status${arrow("status_display")}</th>
+            <th class="col-idx"></th>
+            <th class="sortable col-name" data-sort="name">Name${arrow("name")}</th>
+            <th class="sortable col-category" data-sort="category_display">Category${arrow("category_display")}</th>
+            <th class="sortable col-entity" data-sort="primary_entity">Primary entity${arrow("primary_entity")}</th>
+            <th class="sortable col-mode" data-sort="execution_mode">Mode${arrow("execution_mode")}</th>
+            <th class="sortable col-trigger" data-sort="operation">Trigger${arrow("operation")}</th>
+            <th class="sortable col-fields" data-sort="trigger_fields">Trigger fields${arrow("trigger_fields")}</th>
+            <th class="sortable col-scope" data-sort="scope">Scope${arrow("scope")}</th>
+            <th class="sortable col-status" data-sort="status_display">Status${arrow("status_display")}</th>
             </tr>
           </thead>
           <tbody>
@@ -322,10 +322,10 @@ function renderDependencies(processes) {
                     </td>
                     <td id="category"><span class="cat-pill" style="--cat:${handleColor(e.category)}">${e.category_display}</span></td>
                     <td id="primary-entity" style="color:#5d699a">${e.primary_entity != "none" ? e.primary_entity : ""}</td>
-                    <td>${detailCell(e.execution_mode)}</td>
-                    <td>${detailCell(e.operation)}</td>
-                    <td>${detailCell(e.trigger_fields)}</td>
-                    <td>${detailCell(e.scope)}</td>
+                    ${modeCell(e)}
+                    ${triggerCell(e.operation)}
+                    ${fieldsCell(e.trigger_fields)}
+                    ${scopeCell(e.scope)}
                     <td>
                     <span class="status-pill ${e.status == 1 ? "on" : "off"}" title="${e.status == 1 ? "Active" : "Inactive"}">${e.status_display}</span>
                     </td>
@@ -372,10 +372,57 @@ function renderDependencies(processes) {
   makeColumnsResizable();
 }
 
-function detailCell(value) {
-  if (!value) return "";
-  var safe = escapeHtml(value);
-  return `<span title="${safe.replace(/"/g, "&quot;")}">${safe}</span>`;
+// Detail cells render chips on screen; data-v keeps plain text for the Excel export.
+function detailTd(plain, html, cls) {
+  if (!plain) return `<td class="${cls || ""}" data-v=""><span class="muted-dash">—</span></td>`;
+  var attr = escapeHtml(plain).replace(/"/g, "&quot;");
+  return `<td class="${cls || ""}" data-v="${attr}" title="${attr}">${html}</td>`;
+}
+
+function modeCell(e) {
+  if (!e.execution_mode) return detailTd("");
+  var plain = e.stage ? `${e.execution_mode} (${e.stage})` : e.execution_mode;
+  var html =
+    `<span class="mode-pill ${e.execution_mode.toLowerCase()}">${escapeHtml(e.execution_mode)}</span>` +
+    (e.stage ? `<span class="sub-text">${escapeHtml(e.stage)}</span>` : "");
+  return detailTd(plain, html, "cell-stack");
+}
+
+function triggerCell(operation) {
+  if (!operation) return detailTd("");
+  var html = operation
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean)
+    .map((o) => `<span class="op-chip op-${o.toLowerCase().replace(/[^a-z]/g, "")}">${escapeHtml(o)}</span>`)
+    .join("");
+  return detailTd(operation, html, "cell-wrap");
+}
+
+function fieldsCell(fields) {
+  if (!fields) return detailTd("");
+  var keyword = (searchKeyword || "").toLowerCase();
+  var list = fields
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
+  var html = list
+    .map((f) => {
+      var cls = f.startsWith("(") ? "field-chip all" : f.toLowerCase() === keyword ? "field-chip match" : "field-chip";
+      return `<span class="${cls}">${escapeHtml(f)}</span>`;
+    })
+    .join("");
+  return detailTd(list.join(", "), html, "cell-wrap");
+}
+
+function scopeCell(scope) {
+  if (!scope) return detailTd("");
+  var isForm = scope.indexOf("Form: ") === 0;
+  var kind = isForm ? "Form" : scope;
+  var html =
+    `<span class="scope-pill ${kind.toLowerCase().replace(/[^a-z]/g, "")}">${escapeHtml(kind)}</span>` +
+    (isForm ? `<span class="sub-text">${escapeHtml(scope.slice(6))}</span>` : "");
+  return detailTd(scope, html, "cell-stack");
 }
 
 function escapeHtml(text) {
