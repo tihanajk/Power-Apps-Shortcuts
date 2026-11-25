@@ -634,17 +634,28 @@ function openViewInModal(url) {
 }
 
 function executeInScript(message, scriptName, dataForScript) {
-  var script = document.createElement("script");
-  script.type = "text/javascript";
-
-  script.src = chrome.runtime.getURL(scriptName);
-  document.head.appendChild(script);
-
-  script.onload = function () {
-    window.postMessage({ type: message, dataForScript: dataForScript }, "*");
+  // Re-inject modal.js first: it no-ops unless the page holds an older revision.
+  var modal = document.createElement("script");
+  modal.src = chrome.runtime.getURL("modal.js");
+  modal.onload = modal.onerror = function () {
+    modal.remove();
+    injectAndRun();
   };
+  (document.head || document.documentElement).appendChild(modal);
 
-  script.remove();
+  function injectAndRun() {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+
+    script.src = chrome.runtime.getURL(scriptName);
+    document.head.appendChild(script);
+
+    script.onload = function () {
+      window.postMessage({ type: message, dataForScript: dataForScript }, "*");
+    };
+
+    script.remove();
+  }
 }
 
 // Listen for messages from the injected script

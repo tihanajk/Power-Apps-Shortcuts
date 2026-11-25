@@ -2,7 +2,10 @@
 // Loaded both as a content script (for content.js) and injected into the page
 // context (for dataverse.js). Exposes window.paModal with promise-based methods.
 (function () {
-  if (window.paModal && window.paModal.__isPaModal) return;
+  // Bump PA_MODAL_REV whenever modal.js changes so an already-open page picks up
+  // the new version instead of keeping the copy injected on page load.
+  var PA_MODAL_REV = 3;
+  if (window.paModal && window.paModal.__isPaModal && (window.paModal.__rev || 1) >= PA_MODAL_REV) return;
 
   var Z = 2147483647;
 
@@ -30,9 +33,12 @@
   }
 
   function ensureStyles() {
-    if (document.getElementById("pa-modal-style")) return;
+    var existing = document.getElementById("pa-modal-style");
+    if (existing && existing.getAttribute("data-rev") === String(PA_MODAL_REV)) return;
+    if (existing) existing.remove();
     var style = document.createElement("style");
     style.id = "pa-modal-style";
+    style.setAttribute("data-rev", String(PA_MODAL_REV));
     style.textContent = [
       ".pa-modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:" +
         Z +
@@ -445,7 +451,7 @@
                     return o.value === comboEntry.value;
                   });
                   if (cur) comboInput.value = cur.label;
-                } else {
+                } else if (!field.allowCustom) {
                   comboInput.value = "";
                 }
               }, 150);
@@ -482,7 +488,8 @@
               var exact = comboOptions.find(function (o) {
                 return o.label.toLowerCase() === typed && (!comboEntry.group || !o.group || o.group === comboEntry.group);
               });
-              return exact ? exact.value : "";
+              // allowCustom: free text (e.g. a *wildcard* pattern) is returned as-is.
+              return exact ? exact.value : field.allowCustom ? comboInput.value.trim() : "";
             };
 
             formInputs.push(comboEntry);
@@ -506,7 +513,7 @@
           } else {
             fInput = document.createElement("input");
             fInput.className = "pa-modal-input";
-            fInput.type = "text";
+            fInput.type = field.inputType || "text";
             fInput.value = field.defaultValue != null ? String(field.defaultValue) : "";
             if (field.placeholder) fInput.placeholder = field.placeholder;
           }
@@ -677,6 +684,7 @@
 
   window.paModal = {
     __isPaModal: true,
+    __rev: PA_MODAL_REV,
     alert: function (message, opts) {
       return open(Object.assign({ type: "alert", message: message }, opts || {}));
     },
