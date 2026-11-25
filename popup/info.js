@@ -192,65 +192,112 @@ document.addEventListener("DOMContentLoaded", function () {
   let activeIndex = -1;
   let shortcutMap = {};
   let activeContext = "model";
+  let favorites = [];
+  let recents = [];
+  const MAX_RECENTS = 4;
+
+  function contextGroups() {
+    return groups.filter(function (group) {
+      return group.context === activeContext;
+    });
+  }
+
+  // Favorites and recently used actions are shown above the regular groups.
+  function sectionsToRender() {
+    const byCommand = {};
+    contextGroups().forEach(function (g) {
+      g.items.forEach(function (item) {
+        byCommand[item.command] = item;
+      });
+    });
+    const pick = (list) => list.map((c) => byCommand[c]).filter(Boolean);
+    const favItems = pick(favorites);
+    const recentItems = pick(recents.filter((c) => favorites.indexOf(c) === -1)).slice(0, MAX_RECENTS);
+
+    const sections = [];
+    if (favItems.length) sections.push({ title: "★ Favorites", items: favItems, quick: true });
+    if (recentItems.length) sections.push({ title: "Recent", items: recentItems, quick: true });
+    return sections.concat(contextGroups());
+  }
+
+  function toggleFavorite(command) {
+    const idx = favorites.indexOf(command);
+    if (idx === -1) favorites.push(command);
+    else favorites.splice(idx, 1);
+    chrome.storage.sync.set({ favoriteCommands: favorites });
+    const scrollTop = container.scrollTop;
+    render();
+    applyFilter();
+    container.scrollTop = scrollTop;
+  }
 
   function render() {
     container.innerHTML = "";
-    groups
-      .filter(function (group) {
-        return group.context === activeContext;
-      })
-      .forEach(function (group) {
-        const section = document.createElement("div");
-        section.className = "action-group";
+    sectionsToRender().forEach(function (group) {
+      const section = document.createElement("div");
+      section.className = "action-group" + (group.quick ? " quick-group" : "");
 
-        const heading = document.createElement("div");
-        heading.className = "group-title";
-        heading.textContent = group.title;
-        section.appendChild(heading);
+      const heading = document.createElement("div");
+      heading.className = "group-title";
+      heading.textContent = group.title;
+      section.appendChild(heading);
 
-        group.items.forEach(function (c) {
-          const btn = document.createElement("button");
-          btn.className = "action-btn";
-          btn.dataset.label = c.label.toLowerCase();
-          if (c.desc) btn.title = c.desc;
+      group.items.forEach(function (c) {
+        const btn = document.createElement("button");
+        btn.className = "action-btn";
+        btn.dataset.label = c.label.toLowerCase();
+        if (c.desc) btn.title = c.desc;
 
-          const label = document.createElement("span");
-          label.className = "action-label";
-          label.textContent = c.label;
-
-          btn.appendChild(label);
-
-          if (c.isNew) {
-            const badge = document.createElement("span");
-            badge.className = "action-new";
-            badge.textContent = "NEW";
-            btn.appendChild(badge);
-          }
-
-          const shortcut = shortcutMap[c.command];
-          if (shortcut) {
-            const kbd = document.createElement("kbd");
-            kbd.className = "action-kbd";
-            kbd.textContent = shortcut;
-            btn.appendChild(kbd);
-          }
-
-          btn.addEventListener("click", function () {
-            chrome.runtime.sendMessage({ action: "triggerCommand", command: c.command });
-            window.close();
-          });
-
-          btn.addEventListener("mousemove", function () {
-            const btns = visibleButtons();
-            const idx = btns.indexOf(btn);
-            if (idx !== -1) setActive(idx);
-          });
-
-          section.appendChild(btn);
+        const isFavorite = favorites.indexOf(c.command) !== -1;
+        const star = document.createElement("span");
+        star.className = "action-star" + (isFavorite ? " on" : "");
+        star.textContent = isFavorite ? "★" : "☆";
+        star.title = isFavorite ? "Remove from favorites" : "Pin to favorites";
+        star.setAttribute("role", "button");
+        star.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFavorite(c.command);
         });
 
-        container.appendChild(section);
+        const label = document.createElement("span");
+        label.className = "action-label";
+        label.textContent = c.label;
+
+        btn.appendChild(star);
+        btn.appendChild(label);
+
+        if (c.isNew) {
+          const badge = document.createElement("span");
+          badge.className = "action-new";
+          badge.textContent = "NEW";
+          btn.appendChild(badge);
+        }
+
+        const shortcut = shortcutMap[c.command];
+        if (shortcut) {
+          const kbd = document.createElement("kbd");
+          kbd.className = "action-kbd";
+          kbd.textContent = shortcut;
+          btn.appendChild(kbd);
+        }
+
+        btn.addEventListener("click", function () {
+          chrome.runtime.sendMessage({ action: "triggerCommand", command: c.command });
+          window.close();
+        });
+
+        btn.addEventListener("mousemove", function () {
+          const btns = visibleButtons();
+          const idx = btns.indexOf(btn);
+          if (idx !== -1) setActive(idx);
+        });
+
+        section.appendChild(btn);
       });
+
+      container.appendChild(section);
+    });
   }
 
   function visibleButtons() {
@@ -271,9 +318,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const term = (searchInput.value || "").toLowerCase();
     let anyVisible = false;
     container.querySelectorAll(".action-group").forEach(function (group) {
+      // While searching, skip Favorites/Recent so each match is listed once.
+      const skip = term && group.classList.contains("quick-group");
       let groupVisible = 0;
       group.querySelectorAll(".action-btn").forEach(function (btn) {
-        const match = btn.dataset.label.includes(term);
+        const match = !skip && btn.dataset.label.includes(term);
         btn.classList.toggle("hidden", !match);
         if (match) groupVisible++;
       });
@@ -285,8 +334,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function init() {
-    render();
-    applyFilter();
+    chrome.storage.sync.get({ favoriteCommands: [] }, function (syncCfg) {
+      chrome.storage.local.get({ recentCommands: [] }, function (localCfg) {
+        favorites = Array.isArray(syncCfg.favoriteCommands) ? syncCfg.favoriteCommands : [];
+        recents = Array.isArray(localCfg.recentCommands) ? localCfg.recentCommands : [];
+        render();
+        applyFilter();
+      });
+    });
   }
 
   // Default to the tab matching the active page (maker portal vs model-driven).

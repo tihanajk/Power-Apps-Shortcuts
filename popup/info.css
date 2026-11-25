@@ -418,6 +418,38 @@ body {
   white-space: nowrap;
 }
 
+.action-star {
+  flex-shrink: 0;
+  width: 16px;
+  margin: -2px -4px -2px -4px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-muted);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.action-btn:hover .action-star,
+.action-btn.active .action-star {
+  opacity: 0.55;
+}
+
+.action-star:hover {
+  opacity: 1 !important;
+  color: #d97706;
+  transform: scale(1.15);
+}
+
+.action-star.on {
+  opacity: 1;
+  color: #f59e0b;
+}
+
 .action-new {
   flex-shrink: 0;
   font-size: 9px;

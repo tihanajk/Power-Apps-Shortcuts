@@ -419,6 +419,7 @@ chrome.commands.onCommand.addListener(function (command) {
 });
 
 function handleCommand(command) {
+  recordRecentCommand(command);
   switch (command) {
     case "env_banner":
       sendMessageToTab("envBanner");
@@ -531,6 +532,18 @@ function handleCommand(command) {
     default:
       break;
   }
+}
+
+// Keeps the most recently used commands (newest first) for the popup's "Recent" group.
+function recordRecentCommand(command) {
+  if (!command) return;
+  chrome.storage.local.get({ recentCommands: [] }, function (cfg) {
+    var list = (cfg.recentCommands || []).filter(function (c) {
+      return c !== command;
+    });
+    list.unshift(command);
+    chrome.storage.local.set({ recentCommands: list.slice(0, 8) });
+  });
 }
 
 function sendMessageToTab(mess) {

@@ -41,6 +41,8 @@ Start by setting up which keyboard shortcuts trigger which actions. Here's an ex
 
 Don't want to memorize shortcuts? Click the extension icon to open the popup, where every action is grouped and searchable — just type to filter and press <kbd>Enter</kbd> to run.
 
+Hover an action and click ☆ to pin it to a **★ Favorites** group at the top of the popup. Your most recently used actions also appear in a **Recent** group.
+
 ![Popup launcher](img/screenshots/popup.png)
 
 The popup also has a **"Show results in a modal on the current tab"** toggle:
