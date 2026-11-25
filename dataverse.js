@@ -1628,6 +1628,7 @@ async function listFlowDependencies() {
     var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
 
     result2.entities.forEach((e) => {
+      var fieldsInTrigger = e["filteringattributes"] ? e["filteringattributes"].split(",").map(f => f.trim()).filter(f => f) : [];
       processes.push({
         id: e["sdkmessageprocessingstepid"],
         name: e["p.name"],
@@ -1640,6 +1641,51 @@ async function listFlowDependencies() {
         execution_mode: e["mode"] === 0 ? "Sync" : e["mode"] === 1 ? "Async" : "",
         primary_entity: e["f.primaryobjecttypecode"],
         pl_image: !e["filteringattributes"]?.includes(term),
+        fields_touched: fieldsInTrigger.join(", "),
+      });
+    });
+  }
+
+  // BUSINESS RULES
+  if (selectedTypes.includes(2)) {
+    var fetchBR = `<fetch>
+  <entity name='workflow'>
+    <attribute name='name' />
+    <attribute name='category' />
+    <attribute name='statecode' />
+    <attribute name='statuscode' />
+    <attribute name='workflowid' />
+    <attribute name='primaryentity' />
+    <attribute name='rulesscope' />
+    <attribute name='clientdata' />
+    <filter>
+      <condition attribute='category' operator='eq' value='2' />
+      <filter type='or'>
+        <condition attribute='name' operator='like' value='%${term}%' />
+        <condition attribute='clientdata' operator='like' value='%${term}%' />
+      </filter>
+    </filter>
+    <order attribute='name' />
+  </entity>
+</fetch>`;
+
+    var escapedFetchBR = encodeURIComponent(fetchBR);
+
+    var resultBR = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchBR);
+
+    resultBR.entities.forEach((e) => {
+      var brScope = e["rulesscope"];
+      var brScopeDisplay = brScope === 1 ? "Form level" : brScope === 2 ? "Entity level" : "Unknown";
+
+      processes.push({
+        id: e["workflowid"],
+        name: e["name"],
+        status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
+        status: e["statecode"],
+        category_display: "Business Rule",
+        category: 2,
+        primary_entity: e["primaryentity"],
+        execution_level: brScopeDisplay,
       });
     });
   }
