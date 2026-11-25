@@ -298,10 +298,10 @@ function renderDependencies(processes) {
             <th class="sortable" data-sort="name">Name${arrow("name")}</th>
             <th class="sortable" data-sort="category_display">Category${arrow("category_display")}</th>
             <th class="sortable" data-sort="primary_entity">Primary entity${arrow("primary_entity")}</th>
-            <th class="sortable" data-sort="execution_mode">Execution Mode${arrow("execution_mode")}</th>
-            <th class="sortable" data-sort="operation">Operation${arrow("operation")}</th>
-            <th class="sortable" data-sort="fields_touched">Fields Touched${arrow("fields_touched")}</th>
-            <th class="sortable" data-sort="execution_level">Level${arrow("execution_level")}</th>
+            <th class="sortable" data-sort="execution_mode">Mode${arrow("execution_mode")}</th>
+            <th class="sortable" data-sort="operation">Trigger${arrow("operation")}</th>
+            <th class="sortable" data-sort="trigger_fields">Trigger fields${arrow("trigger_fields")}</th>
+            <th class="sortable" data-sort="scope">Scope${arrow("scope")}</th>
             <th class="sortable" data-sort="status_display">Status${arrow("status_display")}</th>
             </tr>
           </thead>
@@ -322,10 +322,10 @@ function renderDependencies(processes) {
                     </td>
                     <td id="category"><span class="cat-pill" style="--cat:${handleColor(e.category)}">${e.category_display}</span></td>
                     <td id="primary-entity" style="color:#5d699a">${e.primary_entity != "none" ? e.primary_entity : ""}</td>
-                    <td>${e.execution_mode || ""}</td>
-                    <td>${e.operation || ""}</td>
-                    <td>${e.fields_touched ? `<span title="${escapeHtml(e.fields_touched)}">${escapeHtml(e.fields_touched.substring(0, 30))}${e.fields_touched.length > 30 ? "..." : ""}</span>` : ""}</td>
-                    <td>${e.execution_level || ""}</td>
+                    <td>${detailCell(e.execution_mode)}</td>
+                    <td>${detailCell(e.operation)}</td>
+                    <td>${detailCell(e.trigger_fields)}</td>
+                    <td>${detailCell(e.scope)}</td>
                     <td>
                     <span class="status-pill ${e.status == 1 ? "on" : "off"}" title="${e.status == 1 ? "Active" : "Inactive"}">${e.status_display}</span>
                     </td>
@@ -370,6 +370,12 @@ function renderDependencies(processes) {
   });
 
   makeColumnsResizable();
+}
+
+function detailCell(value) {
+  if (!value) return "";
+  var safe = escapeHtml(value);
+  return `<span title="${safe.replace(/"/g, "&quot;")}">${safe}</span>`;
 }
 
 function escapeHtml(text) {

@@ -318,7 +318,7 @@ const CHANGELOG = [
     version: "2.0.0.36",
     notes: [
       "🔌 List Plugin Steps now shows toggle controls to enable/disable steps directly (applies immediately upon confirmation).",
-      "🔗 Dependency detection includes operation types and execution modes for plugin steps.",
+      "🔗 Process dependencies show mode (Sync/Async + plugin stage), trigger (Create/Update/Delete), trigger fields, and business rule scope (Entity / All forms / specific form).",
       "🧭 Open Entity List and Open Record now use searchable entity pickers with display and logical names.",
       "🧩 Form Layout compares default and current visibility, disabled, and required states; differences may indicate form logic such as a business rule or script.",
     ],

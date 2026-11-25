@@ -1474,6 +1474,27 @@ async function getAllFields() {
   );
 }
 
+function getBusinessRuleFormId(e) {
+  var id = e["processtriggerformid"] || e["_processtriggerformid_value"];
+  return id ? String(id).replace(/[{}]/g, "").toLowerCase() : "";
+}
+
+async function getBusinessRuleFormNames(workflows) {
+  var ids = Array.from(new Set(workflows.filter((e) => e["category"] === 2).map(getBusinessRuleFormId).filter(Boolean)));
+  var names = {};
+  if (ids.length === 0) return names;
+  try {
+    var filter = ids.map((id) => `formid eq ${id}`).join(" or ");
+    var forms = await Xrm.WebApi.retrieveMultipleRecords("systemform", `?$select=name,formid&$filter=${filter}`);
+    forms.entities.forEach((f) => {
+      names[String(f.formid).toLowerCase()] = f.name;
+    });
+  } catch (err) {
+    // Fall back to showing the form id when form names cannot be read.
+  }
+  return names;
+}
+
 async function listFlowDependencies() {
   var typeOptions = [
     { value: 5, label: "Modern Flows", checked: true },
@@ -1543,6 +1564,8 @@ async function listFlowDependencies() {
     <attribute name="triggeroncreate" />
     <attribute name="triggerondelete" />
     <attribute name="triggeronupdateattributelist" />
+    <attribute name="processtriggerscope" />
+    <attribute name="processtriggerformid" />
     <filter>       
       <condition attribute="type" operator="eq" value="1" />
       <condition attribute="category" operator="in">
@@ -1569,14 +1592,30 @@ async function listFlowDependencies() {
   if (wantsProcesses) {
     var result = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchXML);
 
+    var brFormNames = await getBusinessRuleFormNames(result.entities);
+
     result.entities.forEach((e) => {
       if (!selectedTypes.includes(e["category"])) return;
 
       var operations = [];
+      var triggerFields = "";
       if (e["category"] === 0) {
         if (e["triggeroncreate"] === true) operations.push("Create");
-        if (e["triggeronupdateattributelist"]) operations.push("Update");
+        if (e["triggeronupdateattributelist"]) {
+          operations.push("Update");
+          triggerFields = e["triggeronupdateattributelist"];
+        }
         if (e["triggerondelete"] === true) operations.push("Delete");
+      }
+
+      // Business rule scope: 2 = Entity (server + all forms), 1 = Form (all forms or one specific form)
+      var scope = "";
+      if (e["category"] === 2) {
+        var formId = getBusinessRuleFormId(e);
+        if (e["processtriggerscope"] === 2) scope = "Entity";
+        else if (formId) scope = "Form: " + (brFormNames[formId] || formId);
+        else if (e["processtriggerscope"] === 1) scope = "All forms";
+        else scope = e["processtriggerscope@OData.Community.Display.V1.FormattedValue"] || "";
       }
 
       processes.push({
@@ -1589,6 +1628,8 @@ async function listFlowDependencies() {
         primary_entity: e["primaryentity"],
         operation: operations.join(", "),
         execution_mode: e["category"] === 0 ? (e["mode"] === 0 ? "Async" : e["mode"] === 1 ? "Sync" : "") : "",
+        trigger_fields: triggerFields,
+        scope: scope,
       });
     });
   }
@@ -1601,6 +1642,7 @@ async function listFlowDependencies() {
     <attribute name='plugintypeid' />
     <attribute name='statuscode' />
     <attribute name='mode' />
+    <attribute name='stage' />
     <link-entity name='plugintype' from='plugintypeid' to='plugintypeid' alias='p'>
       <attribute name='name' />
     </link-entity>
@@ -1627,8 +1669,15 @@ async function listFlowDependencies() {
 
     var result2 = await Xrm.WebApi.retrieveMultipleRecords("sdkmessageprocessingstep", "?fetchXml=" + escapedFetchXML2);
 
+    var PLUGIN_STAGES = { 10: "PreValidation", 20: "PreOperation", 40: "PostOperation" };
+
     result2.entities.forEach((e) => {
-      var fieldsInTrigger = e["filteringattributes"] ? e["filteringattributes"].split(",").map(f => f.trim()).filter(f => f) : [];
+      var mode = e["mode"] === 0 ? "Sync" : e["mode"] === 1 ? "Async" : "";
+      var stage = PLUGIN_STAGES[e["stage"]] || "";
+      var filtering = e["filteringattributes"] || "";
+      // An Update step without filtering attributes fires on any column change.
+      var pluginFields = filtering || (e["m.name"] === "Update" ? "(all columns)" : "");
+
       processes.push({
         id: e["sdkmessageprocessingstepid"],
         name: e["p.name"],
@@ -1638,54 +1687,10 @@ async function listFlowDependencies() {
         category: -1,
         message: e["m.name"],
         operation: e["m.name"] || "",
-        execution_mode: e["mode"] === 0 ? "Sync" : e["mode"] === 1 ? "Async" : "",
+        execution_mode: stage ? `${mode} (${stage})` : mode,
+        trigger_fields: pluginFields,
         primary_entity: e["f.primaryobjecttypecode"],
         pl_image: !e["filteringattributes"]?.includes(term),
-        fields_touched: fieldsInTrigger.join(", "),
-      });
-    });
-  }
-
-  // BUSINESS RULES
-  if (selectedTypes.includes(2)) {
-    var fetchBR = `<fetch>
-  <entity name='workflow'>
-    <attribute name='name' />
-    <attribute name='category' />
-    <attribute name='statecode' />
-    <attribute name='statuscode' />
-    <attribute name='workflowid' />
-    <attribute name='primaryentity' />
-    <attribute name='rulesscope' />
-    <attribute name='clientdata' />
-    <filter>
-      <condition attribute='category' operator='eq' value='2' />
-      <filter type='or'>
-        <condition attribute='name' operator='like' value='%${term}%' />
-        <condition attribute='clientdata' operator='like' value='%${term}%' />
-      </filter>
-    </filter>
-    <order attribute='name' />
-  </entity>
-</fetch>`;
-
-    var escapedFetchBR = encodeURIComponent(fetchBR);
-
-    var resultBR = await Xrm.WebApi.retrieveMultipleRecords("workflow", "?fetchXml=" + escapedFetchBR);
-
-    resultBR.entities.forEach((e) => {
-      var brScope = e["rulesscope"];
-      var brScopeDisplay = brScope === 1 ? "Form level" : brScope === 2 ? "Entity level" : "Unknown";
-
-      processes.push({
-        id: e["workflowid"],
-        name: e["name"],
-        status_display: e["statecode@OData.Community.Display.V1.FormattedValue"],
-        status: e["statecode"],
-        category_display: "Business Rule",
-        category: 2,
-        primary_entity: e["primaryentity"],
-        execution_level: brScopeDisplay,
       });
     });
   }
