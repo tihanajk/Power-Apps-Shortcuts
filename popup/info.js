@@ -35,6 +35,12 @@ document.addEventListener("DOMContentLoaded", function () {
           desc: "Show app, environment, org, user and current form/record details.",
           isNew: true,
         },
+        {
+          command: "env_banner",
+          label: "Environment color banner",
+          desc: "Color-code this org (e.g. red for production) with a banner and a tab-title prefix.",
+          isNew: true,
+        },
       ],
     },
     {
@@ -155,6 +161,12 @@ document.addEventListener("DOMContentLoaded", function () {
           command: "maker_open_flow",
           label: "Open flow in Power Automate",
           desc: "Pick a cloud flow in this environment and open it in Power Automate.",
+          isNew: true,
+        },
+        {
+          command: "env_banner",
+          label: "Environment color banner",
+          desc: "Color-code this environment (same banner as on the Dynamics org, matched by environment id).",
           isNew: true,
         },
       ],

@@ -392,6 +392,9 @@ chrome.commands.onCommand.addListener(function (command) {
 
 function handleCommand(command) {
   switch (command) {
+    case "env_banner":
+      sendMessageToTab("envBanner");
+      break;
     case "god_mode":
       sendMessageToTab("triggerGM");
       break;

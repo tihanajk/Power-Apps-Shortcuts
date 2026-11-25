@@ -109,6 +109,9 @@
     "show_context_info": {
       "description": "Display app, environment and form info"
     },
+    "env_banner": {
+      "description": "Set the environment color banner for this org"
+    },
     "maker_navigate": {
       "description": "Maker portal: go to a maker area (solutions, tables, flows, …)"
     },
@@ -156,12 +159,13 @@
       "js": [
         "modal.js",
         "content.js",
-        "tabs/common.js"
+        "tabs/common.js",
+        "envBanner.js"
       ]
     },
     {
       "matches": ["*://make.powerapps.com/*", "*://make.powerautomate.com/*"],
-      "js": ["modal.js", "tabs/common.js", "maker.js"],
+      "js": ["modal.js", "tabs/common.js", "envBanner.js", "maker.js"],
       "css": ["maker.css"]
     }
   ]
