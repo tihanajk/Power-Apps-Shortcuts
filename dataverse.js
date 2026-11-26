@@ -1480,7 +1480,14 @@ function getBusinessRuleFormId(e) {
 }
 
 async function getBusinessRuleFormNames(workflows) {
-  var ids = Array.from(new Set(workflows.filter((e) => e["category"] === 2).map(getBusinessRuleFormId).filter(Boolean)));
+  var ids = Array.from(
+    new Set(
+      workflows
+        .filter((e) => e["category"] === 2)
+        .map(getBusinessRuleFormId)
+        .filter(Boolean),
+    ),
+  );
   var names = {};
   if (ids.length === 0) return names;
   try {
@@ -3265,14 +3272,7 @@ async function ribbonInflateRaw(compData) {
 var PA_LN_MARK = "\u2063";
 
 function encodeLogicalNameMarker(index) {
-  return (
-    PA_LN_MARK +
-    index
-      .toString(2)
-      .replace(/0/g, "\u200B")
-      .replace(/1/g, "\u200C") +
-    PA_LN_MARK
-  );
+  return PA_LN_MARK + index.toString(2).replace(/0/g, "\u200B").replace(/1/g, "\u200C") + PA_LN_MARK;
 }
 
 function ensureLogicalNameStyles() {
@@ -3328,6 +3328,17 @@ function findLogicalNameContainer(item) {
   return null;
 }
 
+function ensureLogicalNameMarkers(state) {
+  state.items.forEach(function (item, index) {
+    try {
+      var markerLabel = item.label + encodeLogicalNameMarker(index);
+      if (item.target.getLabel() !== markerLabel) item.target.setLabel(markerLabel);
+    } catch (e) {
+      /* control may have been removed */
+    }
+  });
+}
+
 // Adds a badge next to every rendered label carrying a marker, and a floating
 // badge at the top of the container for items whose label isn't rendered.
 function attachLogicalNameBadges(state) {
@@ -3367,9 +3378,13 @@ function attachLogicalNameBadges(state) {
   });
 }
 
-function toggleLogicalNames() {
+function toggleLogicalNames(forceEnabled, silent) {
+  if (forceEnabled === false && window.__paLogicalNamesRestoreTimer) {
+    clearTimeout(window.__paLogicalNamesRestoreTimer);
+    window.__paLogicalNamesRestoreTimer = null;
+  }
   if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.ui || !Xrm.Page.data) {
-    paModal.alert("⚠️ Open a record form to toggle logical names");
+    if (!silent && forceEnabled !== false) paModal.alert("⚠️ Open a record form to toggle logical names");
     return;
   }
 
@@ -3383,6 +3398,7 @@ function toggleLogicalNames() {
   var state = window.__paLogicalNames;
 
   if (state) {
+    if (state.key === key && forceEnabled === true) return;
     if (state.observer) state.observer.disconnect();
     clearTimeout(state.timer);
     document.querySelectorAll(".pa-ln-badge").forEach(function (b) {
@@ -3396,8 +3412,9 @@ function toggleLogicalNames() {
       }
     });
     window.__paLogicalNames = null;
-    // Same form: this run was the "off" toggle. Different form: start fresh below.
-    if (state.key === key) return;
+    if (forceEnabled === false || (state.key === key && forceEnabled !== true)) return;
+  } else if (forceEnabled === false) {
+    return;
   }
 
   var items = [];
@@ -3432,6 +3449,7 @@ function toggleLogicalNames() {
   function schedule() {
     clearTimeout(state.timer);
     state.timer = setTimeout(function () {
+      ensureLogicalNameMarkers(state);
       attachLogicalNameBadges(state);
     }, 120);
   }
@@ -3440,6 +3458,31 @@ function toggleLogicalNames() {
     state.observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
   schedule();
+}
+
+function restoreLogicalNamesWhenReady(attempt) {
+  if (window.__paLogicalNames) {
+    window.__paLogicalNamesRestoreTimer = null;
+    return;
+  }
+  if (typeof Xrm !== "undefined" && Xrm.Page && Xrm.Page.ui && Xrm.Page.data) {
+    window.__paLogicalNamesRestoreTimer = null;
+    toggleLogicalNames(true, true);
+    return;
+  }
+  if (attempt >= 120) {
+    window.__paLogicalNamesRestoreTimer = null;
+    console.warn("Logical names are enabled, but no record form became available.");
+    return;
+  }
+  window.__paLogicalNamesRestoreTimer = setTimeout(function () {
+    restoreLogicalNamesWhenReady(attempt + 1);
+  }, 500);
+}
+
+function restoreLogicalNames() {
+  if (window.__paLogicalNames || window.__paLogicalNamesRestoreTimer) return;
+  restoreLogicalNamesWhenReady(0);
 }
 
 // Registered plugin types (custom code + workflow activities), excluding Microsoft's own.
@@ -3715,6 +3758,13 @@ if (!window.__paDataverseListenerAdded) {
       LIST_RIBBON: listRibbon,
       FETCH_WR_CONTENT: fetchWrContentOnDemand,
       TOGGLE_LOGICAL_NAMES: toggleLogicalNames,
+      ENABLE_LOGICAL_NAMES: function () {
+        toggleLogicalNames(true, true);
+      },
+      DISABLE_LOGICAL_NAMES: function () {
+        toggleLogicalNames(false, true);
+      },
+      RESTORE_LOGICAL_NAMES: restoreLogicalNames,
       LIST_TRACE_LOGS: listTraceLogs,
       LIST_TRACE_LOGS_NEXT: listTraceLogsNext,
       LIST_TRACE_LOGS_RELOAD: reloadTraceLogs,

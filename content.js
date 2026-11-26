@@ -7,6 +7,28 @@
   (document.head || document.documentElement).appendChild(s);
 })();
 
+var LOGICAL_NAMES_STORAGE_KEY = "logicalNamesEnabled";
+
+function applyLogicalNamesPreference(enabled, restore) {
+  var command = restore ? "RESTORE_LOGICAL_NAMES" : enabled ? "ENABLE_LOGICAL_NAMES" : "DISABLE_LOGICAL_NAMES";
+  executeInScript(command, "dataverse.js");
+}
+
+chrome.storage.onChanged.addListener(function (changes, area) {
+  if (area === "sync" && changes[LOGICAL_NAMES_STORAGE_KEY]) {
+    var enabled = !!changes[LOGICAL_NAMES_STORAGE_KEY].newValue;
+    applyLogicalNamesPreference(enabled, enabled);
+  }
+});
+
+chrome.storage.sync.get({ [LOGICAL_NAMES_STORAGE_KEY]: false }, function (cfg) {
+  if (chrome.runtime.lastError) {
+    console.error("Could not load the logical-names preference:", chrome.runtime.lastError.message);
+    return;
+  }
+  if (cfg[LOGICAL_NAMES_STORAGE_KEY]) applyLogicalNamesPreference(true, true);
+});
+
 //add listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   const execute = (cmd, data) => executeInScript(cmd, "dataverse.js", data);
@@ -116,7 +138,16 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       break;
 
     case "toggleLogicalNames":
-      execute("TOGGLE_LOGICAL_NAMES");
+      chrome.storage.sync.get({ [LOGICAL_NAMES_STORAGE_KEY]: false }, function (cfg) {
+        if (chrome.runtime.lastError) {
+          console.error("Could not load the logical-names preference:", chrome.runtime.lastError.message);
+          return;
+        }
+        var enabled = !cfg[LOGICAL_NAMES_STORAGE_KEY];
+        chrome.storage.sync.set({ [LOGICAL_NAMES_STORAGE_KEY]: enabled }, function () {
+          if (chrome.runtime.lastError) console.error("Could not save the logical-names preference:", chrome.runtime.lastError.message);
+        });
+      });
       break;
 
     case "listTraceLogs":
