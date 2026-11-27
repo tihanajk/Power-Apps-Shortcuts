@@ -71,17 +71,31 @@ var traceLogSourceTabId = null;
 function openView(path) {
   var fullUrl = chrome.runtime.getURL(path);
   chrome.storage.sync.get({ openMode: "tab" }, function (cfg) {
-    if (cfg.openMode === "modal") {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        if (tabs && tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, { message: "openViewModal", url: fullUrl });
-        } else {
-          chrome.tabs.create({ url: fullUrl });
-        }
-      });
-    } else {
-      chrome.tabs.create({ url: fullUrl });
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      var sourceTab = tabs && tabs[0];
+      if (cfg.openMode === "modal" && sourceTab) {
+        chrome.tabs.sendMessage(sourceTab.id, { message: "openViewModal", url: fullUrl });
+      } else {
+        openViewTab(fullUrl, sourceTab);
+      }
+    });
+  });
+}
+
+// Passes the source tab's environment to the view so it shows the same env banner.
+function openViewTab(fullUrl, sourceTab) {
+  if (!sourceTab) {
+    chrome.tabs.create({ url: fullUrl });
+    return;
+  }
+  chrome.tabs.sendMessage(sourceTab.id, { message: "getEnvBannerTarget" }, function (target) {
+    var params = new URLSearchParams();
+    if (!chrome.runtime.lastError && target) {
+      if (target.envId) params.set("paEnvId", target.envId);
+      if (target.host) params.set("paHost", target.host);
     }
+    var qs = params.toString();
+    chrome.tabs.create({ url: qs ? fullUrl + "?" + qs : fullUrl });
   });
 }
 

@@ -29,9 +29,15 @@
   var titleObserver = null;
   var envId = "";
   var isMaker = /^make\.power(apps|automate)\.com$/i.test(location.hostname);
+  // Extension view pages (tabs/*.html) get the source tab's env id/host via URL params.
+  var isViewPage = location.href.indexOf(chrome.runtime.getURL("")) === 0;
+  // In modal mode the view is an iframe over the source page, which already shows the banner.
+  if (isViewPage && window.top !== window) return;
+  var viewParams = isViewPage ? new URLSearchParams(location.search) : null;
 
   // Legacy key: banners saved before env-id keys existed were stored per org host.
   function hostKey() {
+    if (isViewPage) return (viewParams.get("paHost") || "").toLowerCase();
     return location.hostname.replace(/\.mcas\.ms$/i, "").toLowerCase();
   }
 
@@ -44,7 +50,7 @@
   function storageKeys() {
     var keys = [];
     if (envId) keys.push("env:" + envId.toLowerCase());
-    if (!isMaker) keys.push(hostKey());
+    if (!isMaker && hostKey()) keys.push(hostKey());
     return keys;
   }
 
@@ -424,14 +430,33 @@
     }
   });
 
-  chrome.runtime.onMessage.addListener(function (request) {
-    if (request && request.message === "envBanner") configure();
+  var envReady;
+
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (!request) return;
+    if (request.message === "envBanner") {
+      configure();
+    } else if (request.message === "getEnvBannerTarget") {
+      // Don't let a slow env id lookup hold up opening the view tab.
+      var timeout = new Promise(function (resolve) {
+        setTimeout(resolve, 1500);
+      });
+      Promise.race([envReady, timeout]).then(function () {
+        sendResponse({ envId: envId, host: isMaker ? "" : hostKey() });
+      });
+      return true;
+    }
   });
 
   window.paEnvBanner = { configure: configure };
 
-  if (isMaker) {
+  if (isViewPage) {
+    envId = viewParams.get("paEnvId") || "";
+    envReady = Promise.resolve();
+    load();
+  } else if (isMaker) {
     envId = makerEnvId();
+    envReady = Promise.resolve();
     load();
     // The maker portals are SPAs: follow environment switches without a reload.
     setInterval(function () {
@@ -442,7 +467,7 @@
       }
     }, 1000);
   } else {
-    resolveDynamicsEnvId().then(function (id) {
+    envReady = resolveDynamicsEnvId().then(function (id) {
       envId = id;
       load();
     });
